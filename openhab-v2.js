@@ -114,6 +114,10 @@ module.exports = function (RED) {
                 node.status({ fill: 'green', shape: 'dot', text: customMessage ? customMessage : STATE_MSG.CONNECTED });
                 break;
             }
+            case STATE.DISCONNECTED: {
+                node.status({ fill: 'red', shape: 'ring', text: customMessage ? customMessage : STATE_MSG.DISCONNECTED });
+                break;
+            }            
             case STATE.CURRENT_STATE: {
                 node.status({ fill: 'green', shape: 'dot', text: customMessage ? customMessage : currentState });
                 break;
@@ -475,7 +479,7 @@ module.exports = function (RED) {
         var openHABController = RED.nodes.getNode(config.controller);
         node.name = config.name;
         node.eventSource = openHABController.getEventSource();
-        node.disabledNodeStates = [ STATE.CONNECTING, STATE.CONNECTED ];
+        node.disabledNodeStates = [ STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED ];
 
         /* 
          * Node methods
@@ -615,7 +619,7 @@ module.exports = function (RED) {
         var openHABController = RED.nodes.getNode(config.controller);
         node.name = config.name;
         node.itemName = config.itemName;
-        node.disabledNodeStates = [ STATE.CONNECTING, STATE.CONNECTED ];
+        node.disabledNodeStates = [ STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED ];
 
         /* 
          * Node methods
