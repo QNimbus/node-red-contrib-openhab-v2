@@ -27,7 +27,7 @@ Configuration node for communication with an OpenHAB controller.
 - Path : (Optionally) Specify the additional base path
 - Username : (Optionally) Specify the username to authenticate
 - Password : (Optionally) Specify the password to authenticate
-- Raw events : enables/disabled the emitting of raw events (currently disabled, see [issue #1](https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1))
+- Raw events : Enables/disabled the emitting of raw events (currently disabled, see [issue #1](https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1))
 
 ##### - openhab-v2-events
 
@@ -40,9 +40,9 @@ Listens to events on the OpenHAB eventbus.
 *Messages injected in NodeRED flows (1 output channel):*
 
 Channel 1:
-- <kbd>msg.topic</kbd> : the topic of the event (e.g. *smarthome/items/MyItemName/state*)
-- <kbd>msg.payload</kbd> : the state of the event item
-- <kbd>msg.type</kbd> : the message type (e.g. *ItemStateEvent*, *ItemStateChangeEvent*, *ItemCommandEvent*, etc)
+- <kbd>msg.topic</kbd> : Topic of the event (e.g. *smarthome/items/MyItemName/state*)
+- <kbd>msg.payload</kbd> : State of the event item
+- <kbd>msg.type</kbd> : Message type (e.g. *ItemStateEvent*, *ItemStateChangeEvent*, *ItemCommandEvent*, etc)
 
 ##### - openhab-v2-in
 
@@ -56,12 +56,12 @@ Listens to state changes of a selected OpenHAB Item.
 *Messages injected in NodeRED flows (2 output channels):*
 
 Channel 1:
-- <kbd>msg.item</kbd> : The item name
+- <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : "StateEvent"
 - <kbd>msg.payload</kbd> : The new state of the selected item
 
 Channel 2:
-- <kbd>msg.item</kbd> : The item name
+- <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : "RawEvent"
 - <kbd>msg.payload</kbd> :  Raw (unprocessed) event of the selected item
 
@@ -70,15 +70,15 @@ Channel 2:
 Output a message to the openab-v2-controller. Can use an incomming message which can be overridden by the configured parameters on the node itself.
 
 *Configuration:*
-- Name : Optionally specify a name
+- Name :(Optionally) Specify a name
 - Controller : Select the OpenHAB controller
-- Item name : Item to send message to
+- Item name : (Optionally) Item to send message to
 - Topic : (Optionally) Topic to use for message (e.g. *ItemCommand* or *ItemUpdate*)
 - Payload : (Optionally) Payload to use for message (e.g. *ON*, *OFF*, *50*, etc)
 
 *Messages injected in NodeRED flows (1 input channel):*
 
 Channel 1:
-- <kbd>msg.item</kbd> : The item name
+- <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : (Optionally) "*ItemCommand*" or "*ItemUpdate*"
 - <kbd>msg.payload</kbd> : (Optionally) The state to send to the item

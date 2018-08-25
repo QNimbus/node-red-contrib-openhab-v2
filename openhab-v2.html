@@ -465,19 +465,27 @@
         <li><b>Path :</b> (Optionally) Specify the additional base path</li>
         <li><b>Username :</b> (Optionally) Specify the username to authenticate</li>
         <li><b>Password :</b> (Optionally) Specify the password to authenticate</li>
-        <li><b>Raw events :</b> The controller will also output the raw events received without modification (note: disabled for now due to the fact that the 'events' node depends on raw messages</li>
+        <li><b>Raw events :</b> Enables/disabled the emitting of raw events (currently disabled, see <a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1">issue #1</a></li>
     </ul>
 </script>
 
 <script type='text/x-red' data-help-name='openhab-v2-events'>
-    <p>Watches the event bus.</p>
+    <p>Listens to events on the OpenHAB eventbus.</p>
     <p></p>
     <b>Configuration</b>
     <ul>
-        <li><b>Name :</b> Optionally specify a name</li>
-        <li><b>Controller :</b> Select the OpenHAB controller</li>
+        <li><b>Name :</b> (Optionally) Specify a name</li>
+        <li><b>Controller :</b> OpenHAB controller to use for monitoring events</li>
     </ul>
     <p></p>
+	<b>Messages output (1 output)</b>
+    <ul>
+        <ul>            
+            <li><code>msg.topic</code> : Topic of the event (e.g. <i>smarthome/items/MyItemName/state</i>)</li>
+            <li><code>msg.payload</code> : State of the event item</li>
+            <li><code>msg.type</code> : Message type (e.g. <i>ItemStateEvent</i>, <i>ItemStateChangeEvent</i>, <i>ItemCommandEvent</i>, etc)</li>
+        </ul>
+   	 </ul>    
 </script>
 
 <script type="text/x-red" data-help-name="openhab-v2-in">
@@ -485,47 +493,47 @@
 	<p></p>
 	<b>Configuration</b>
     <ul>
-        <li><b>Name :</b> Optionally specify a name</li>
-        <li><b>Controller :</b> Select the openHAB controller</li>
-        <li><b>Item :</b>Select the Item to monitor</li>
+        <li><b>Name :</b> (Optionally) Specify a name</li>
+        <li><b>Controller :</b> OpenHAB controller to use for monitoring item(s)</li>
+        <li><b>Item name :</b>Item to monitor</li>
    	 </ul>
 	<p></p>
-	<b>Messages injected in NodeRED flows (2 outputs)</b>
+	<b>Messages output (2 outputs)</b>
     <ul>
         <li>Output 1 :
 			<ul>
-        		<li><code>msg.item</code> : the item's itemname (not label)</li>
+        		<li><code>msg.item</code> : The item name</li>
         		<li><code>msg.topic</code> : "StateEvent"</li>
-        		<li><code>msg.payload</code> : the new state of the selected item</li>
+        		<li><code>msg.payload</code> : The new state of the selected item</li>
   	 		</ul>
 		</li>
         <li>Output 2 :
 			<ul>
-        		<li><code>msg.item</code> : the item's itemname (not label)</li>
+        		<li><code>msg.item</code> : The item name</li>
         		<li><code>msg.topic</code> : "RawEvent"</li>
-        		<li><code>msg.payload</code> : raw (unprocessed) event for the selected item</li>
+        		<li><code>msg.payload</code> : Raw (unprocessed) event of the selected item</li>
   	 		</ul>
 		</li>
    	 </ul>
 </script>
 
 <script type="text/x-red" data-help-name="openhab-v2-out">
-    <p>Sends commands or state updates to a selected OpenHAB Item.</p>
-    <p>E.g. "ON", "OFF", "REFRESH", ... </p>
+    <p>Output a message to the openab-v2-controller. Can use an incomming message which can be overridden by the configured parameters on the node itself.</p>
+    <p>e.g. "ON", "OFF", "REFRESH", "50", et cetera</p>
 	<p></p>
 	<b>Configuration</b>
     <ul>
-        <li><b>Name :</b> Optionally specify a name</li>
-        <li><b>Controller :</b> Select the openHAB controller</li>
-        <li><b>Item :</b> Optionally select the Item to address. If specified, it overrides the item specified in the incoming message.</li>
-        <li><b>Topic :</b> Optionally select "ItemCommand" or "ItemUpdate". If specified, it overrides the topic specified in the incoming message.</li>
-        <li><b>Payload :</b> Optionally specify the command or update value to send to the selected item. If specified, it overrides the value specified in the incoming message.</li>
+        <li><b>Name :</b> (Optionally) Specify a name</li>
+        <li><b>Controller :</b> Select the OpenHAB controller</li>
+        <li><b>Item :</b> (Optionally) Item to send message to</li>
+        <li><b>Topic :</b> (Optionally) Topic to use for message (e.g. <i>ItemCommand</i> or <i>ItemUpdate</i>)</li>
+        <li><b>Payload :</b> (Optionally) Payload to use for message (e.g. <i>ON</i>, <i>OFF</i>, <i>50</i>, etc)</li>
    	 </ul>
 	<p></p>
-	<b>Messages accepted by NodeRED flows</b>
+	<b>Messages input (1 input)</b>
     <ul>
-        <li><code>msg.item</code> optionally the Item to address</li>
-        <li><code>msg.topic</code> optionally "ItemCommand", "ItemUpdate"</li>
-        <li><code>msg.payload</code> optionally the fixed command or update value to send to the selected item</li>
+        <li><code>msg.item</code> (Optionally) the Item to address</li>
+        <li><code>msg.topic</code> (Optionally) "<i>ItemCommand</i>" or "<i>ItemUpdate</i>"</li>
+        <li><code>msg.payload</code> (Optionally) The state to send to the item</li>
    	 </ul>
 </script>
