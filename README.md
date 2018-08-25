@@ -1,6 +1,6 @@
 # node-red-contrib-openhab-v2
 
-![alt text](https://cdn.rawgit.com/QNimbus/node-red-contrib-openhab-v2/326f229a/node-red-openhab-v2.png)
+![alt text](https://raw.githubusercontent.com/QNimbus/node-red-contrib-openhab-v2/master/node-red-openhab-v2.png)
 
 ## Description
 
@@ -39,7 +39,7 @@ Listens to events on the OpenHAB eventbus.
 
 *Messages injected in NodeRED flows (1 output channel):*
 
-Channel 1:
+Output 1:
 - <kbd>msg.topic</kbd> : Topic of the event (e.g. *smarthome/items/MyItemName/state*)
 - <kbd>msg.payload</kbd> : State of the event item
 - <kbd>msg.type</kbd> : Message type (e.g. *ItemStateEvent*, *ItemStateChangeEvent*, *ItemCommandEvent*, etc)
@@ -55,12 +55,12 @@ Listens to state changes of a selected OpenHAB Item.
 
 *Messages injected in NodeRED flows (2 output channels):*
 
-Channel 1:
+Output 1:
 - <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : "StateEvent"
 - <kbd>msg.payload</kbd> : New state of the selected item
 
-Channel 2:
+Output 2:
 - <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : "RawEvent"
 - <kbd>msg.payload</kbd> :  Raw (unprocessed) event of the selected item
@@ -70,7 +70,7 @@ Channel 2:
 Output a message to the openab-v2-controller. Can use an incomming message which can be overridden by the configured parameters on the node itself.
 
 *Configuration:*
-- Name :(Optionally) Specify a name
+- Name : (Optionally) Specify a name
 - Controller : Select OpenHAB controller
 - Item name : (Optionally) Item to send message to
 - Topic : (Optionally) Topic to use for message (e.g. *ItemCommand* or *ItemUpdate*)
@@ -78,7 +78,25 @@ Output a message to the openab-v2-controller. Can use an incomming message which
 
 *Messages injected in NodeRED flows (1 input channel):*
 
-Channel 1:
+Input 1:
 - <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : (Optionally) "*ItemCommand*" or "*ItemUpdate*"
 - <kbd>msg.payload</kbd> : (Optionally) State to send to the item
+
+##### - openhab-v2-get
+
+Fetch item state information based on incomming message payload. Can be overriden by the configured item on the node itself.
+
+*Configuration:*
+- Name : (Optionally) Specify a name
+- Controller : Select OpenHAB controller
+- Item name : (Optionally) Item to send message to
+
+*Messages injected in NodeRED flows (1 input, 1 output channel):*
+
+Input 1:
+- <kbd>msg.item</kbd> : (Optionally) Item name (can be overriden by node config)
+
+Output 2:
+- <kbd>msg.payload</kbd> : State information of the item
+- <kbd>msg.payload_in</kbd> : Copy of the incomming message

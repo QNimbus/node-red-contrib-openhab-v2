@@ -85,10 +85,6 @@
                 type: 'openhab-v2-controller',
                 required: true
             },
-            itemname: {
-                value: '',
-                required: false
-            },
         },
         inputs: 0,
         outputs: 1,
@@ -133,7 +129,7 @@
         },
         oneditprepare: function () {
             getItemList(this, false);
-        }
+        },
     });
 </script>
 
@@ -173,6 +169,41 @@
         paletteLabel: 'out',
         label: function () {
             return (this.name || this.itemname || 'out');
+        },
+        oneditprepare: function () {
+            getItemList(this, true);
+        },
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+    RED.nodes.registerType('openhab-v2-get', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'left',
+        defaults: {
+            name: {
+                value: ''
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true
+            },
+            itemName: {
+                value: '',
+                required: false
+            },
+        },
+        inputs: 1,
+        outputs: 1,
+        inputLabels: ['Item'],
+        outputLabels: [],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'get',
+        label: function () {
+            return (this.name || 'get');
         },
         oneditprepare: function () {
             getItemList(this, true);
@@ -445,6 +476,54 @@
     </div>
 </script>
 
+<script type="text/x-red" data-template-name="openhab-v2-get">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        .multiselect {
+            width: 100%;
+        }
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        .multiselect-clear-filter {
+            display: none;
+        }
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='static/css/bootstrap-multiselect.css' type='text/css' />     
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-itemName"><i class="fa fa-crosshairs"></i> Item name</label>
+    	<select id="node-input-itemName" name="node-input-itemName">
+    	</select>
+    </div>
+</script>
+
 <!--
 
     *******************
@@ -511,14 +590,14 @@
 			<ul>
         		<li><code>msg.item</code> : Item name</li>
         		<li><code>msg.topic</code> : "RawEvent"</li>
-        		<li><code>msg.payload</code> : Raw (unprocessed) event of the selected item</li>
+        		<li><code>msg.payload</code> : Raw (unprocessed) event of the item</li>
   	 		</ul>
 		</li>
    	 </ul>
 </script>
 
 <script type="text/x-red" data-help-name="openhab-v2-out">
-    <p>Output a message to the openab-v2-controller. Can use an incomming message which can be overridden by the configured parameters on the node itself.</p>
+    <p>Output a message to the openab-v2-controller. Can be overridden by the configured item, topic and/or payload on the node itself.</p>
     <p>e.g. "ON", "OFF", "REFRESH", "50", et cetera</p>
 	<p></p>
 	<b>Configuration</b>
@@ -535,5 +614,31 @@
         <li><code>msg.item</code> (Optionally) Item name</li>
         <li><code>msg.topic</code> (Optionally) "<i>ItemCommand</i>" or "<i>ItemUpdate</i>"</li>
         <li><code>msg.payload</code> (Optionally) State to send to the item</li>
+   	 </ul>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-get">
+    <p>Fetch item state information based on incomming message payload. Can be overriden by the configured item on the node itself.</p>
+	<p></p>
+	<b>Configuration</b>
+    <ul>
+        <li><b>Name :</b> (Optionally) Specify a name</li>
+        <li><b>Controller :</b> Select the OpenHAB controller</li>
+        <li><b>Item :</b> (Optionally) Item to send message to</li>
+   	 </ul>
+	<p></p>
+	<b>Messages input/output (1 input, 1 output)</b>
+    <ul>
+        <li>Input 1 :
+            <ul>
+                <li><code>msg.item</code> (Optionally) Item name (can be overriden by node config)</li>
+            </ul>
+        </li>
+        <li>Output 1 :
+            <ul>
+                <li><code>msg.payload</code> State information of the item</li>
+                <li><code>msg.payload_in</code> Copy of the incomming message</li>
+            </ul>
+        </li>        
    	 </ul>
 </script>
