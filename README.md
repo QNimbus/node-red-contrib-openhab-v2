@@ -10,7 +10,7 @@ Nodes facilitating automation of *OpenHAB* ( <http://www.OpenHAB.org> ) items wi
 
 ```
 $ cd ~/.node-red
-$ npm install node-red-contrib-OpenHAB-v2
+$ npm install node-red-contrib-openhab-v2
 ```
 
 ## Nodes

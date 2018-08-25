@@ -732,6 +732,7 @@ module.exports = function (RED) {
                 message.payload_in = message.payload;
                 message.payload = JSON.parse(body);
                 node.send(message);
+                node.updateNodeStatus(STATE.CURRENT_STATE, `last state: ${message.payload.state}`);
             }
 
             function fail(errorMessage) {
