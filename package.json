@@ -1,0 +1,40 @@
+{
+    "name": "node-red-contrib-openhab-v2",
+    "version": "1.0.1",
+    "description": "OpenHAB nodes for node-red",
+    "dependencies": {
+        "@joeybaker/eventsource": "latest",
+        "bootstrap-multiselect": "^0.9.13-1",
+        "request": "latest"
+    },
+    "author": "Bas van Wetten <bas.van.wetten@gmail.com>",
+    "keywords": [
+        "node-red",
+        "openhab2"
+    ],
+    "node-red": {
+        "nodes": {
+            "openhab-v2": "openhab-v2.js"
+        }
+    },
+    "scripts": {
+        "debug": "nodemon"
+    },
+    "nodemonConfig": {
+        "signal": "SIGHUP",
+        "env": {
+            "NODE_ENV": "development"
+        },
+        "watch": ".",
+        "ext": "html,js",
+        "exec": "node-red --port 3030 -v -u . ./test_flow.json"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/QNimbus/node-red-contrib-openhab-v2.git"
+    },
+    "license": "Apache-2.0",
+    "devDependencies": {
+        "nodemon": "^1.18.3"
+    }
+}
