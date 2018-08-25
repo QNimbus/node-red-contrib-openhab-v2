@@ -4,7 +4,7 @@
 
 ## Description
 
-Nodes facilitating the automation of *OpenHAB* ( <http://www.OpenHAB.org> ) items with Node-RED ( <http://nodered.org> ).
+Nodes facilitating automation of *OpenHAB* ( <http://www.OpenHAB.org> ) items with Node-RED ( <http://nodered.org> ).
 
 ## Installation
 
@@ -58,7 +58,7 @@ Listens to state changes of a selected OpenHAB Item.
 Channel 1:
 - <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : "StateEvent"
-- <kbd>msg.payload</kbd> : The new state of the selected item
+- <kbd>msg.payload</kbd> : New state of the selected item
 
 Channel 2:
 - <kbd>msg.item</kbd> : Item name
@@ -71,7 +71,7 @@ Output a message to the openab-v2-controller. Can use an incomming message which
 
 *Configuration:*
 - Name :(Optionally) Specify a name
-- Controller : Select the OpenHAB controller
+- Controller : Select OpenHAB controller
 - Item name : (Optionally) Item to send message to
 - Topic : (Optionally) Topic to use for message (e.g. *ItemCommand* or *ItemUpdate*)
 - Payload : (Optionally) Payload to use for message (e.g. *ON*, *OFF*, *50*, etc)
@@ -81,4 +81,4 @@ Output a message to the openab-v2-controller. Can use an incomming message which
 Channel 1:
 - <kbd>msg.item</kbd> : Item name
 - <kbd>msg.topic</kbd> : (Optionally) "*ItemCommand*" or "*ItemUpdate*"
-- <kbd>msg.payload</kbd> : (Optionally) The state to send to the item
+- <kbd>msg.payload</kbd> : (Optionally) State to send to the item
