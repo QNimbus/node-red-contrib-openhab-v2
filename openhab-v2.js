@@ -161,6 +161,9 @@ module.exports = function (RED) {
         node._itemList = undefined;
         node._url = undefined;
 
+        // Temporary workaround for issue #3 (https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/3)
+        node.setMaxListeners(50);
+
         /**
          * node.request
          * 

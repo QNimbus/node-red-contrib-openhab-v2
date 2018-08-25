@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-openhab-v2",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "OpenHAB nodes for node-red",
     "dependencies": {
         "@joeybaker/eventsource": "latest",
