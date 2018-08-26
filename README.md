@@ -4,7 +4,7 @@
 
 ## Description
 
-Nodes facilitating automation of *OpenHAB* ( <http://www.OpenHAB.org> ) items with Node-RED ( <http://nodered.org> ).
+Nodes facilitating automation of *OpenHAB* ( <http://www.openhab.org> ) items with Node-RED ( <http://nodered.org> ).
 
 ## Installation
 
