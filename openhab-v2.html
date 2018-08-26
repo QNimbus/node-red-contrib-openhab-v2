@@ -70,6 +70,7 @@
 </script>
 
 <script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
     RED.nodes.registerType('openhab-v2-events', {
         category: 'OpenHAB',
         color: '#ff6600',
@@ -83,6 +84,10 @@
                 type: 'openhab-v2-controller',
                 required: true
             },
+            itemName: {
+                value: [],
+                required: true
+            },
         },
         inputs: 0,
         outputs: 1,
@@ -91,7 +96,13 @@
         icon: 'node-red-contrib-openhab-v2.png',
         paletteLabel: 'events',
         label: function () {
-            return (this.name || this.itemname || 'events');
+            return (this.name || 'events');
+        },
+        oneditprepare: function () {
+            getItemList(this, false);
+        },
+        oneditsave: function () {
+            workaroundForEmptyItemsList(this);
         }
     });
 </script>
@@ -223,7 +234,7 @@
             sortObject.sort(function (a, b) {
                 a = caseSensitive ? a[sortProperty] : a[sortProperty].toLowerCase();
                 b = caseSensitive ? b[sortProperty] : b[sortProperty].toLowerCase();
-    
+
                 if (a < b)
                     return sortDesc ? 1 : -1;
                 else if (a > b)
@@ -234,78 +245,106 @@
         } catch (error) {
             // Unable to sort (i.e. unknown property?)
         }
-    
+
         return sortObject;
     }
-    
+
+    /**
+     * workaroundForEmptyItemsList
+     * 
+     * Since 'invalid' form elements do not get POSTed (an empty multiselect input element is considered 'invalid'), the NodeRED frontend
+     * will not allow user to deploy the node/flow when no items are selected. To workaround this issue, an empty option will be added
+     * dynamically to trick the DOM into POSTing the form with the SELECT input element. Backend needs to account for a single '' (empty string)
+     * value being passed in case nothing is selected.
+     *
+     */
+
+    function workaroundForEmptyItemsList(node) {
+        var selectedItemElement = $('#node-input-itemName');
+        var selectedItems = selectedItemElement.find('option').filter(':selected');
+
+        if (selectedItems.length === 0) {
+            var optionElement = document.createElement('option');
+            selectedItemElement.append(optionElement).children().last().attr('selected', 'selected');
+        }
+    }
+
     function getItemList(node, allowEmpty = false) {
-    
+
         function updateItemList(controller, selectedItemElement, itemName) {
-    
+
             // Remove all previous and/or static (if any) elements from 'select' input element
             selectedItemElement.children().remove();
-    
-            // Initialize bootstrap multiselect form
-            selectedItemElement.multiselect({
-                enableFiltering: true,
-                enableCaseInsensitiveFiltering: true,
-                maxHeight: 300,
-                disableIfEmpty: true,
-                nonSelectedText: 'Select item...',
-                disabledText: 'No items found...'
-            });
-    
+
             if (controller) {
                 $.getJSON('/openhab2/itemlist', { controllerID: controller.id, forceRefresh: 1 })
                     .done(function (data, textStatus, jqXHR) {
                         try {
                             var items = sortBy(data, 'name');
-    
-                            if (allowEmpty)
-                                selectedItemElement.append('<option value=\'\'></option>');
-    
+
+                            // Remove all previous and/or static (if any) elements from 'select' input element
+                            selectedItemElement.children().remove();
+
+                            if (allowEmpty) {
+                                var optionElement = document.createElement('option');
+                                selectedItemElement.append(optionElement).children().last().attr('value', '');
+                            }
+
                             items.forEach(function (item) {
-                                selectedItemElement.append('<option>' + item.name + '</option>');
-                                selectedItemElement.children().last().attr('value', item.name);
+                                var optionElement = document.createElement('option');
+                                selectedItemElement.append(optionElement).children().last().attr('value', item.name).html(item.name);
                             });
-    
+
                             // Enable item selection
-                            selectedItemElement.prop('disabled', false);
-    
+                            selectedItemElement.multiselect('enable');
+
                             // Finally, set the value of the input select to the selected value
                             selectedItemElement.val(itemName);
-    
+
                             // Rebuild bootstrap multiselect form
                             selectedItemElement.multiselect('rebuild');
                         } catch (error) {
                             console.error(`Error: ${error}`);
                         }
-    
+
                     })
                     .fail(function (jqXHR, textStatus, errorThrown) {
                         // Disable item selection if no items were retrieved
-                        selectedItemElement.prop('disabled', true);
-    
+                        selectedItemElement.multiselect('disable');
+                        selectedItemElement.multiselect('refresh');
+
                         console.error(`Error: ${errorThrown}`);
                     });
             } else {
                 // Disable item selection if no (valid) controller was selected
-                selectedItemElement.prop('disabled', true);
+                selectedItemElement.multiselect('disable');
+                selectedItemElement.multiselect('refresh');
             }
         }
-    
+
         var selectedItemElement = $('#node-input-itemName');
         var selectedItem = selectedItemElement.val();
         var openHABControllerElement = $('#node-input-controller');
         var openHABController = RED.nodes.node(openHABControllerElement.val());
-    
-        selectedItemElement.children().remove();
-    
+
+        // Initialize bootstrap multiselect form
+        selectedItemElement.multiselect({
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            filterPlaceholder: 'Filter...',
+            includeResetOption: false,
+            numberDisplayed: 1,
+            maxHeight: 300,
+            disableIfEmpty: true,
+            nSelectedText: 'selected',
+            nonSelectedText: 'None selected',
+        });
+
         // onChange event handler in case a new controller gets selected
         openHABControllerElement.change(function (event) {
             updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || node.itemName);
         });
-    
+
     }
 </script>
 
@@ -316,7 +355,7 @@
     
 -->
 
-<script type='text/x-red' data-template-name='openhab-v2-controller'>
+<script type='text/x-red' data-template-name='openhab-v2-controller'>   
     <div class='form-row'>
         <label for='node-config-input-name'><i class='fa fa-tag'></i> Name</label>
         <input type='text' id='node-config-input-name' placeholder='Name'>
@@ -355,6 +394,38 @@
 </script>
 
 <script type='text/x-red' data-template-name='openhab-v2-events'>
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        .multiselect {
+            width: 100%;
+        }
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        .multiselect-clear-filter {
+            display: none;
+        }
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />      
     <div class='form-row'>
         <label for='node-input-name'><i class='fa fa-tag'></i> Name</label>
         <input type='text' id='node-input-name' placeholder='Name'>
@@ -362,6 +433,11 @@
     <div class='form-row'>
         <label for='node-input-controller'><i class='fa fa-globe'></i> Controller</label>
         <input type='text' id='node-input-controller'>
+    </div>
+    <div class="form-row">
+        <label for="node-input-itemName"><i class="fa fa-crosshairs"></i> Item name(s)</label>
+        <select id="node-input-itemName" name="node-input-itemName" multiple="multiple">
+        </select>
     </div>
 </script>
 
@@ -580,6 +656,10 @@
             <span class="property-type">(object)</span>
         </dt>
         <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name(s)
+                <span class="property-type">[string]</span>
+            </dt>
+            <dd>Item(s) to watch for events.</dd>        
     </dl>    
     <h3>Outputs</h3>
     <dl class="message-properties">
@@ -597,7 +677,7 @@
             <dd>Message type. (e.g. <i>ItemStateEvent</i>, <i>ItemStateChangeEvent</i>, <i>ItemCommandEvent</i>, etc)</dd>              
     </dl>
     <h3>Details</h3>
-    <p>Will output any events it gets from the openhab-v2-controller (Eventbus) for a given item.</p>
+    <p>Will output any events it gets from the openhab-v2-controller (Eventbus) for all items or (a) specific item(s).</p>
 </script>
 
 <script type="text/x-red" data-help-name="openhab-v2-in">   

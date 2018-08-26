@@ -505,8 +505,14 @@ module.exports = function (RED) {
 
         var node = this;
         var openHABController = RED.nodes.getNode(config.controller);
+
+        if (!openHABController) {
+            return;
+        }
+
         node.name = config.name;
         node.eventSource = openHABController.getEventSource();
+        node.itemNames = config.itemName.filter(String);
         node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
@@ -533,12 +539,25 @@ module.exports = function (RED) {
          */
 
         node.processRawEvent = function (message) {
-            ``
             try {
+                var emitEvent = true;
+
                 message = JSON.parse(message.data);
                 if (message.payload && (message.payload.constructor === String))
                     message.payload = JSON.parse(message.payload);
-                node.send(message);
+
+                if (node.itemNames.length > 0) {
+                    var topicRegex = /^smarthome\/(?:items|things)\/([^\/]+).*$/;
+                    var matches = topicRegex.exec(message.topic);
+                    
+                    if (node.itemNames.indexOf(matches[1]) < 0) {
+                        emitEvent = false;
+                    }
+                }
+
+                if (emitEvent) {
+                    node.send(message);
+                }                
             } catch (error) {
                 node.error('Unexpected Error : ' + error)
                 node.status({ fill: 'red', shape: 'dot', text: 'Unexpected Error : ' + error });

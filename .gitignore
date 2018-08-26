@@ -1,3 +1,6 @@
 *.backup
 test_flow*
 node_modules/
+\.config\.json
+
+settings\.js
