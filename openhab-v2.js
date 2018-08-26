@@ -333,7 +333,7 @@ module.exports = function (RED) {
                             node.emit(STATE.EVENT_NAME, STATE.WARN);
                             setTimeout(function () {
                                 node.getItemStates();
-                            }, 5000);
+                            }, 10000);
                             break;
                         }
                         case 200: {
@@ -517,6 +517,8 @@ module.exports = function (RED) {
         node.updateNodeStatus = function (state, customMessage = undefined) {
             if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
                 updateNodeStatus(node, state, customMessage);
+            } else {
+                node.status({});
             }
         };
 
@@ -582,6 +584,8 @@ module.exports = function (RED) {
         node.updateNodeStatus = function (state, customMessage = undefined) {
             if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
                 updateNodeStatus(node, state, customMessage);
+            } else {
+                node.status({});
             }
         };
 
@@ -658,6 +662,8 @@ module.exports = function (RED) {
         node.updateNodeStatus = function (state, customMessage = undefined) {
             if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
                 updateNodeStatus(node, state, customMessage);
+            } else {
+                node.status({});
             }
         };
 
@@ -722,6 +728,8 @@ module.exports = function (RED) {
         node.updateNodeStatus = function (state, customMessage = undefined) {
             if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
                 updateNodeStatus(node, state, customMessage);
+            } else {
+                node.status({});
             }
         };
 
