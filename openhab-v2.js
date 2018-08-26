@@ -375,26 +375,25 @@ module.exports = function (RED) {
          */
         node.onError = function (error) {
             try {
-                    // the EventSource object has given up retrying ... retry reconnecting after 10 seconds
-                    var errorMessage = `Unable to connect: ${error.type} on ${node._eventSource.url}`;
-
-                node._eventSource.removeAllListeners();
-                node._eventSource.close();
-
-                node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
-                node._eventSource.close();
-                delete node._eventSource;
-
-                setTimeout(function () {
-                    node.getEventSource();
-                }, 10000);
-            } catch (error) {
                 var errorMessage = `Unable to connect: ${error.type} on ${node._eventSource.url}`;
 
                 node._eventSource.removeAllListeners();
                 node._eventSource.close();
 
                 node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
+                delete node._eventSource;
+
+                setTimeout(function () {
+                    node.getEventSource();
+                }, 30000);
+            } catch (error) {
+                var errorMessage = `Unable to connect: ${JSON.stringify(error)} on ${node._eventSource.url}`;
+
+                node._eventSource.removeAllListeners();
+                node._eventSource.close();
+
+                node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
+                delete node._eventSource;
                 node.error(util.inspect(error));
             }
         }
