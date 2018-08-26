@@ -205,7 +205,7 @@ module.exports = function (RED) {
                     node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
                     if (failCallback && typeof failCallback === 'function') {
                         failCallback(errorMessage);
-                    } 
+                    }
                 }
                 else if (!(200 <= response.statusCode && response.statusCode <= 210)) {
                     var errorMessage = `Response error: ${JSON.stringify(response)} on ${url}`;
@@ -213,11 +213,11 @@ module.exports = function (RED) {
                     node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
                     if (failCallback && typeof failCallback === 'function') {
                         failCallback(errorMessage);
-                    }                     
+                    }
                 } else {
                     if (successCallback && typeof successCallback === 'function') {
                         successCallback(body);
-                    }                    
+                    }
                 }
             });
         };
@@ -374,13 +374,29 @@ module.exports = function (RED) {
          *
          */
         node.onError = function (error) {
-            var errorMessage = `Unable to connect: ${error.type} on ${node._eventSource.url}`;
+            try {
+                    // the EventSource object has given up retrying ... retry reconnecting after 10 seconds
+                    var errorMessage = `Unable to connect: ${error.type} on ${node._eventSource.url}`;
 
-            node._eventSource.removeAllListeners();
-            node._eventSource.close();
+                node._eventSource.removeAllListeners();
+                node._eventSource.close();
 
-            node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
-            node.error(util.inspect(error));
+                node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
+                node._eventSource.close();
+                delete node._eventSource;
+
+                setTimeout(function () {
+                    node.getEventSource();
+                }, 10000);
+            } catch (error) {
+                var errorMessage = `Unable to connect: ${error.type} on ${node._eventSource.url}`;
+
+                node._eventSource.removeAllListeners();
+                node._eventSource.close();
+
+                node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
+                node.error(util.inspect(error));
+            }
         }
 
         /**
@@ -749,5 +765,5 @@ module.exports = function (RED) {
             node.log(`closing`);
         });
     }
-    RED.nodes.registerType('openhab-v2-get', OpenHAB_get);    
+    RED.nodes.registerType('openhab-v2-get', OpenHAB_get);
 }
