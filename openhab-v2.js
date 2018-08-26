@@ -609,7 +609,7 @@ module.exports = function (RED) {
         node.processStateEvent = function (event) {
             var currentState = node.context().get('currentState');
 
-            if ((event.state != currentState) && (event.state != 'null')) {
+            if (event.state != 'null') {
                 node.context().set('currentState', event.state);
 
                 node.updateNodeStatus(STATE.CURRENT_STATE);
