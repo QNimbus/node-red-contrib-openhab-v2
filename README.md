@@ -36,6 +36,7 @@ Listens to events on the OpenHAB eventbus.
 *Configuration:*
 - Name : (Optionally) Specify a name
 - Controller : OpenHAB controller to use for monitoring events
+- Item(s): (Optionally) Specify items to watch
 
 *Messages injected in NodeRED flows (1 output channel):*
 
