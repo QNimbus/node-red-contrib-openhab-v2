@@ -229,6 +229,13 @@
 -->
 
 <script type='text/javascript'>
+
+    /**
+     * sortBy
+     * 
+     * Utility function to sort items object (e.g. by name)
+     *
+     */
     function sortBy(sortObject, sortProperty, caseSensitive = true, sortDesc = false) {
         try {
             sortObject.sort(function (a, b) {
@@ -258,7 +265,6 @@
      * value being passed in case nothing is selected.
      *
      */
-
     function workaroundForEmptyItemsList(node) {
         var selectedItemElement = $('#node-input-itemName');
         var selectedItems = selectedItemElement.find('option').filter(':selected');
@@ -277,7 +283,7 @@
             selectedItemElement.children().remove();
 
             if (controller) {
-                $.getJSON('/openhab2/itemlist', { controllerID: controller.id, forceRefresh: 1 })
+                $.getJSON('/openhab2/itemlist', { controllerID: controller.id })
                     .done(function (data, textStatus, jqXHR) {
                         try {
                             var items = sortBy(data, 'name');
@@ -332,7 +338,8 @@
             enableFiltering: true,
             enableCaseInsensitiveFiltering: true,
             filterPlaceholder: 'Filter...',
-            includeResetOption: false,
+            includeResetOption: true,
+            includeResetDivider: true,
             numberDisplayed: 1,
             maxHeight: 300,
             disableIfEmpty: true,
@@ -410,8 +417,13 @@
         .dropdown-menu {
             width: 100% !important;
         }
-        .multiselect-container input[type='checkbox'] {
-            display: none;
+        .multiselect-container > li > a > label.checkbox {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
         }
         .multiselect-container > li > a > label.radio {
             margin: 5px;
@@ -420,7 +432,10 @@
             cursor: pointer;
             font-weight: 400;
             padding: 3px 20px 3px 20px;
-        }        
+        }       
+        .multiselect-container label.checkbox input[type='checkbox'] {
+            display: none;
+        } 
         .multiselect-container label.radio input[type='radio'] {
             display: none;
         }
