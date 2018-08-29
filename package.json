@@ -27,7 +27,7 @@
         },
         "watch": ".",
         "ext": "html,js",
-        "exec": "node-red --port 3030 -v -u . ./test_flow.json"
+        "exec": "node-red --port 3030 -v -u . ./flow_debug.json"
     },
     "repository": {
         "type": "git",
@@ -35,6 +35,7 @@
     },
     "license": "Apache-2.0",
     "devDependencies": {
+        "node-red": "^0.19.2",
         "nodemon": "^1.18.3"
     }
 }
