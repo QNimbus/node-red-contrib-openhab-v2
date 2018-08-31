@@ -47,12 +47,13 @@ Output 1:
 
 ##### - openhab-v2-in
 
-Listens to state changes of a selected OpenHAB Item.
+Listens to state changes of a selected OpenHAB Item. Will only watch for selected event types for the 1st output channel. The 2nd channel (Raw events) are all passed into the flow without filtering for specific event types.
 
 *Configuration:*
 - Name : (Optionally) Specify a name
 - Controller : OpenHAB controller to use for monitoring item(s)
 - Item name : Item to monitor
+- Even types : Listen to the selected event types.
 
 *Messages injected in NodeRED flows (2 output channels):*
 

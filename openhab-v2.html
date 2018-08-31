@@ -30,36 +30,36 @@
         defaults: {
             name: {
                 value: '',
-                required: true
+                required: true,
             },
             protocol: {
                 value: 'http',
-                required: true
+                required: true,
             },
             host: {
                 value: 'localhost',
-                required: true
+                required: true,
             },
             port: {
                 value: 8080,
                 validate: RED.validators.number(),
-                required: false
+                required: false,
             },
             path: {
                 value: '',
-                required: false
+                required: false,
             },
             username: {
                 value: '',
-                required: false
+                required: false,
             },
             password: {
                 value: '',
-                required: false
+                required: false,
             },
             allowRawEvents: {
                 value: true,
-                required: true
+                required: true,
             }
         },
         paletteLabel: 'openhab-v2-controller',
@@ -77,16 +77,16 @@
         align: 'left',
         defaults: {
             name: {
-                value: ''
+                value: '',
             },
             controller: {
                 value: '',
                 type: 'openhab-v2-controller',
-                required: true
+                required: true,
             },
             itemName: {
                 value: [],
-                required: true
+                required: true,
             },
         },
         inputs: 0,
@@ -115,16 +115,20 @@
         align: 'left',
         defaults: {
             name: {
-                value: ''
+                value: '',
             },
             controller: {
                 value: '',
                 type: 'openhab-v2-controller',
-                required: true
+                required: true,
             },
             itemName: {
                 value: '',
-                required: false
+                required: false,
+            },
+            eventTypes: {
+                value: [],
+                required: true,
             },
         },
         inputs: 0,
@@ -138,6 +142,7 @@
         },
         oneditprepare: function () {
             getItemList(this, false);
+            getEventTypeList(this);
         },
     });
 </script>
@@ -150,24 +155,24 @@
         align: 'right',
         defaults: {
             name: {
-                value: ''
+                value: '',
             },
             controller: {
                 value: '',
                 type: 'openhab-v2-controller',
-                required: true
+                required: true,
             },
             itemName: {
                 value: '',
-                required: false
+                required: false,
             },
             topic: {
                 value: '',
-                required: false
+                required: false,
             },
             payload: {
                 value: '',
-                required: false
+                required: false,
             }
         },
         inputs: 1,
@@ -193,16 +198,16 @@
         align: 'left',
         defaults: {
             name: {
-                value: ''
+                value: '',
             },
             controller: {
                 value: '',
                 type: 'openhab-v2-controller',
-                required: true
+                required: true,
             },
             itemName: {
                 value: '',
-                required: false
+                required: false,
             },
         },
         inputs: 1,
@@ -353,6 +358,24 @@
         });
 
     }
+
+    function getEventTypeList(node) {
+
+        var selectedEventsElement = $('#node-input-eventTypes');
+        var selectedEvents = selectedEventsElement.val();
+        var openHABControllerElement = $('#node-input-controller');
+        var openHABController = RED.nodes.node(openHABControllerElement.val());
+
+        // Initialize bootstrap multiselect form
+        selectedEventsElement.multiselect({
+            enableFiltering: false,
+            numberDisplayed: 1,
+            maxHeight: 300,
+            disableIfEmpty: true,
+            nSelectedText: 'selected',
+            nonSelectedText: 'None selected',
+        });
+    }
 </script>
 
 <!--
@@ -502,6 +525,14 @@
         <select id="node-input-itemName" name="node-input-itemName">
         </select>
     </div>
+    <div class="form-row">
+        <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> Event types</label>
+        <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple">
+            <option value="ItemCommandEvent" selected>ItemCommand</option>
+            <option value="ItemStateEvent" selected>ItemUpdate</option>
+            <option value="ItemStateChangedEvent" selected>ItemStateChanged</option>
+        </select>
+    </div>
 </script>
 
 <script type="text/x-red" data-template-name="openhab-v2-out">
@@ -553,9 +584,9 @@
     <div class="form-row">
         <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
         <select id="node-input-topic" name="node-input-topic" style="width: 250px;">
-    <option value=""></option>
-    <option value="ItemCommand">ItemCommand</option>
-    <option value="ItemUpdate">ItemUpdate</option>
+            <option value=""></option>
+            <option value="ItemCommand">ItemCommand</option>
+            <option value="ItemUpdate">ItemUpdate</option>
         </select>
     </div>
     <div class="form-row">
@@ -672,7 +703,7 @@
         </dt>
         <dd>Select the OpenHAB controller.</dd>
         <dt class="optional">Item name(s)
-                <span class="property-type">[string]</span>
+                <span class="property-type">string []</span>
             </dt>
             <dd>Item(s) to watch for events.</dd>        
     </dl>    
@@ -696,7 +727,7 @@
 </script>
 
 <script type="text/x-red" data-help-name="openhab-v2-in">   
-    <p>Listens to state changes of a selected OpenHAB Item.</p>
+    <p>Listens to state changes of a selected OpenHAB Item. Will only watch for selected event types for the 1st output channel. The 2nd channel (Raw events) are all passed into the flow without filtering for specific event types.</p>
     <h3>Configuration</h3>
     <dl class="message-properties">
         <dt class="optional">Name
@@ -711,6 +742,10 @@
             <span class="property-type">string</span>
         </dt>
         <dd>Item to send message to.</dd>
+        <dt class="optional">Event types
+                <span class="property-type">string []</span>
+            </dt>
+            <dd>Listen to the selected event types.</dd>        
     </dl>    
     <h3>Outputs</h3>
     <h5>Output 1</h5>

@@ -419,9 +419,7 @@ module.exports = function (RED) {
                     node.emit(itemName + '/RawEvent', message);
                 }
 
-                if ((parsedMessage.type === 'ItemStateEvent') || (parsedMessage.type === 'ItemStateChangedEvent') || (parsedMessage.type === 'GroupItemStateChangedEvent')) {
-                    node.emit(itemName + '/StateEvent', { type: parsedMessage.type, state: parsedMessage.payload.value });
-                }
+                node.emit(itemName + `/${parsedMessage.type}`, { type: parsedMessage.type, state: parsedMessage.payload.value, payload: parsedMessage.payload });
             } catch (error) {
                 var errorMessage = `Error parsing message: ${error.type.Error} - ${message}`;
 
@@ -541,13 +539,13 @@ module.exports = function (RED) {
         node.processRawEvent = function (message) {
             try {
                 var emitEvent = true;
+                var topicRegex = new RegExp('/^smarthome\/(?:items|things)\/([^\/]+).*$/');
 
                 message = JSON.parse(message.data);
                 if (message.payload && (message.payload.constructor === String))
                     message.payload = JSON.parse(message.payload);
 
-                if (node.itemNames.length > 0) {
-                    var topicRegex = /^smarthome\/(?:items|things)\/([^\/]+).*$/;
+                if (node.itemNames.length > 0) {                    
                     var matches = topicRegex.exec(message.topic);
                     
                     if (node.itemNames.indexOf(matches[1]) < 0) {
@@ -593,6 +591,7 @@ module.exports = function (RED) {
         var openHABController = RED.nodes.getNode(config.controller);
         node.name = config.name;
         node.itemName = config.itemName;
+        node.eventTypes = config.eventTypes.filter(String);
         node.eventSource = openHABController.getEventSource();
 
         /* 
@@ -613,7 +612,6 @@ module.exports = function (RED) {
 
         node.updateNodeStatus(STATE.CONNECTING);
         node.context().set('currentState', undefined);
-
 
         /* 
          * Node event handlers
@@ -636,7 +634,7 @@ module.exports = function (RED) {
 
                 // Send message to node output 1
                 var msgid = RED.util.generateId();
-                node.send([{ _msgid: msgid, payload: event.state, item: node.itemName, event: 'StateEvent' }, null]);
+                node.send([{ _msgid: msgid, payload: event.state, data: event.payload, item: node.itemName, event: event.type }, null]);
 
             }
         }
@@ -648,10 +646,16 @@ module.exports = function (RED) {
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
         openHABController.addListener(node.itemName + '/RawEvent', node.processRawEvent);
         openHABController.addListener(node.itemName + '/StateEvent', node.processStateEvent);
+        node.eventTypes.forEach(function(eventType) {
+            openHABController.addListener(node.itemName + `/${eventType}`, node.processStateEvent);
+        });
 
         node.on('close', function () {
-            openHABController.removeListener(node.itemName + '/StateEvent', node.processStateEvent);
+            node.eventTypes.forEach(function(eventType) {
+                openHABController.removeListener(node.itemName + `/${eventType}`, node.processStateEvent);
+            });
             openHABController.removeListener(node.itemName + '/RawEvent', node.processRawEvent);
+            openHABController.removeListener(node.itemName + '/StateEvent', node.processStateEvent);
             openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
             node.log(`closing`);
         });
