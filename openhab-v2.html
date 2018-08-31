@@ -220,6 +220,10 @@
                 value: '',
                 required: false,
             },
+            listenNode: {
+                value: '',
+                required: false,
+            },
         },
         inputs: 1,
         outputs: 1,
@@ -232,6 +236,7 @@
         },
         oneditprepare: function () {
             getItemList(this, true);
+            getNodesList(this, '#node-input-listenNode');
         }
     });
 </script>
@@ -289,6 +294,21 @@
             var optionElement = document.createElement('option');
             selectedItemElement.append(optionElement).children().last().attr('selected', 'selected');
         }
+    }
+
+    function getNodesList(node, elementName) {
+        var selectedItemElement = $(elementName);
+        var selectedItem = selectedItemElement.val();
+
+        RED.nodes.eachNode(function (node) {
+            if (node.type.startsWith('openhab-v2-in')) {
+                var optionElement = document.createElement('option');
+                selectedItemElement.append(optionElement).children().last().attr('value', node.id).html(node.name || node.id);
+            }
+        });
+
+        // Set the value of the input select to the selected value
+        selectedItemElement.val(node.listenNode);
     }
 
     function getItemList(node, allowEmpty = false) {
@@ -545,7 +565,7 @@
         </select>
     </div>
     <div class='form-row'>
-        <label for='node-input-outputAtStartup'><i class='fa fa-share-square'></i> Startup output</label>
+        <label for='node-input-outputAtStartup'><i class='fa fa-share-square'></i> Start output</label>
         <input type='checkbox' id='node-input-outputAtStartup' style='width:auto; margin: 0;' checked="checked">
     </div>
     <div class='form-row'>
@@ -660,6 +680,12 @@
         <select id="node-input-itemName" name="node-input-itemName">
         </select>
     </div>
+    <div class="form-row">
+        <label for="node-input-listenNode"><i class="fa fa-crosshairs"></i> Nodes</label>
+        <select id="node-input-listenNode" name="node-input-listenNode">
+        </select>
+    </div>
+
 </script>
 
 <!--
@@ -765,7 +791,7 @@
             <span class="property-type">string []</span>
         </dt>
         <dd>Output state at startup.</dd>
-        <dt>Startup output
+        <dt>Start output
             <span class="property-type">boolean</span>
         </dt>
         <dd>Whether or not to emit state at start of flow.</dd>

@@ -18,7 +18,6 @@
   
 */
 
-var _ = require('lodash/core');
 var request = require('request');
 var util = require('util');
 var EventSource = require('@joeybaker/eventsource');
@@ -647,13 +646,13 @@ module.exports = function (RED) {
                             // Send message to node output 1
                             var msgid = RED.util.generateId();
                             node.send([{ _msgid: msgid, payload: event.state, data: event.payload, item: node.itemName, event: event.type }, null]);
+                            node.emit(`${node.id}/NodeEvent`, { payload: event.state, item: node.itemName, event: event.type });
                         }
                     } else {
                         firstMessage = false;
                     }
 
                     node.context().set('currentState', event.state);
-
                     node.updateNodeStatus(STATE.CURRENT_STATE);
 
                     if (node.storeStateInFlow === true) {
@@ -705,7 +704,7 @@ module.exports = function (RED) {
 
         node.name = config.name;
         node.itemName = config.itemName;
-        node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
+        node.disabledNodeStates = [ STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED ];
 
         /* 
          * Node methods
@@ -776,6 +775,7 @@ module.exports = function (RED) {
 
         node.name = config.name;
         node.itemName = config.itemName;
+        node.listenNode = config.listenNode ? RED.nodes.getNode(config.listenNode) : undefined;
         node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
@@ -796,7 +796,6 @@ module.exports = function (RED) {
 
         node.updateNodeStatus(STATE.IDLE);
         node.context().set('currentState', undefined);
-
 
         /* 
          * Node event handlers
@@ -822,6 +821,15 @@ module.exports = function (RED) {
 
             openHABController.send(itemName, null, null, success, fail);
         });
+
+        node.test = function(event) {
+            var msgid = RED.util.generateId();
+            node.send({ _msgid: msgid, payload: event.payload, item: event.item, event: 'NodeEvent' });
+        }
+
+        if (node.listenNode) {
+            node.listenNode.addListener(`${node.listenNode.id}/NodeEvent`, node.test);
+        }
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
 
