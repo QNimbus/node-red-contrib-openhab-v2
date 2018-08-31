@@ -184,7 +184,7 @@ module.exports = function (RED) {
 
             switch (topic) {
                 case 'ItemUpdate': {
-                    url += 'state';
+                    url += '/state';
                     method = request.put;
                     break;
                 }
