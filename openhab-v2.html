@@ -102,7 +102,7 @@
             getItemList(this, false);
         },
         oneditsave: function () {
-            workaroundForEmptyItemsList(this);
+            workaroundForEmptyItemsList(this, '#node-input-itemName');
         }
     });
 </script>
@@ -130,6 +130,14 @@
                 value: [],
                 required: true,
             },
+            outputAtStartup: {
+                value: true,
+                required: true,
+            },
+            storeStateInFlow: {
+                value: false,
+                required: true,
+            },
         },
         inputs: 0,
         outputs: 2,
@@ -144,6 +152,9 @@
             getItemList(this, false);
             getEventTypeList(this);
         },
+        oneditsave: function () {
+            workaroundForEmptyItemsList(this, '#node-input-eventTypes');
+        }
     });
 </script>
 
@@ -270,8 +281,8 @@
      * value being passed in case nothing is selected.
      *
      */
-    function workaroundForEmptyItemsList(node) {
-        var selectedItemElement = $('#node-input-itemName');
+    function workaroundForEmptyItemsList(node, elementName) {
+        var selectedItemElement = $(elementName);
         var selectedItems = selectedItemElement.find('option').filter(':selected');
 
         if (selectedItems.length === 0) {
@@ -529,9 +540,17 @@
         <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> Event types</label>
         <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple">
             <option value="ItemCommandEvent" selected>ItemCommand</option>
-            <option value="ItemStateEvent" selected>ItemUpdate</option>
+            <option value="ItemStateEvent" selected>ItemStateEvent</option>
             <option value="ItemStateChangedEvent" selected>ItemStateChanged</option>
         </select>
+    </div>
+    <div class='form-row'>
+        <label for='node-input-outputAtStartup'><i class='fa fa-share-square'></i> Startup output</label>
+        <input type='checkbox' id='node-input-outputAtStartup' style='width:auto; margin: 0;' checked="checked">
+    </div>
+    <div class='form-row'>
+        <label for='node-input-storeStateInFlow'><i class='fa fa-edit'></i> Store state</label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'>
     </div>
 </script>
 
@@ -743,9 +762,18 @@
         </dt>
         <dd>Item to send message to.</dd>
         <dt class="optional">Event types
-                <span class="property-type">string []</span>
-            </dt>
-            <dd>Listen to the selected event types.</dd>        
+            <span class="property-type">string []</span>
+        </dt>
+        <dd>Output state at startup.</dd>
+        <dt>Startup output
+            <span class="property-type">boolean</span>
+        </dt>
+        <dd>Whether or not to emit state at start of flow.</dd>
+        <dd>Store node state in flow context.</dd>
+        <dt>Store state
+            <span class="property-type">boolean</span>
+        </dt>
+        <dd>Whether or not to store the node state in the flow context in a variable with the same name as the OpenHAB item.</dd> 
     </dl>    
     <h3>Outputs</h3>
     <h5>Output 1</h5>

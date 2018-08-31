@@ -54,6 +54,7 @@ Listens to state changes of a selected OpenHAB Item. Will only watch for selecte
 - Controller : OpenHAB controller to use for monitoring item(s)
 - Item name : Item to monitor
 - Even types : Listen to the selected event types.
+- Startup output : Whether or not to emit state at start of flow.
 
 *Messages injected in NodeRED flows (2 output channels):*
 
