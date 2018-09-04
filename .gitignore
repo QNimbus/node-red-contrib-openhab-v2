@@ -4,3 +4,5 @@ node_modules/
 \.config\.json
 
 settings\.js
+
+flow_debug\.json

@@ -5,7 +5,10 @@
     "dependencies": {
         "@joeybaker/eventsource": "latest",
         "bootstrap-multiselect": "^0.9.13-1",
-        "request": "latest"
+        "node-red-contrib-bigtimer": "~2.0.2",
+        "node-red-contrib-pushover": "~0.1.8",
+        "request": "latest",
+        "ssl-root-cas": "^1.2.5"
     },
     "author": "Bas van Wetten <bas.van.wetten@gmail.com>",
     "keywords": [

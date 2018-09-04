@@ -50,9 +50,15 @@ var STATE_MSG = {
     DISCONNECTED: 'Disconnected',
     IDLE: '',
     NO_PAYLOAD: 'No payload specified',
+    NO_TOPIC: 'No topic specified',
     OK: 'Ok',
     WARN: 'Warning',
     ERROR: 'Error'
+}
+
+var PROXY_DIR = {
+    ITEM_TO_PROXY: 1,
+    PROXY_TO_ITEM: 2,
 }
 
 module.exports = function (RED) {
@@ -130,6 +136,10 @@ module.exports = function (RED) {
                 node.status({ fill: 'red', shape: 'ring', text: customMessage ? customMessage : STATE_MSG.NO_PAYLOAD });
                 break;
             }
+            case STATE.NO_TOPIC: {
+                node.status({ fill: 'red', shape: 'ring', text: customMessage ? customMessage : STATE_MSG.NO_TOPIC });
+                break;
+            }
             case STATE.OK: {
                 node.status({ fill: 'green', shape: 'dot', text: customMessage ? customMessage : STATE_MSG.OK });
                 break;
@@ -154,11 +164,13 @@ module.exports = function (RED) {
     function OpenHAB_controller_node(config) {
         RED.nodes.createNode(this, config);
 
+        var globalContext = this.context().global;
         var node = this;
+        var itemList = globalContext.get('openhab-v2-itemList');
         node.name = config.name;
         node.allowRawEvents = config.allowRawEvents;
         node._eventSource = undefined;
-        node._itemList = undefined;
+        node._itemList = itemList ? itemList : undefined;
         node._url = undefined;
 
         // Temporary workaround for issue #3 (https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/3)
@@ -170,6 +182,7 @@ module.exports = function (RED) {
          */
         node.request = function (urlpart, options, callback) {
             options.uri = node.getURL() + urlpart;
+            options.rejectUnauthorized = false;
             node.log(`Requesting URI ${options.uri} with method ${options.method}`);
             request(options, callback);
         }
@@ -198,7 +211,7 @@ module.exports = function (RED) {
                 }
             }
 
-            method({ url: url, body: String(payload) }, function (error, response, body) {
+            method({ url: url, body: String(payload), strictSSL: false }, function (error, response, body) {
                 if (error) {
                     var errorMessage = `Request error: ${error} on ${url}`;
 
@@ -290,13 +303,13 @@ module.exports = function (RED) {
                 var options = {
                     method: 'GET',
                     json: true,
-                    rejectUnauthorized: false,
                 }
                 node.request(ITEMS_PATH, options, function (error, response, body) {
                     if (error) {
                         node._itemList = undefined;
                     } else {
                         node._itemList = body;
+                        globalContext.set('openhab-v2-itemList', body)
                     }
                     console.log(`Refreshing itemlist.....`);
                     callback(node._itemList);
@@ -318,7 +331,6 @@ module.exports = function (RED) {
             var options = {
                 method: 'GET',
                 json: true,
-                rejectUnauthorized: false,
             }
 
             node.request(ITEMS_PATH, options, function (error, response, body) {
@@ -363,8 +375,8 @@ module.exports = function (RED) {
          *
          */
         node.onOpen = function () {
-            node.getItemStates();
             node.emit(STATE.EVENT_NAME, STATE.CONNECTED);
+            node.getItemStates();
         }
 
         /**
@@ -376,6 +388,8 @@ module.exports = function (RED) {
         node.onError = function (error) {
             try {
                 var errorMessage = `Unable to connect: ${error.type} on ${node._eventSource.url}`;
+
+                node.log(util.inspect(error));
 
                 node._eventSource.removeAllListeners();
                 node._eventSource.close();
@@ -444,7 +458,7 @@ module.exports = function (RED) {
 
                 return eventSource;
             } else {
-                var eventSourceInitDict = {};
+                var eventSourceInitDict = { rejectUnauthorized: false, https: { checkServerIdentity: false, rejectUnauthorized: false } };
                 var url = node.getURL() + EVENTS_PATH + '?topics=smarthome/items';
 
                 node.log(`Controller attempting to connect to: ${url}`);
@@ -510,7 +524,7 @@ module.exports = function (RED) {
 
         node.name = config.name;
         node.eventSource = openHABController.getEventSource();
-        node.itemNames = config.itemName.filter(String);
+        node.items = config.items.filter(String);
         node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
@@ -536,25 +550,25 @@ module.exports = function (RED) {
          * Node event handlers
          */
 
-        node.processRawEvent = function (message) {
+        node.processRawEvent = function (event) {
             try {
-                var sendMessage = true;
+                var sendevent = true;
                 var topicRegex = new RegExp('/^smarthome\/(?:items|things)\/([^\/]+).*$/');
 
-                message = JSON.parse(message.data);
-                if (message.payload && (message.payload.constructor === String))
-                    message.payload = JSON.parse(message.payload);
+                event = JSON.parse(event.data);
+                if (event.payload && (event.payload.constructor === String))
+                    event.payload = JSON.parse(event.payload);
 
-                if (node.itemNames.length > 0) {
-                    var matches = topicRegex.exec(message.topic);
+                if (node.items.length > 0) {
+                    var matches = topicRegex.exec(event.topic);
 
-                    if (node.itemNames.indexOf(matches[1]) < 0) {
-                        sendMessage = false;
+                    if (node.items.indexOf(matches[1]) < 0) {
+                        sendevent = false;
                     }
                 }
 
                 if (sendMessage) {
-                    node.send(message);
+                    node.send(event);
                 }
             } catch (error) {
                 node.error('Unexpected Error : ' + error)
@@ -596,11 +610,12 @@ module.exports = function (RED) {
         }
 
         node.name = config.name;
-        node.itemName = config.itemName;
+        node.item = config.item;
         node.outputAtStartup = config.outputAtStartup;
         node.storeStateInFlow = config.storeStateInFlow;
         node.eventTypes = config.eventTypes.filter(String);
         node.eventSource = openHABController.getEventSource();
+        node.disabledNodeStatesnode = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
          * Node methods
@@ -628,7 +643,7 @@ module.exports = function (RED) {
         node.processRawEvent = function (event) {
             // Send message to node output 2
             var msgid = RED.util.generateId();
-            node.send([null, { _msgid: msgid, payload: event, item: node.itemName, event: 'RawEvent' }]);
+            node.send([null, { _msgid: msgid, payload: event, item: node.item, event: 'RawEvent' }]);
         }
 
         node.processStateEvent = function (event) {
@@ -645,18 +660,17 @@ module.exports = function (RED) {
                         if (sendMessage) {
                             // Send message to node output 1
                             var msgid = RED.util.generateId();
-                            node.send([{ _msgid: msgid, payload: event.state, data: event.payload, item: node.itemName, event: event.type }, null]);
-                            node.emit(`${node.id}/NodeEvent`, { payload: event.state, item: node.itemName, event: event.type });
+                            node.send([{ _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type }, null]);
                         }
                     } else {
                         firstMessage = false;
                     }
 
                     node.context().set('currentState', event.state);
-                    node.updateNodeStatus(STATE.CURRENT_STATE);
+                    node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);
 
                     if (node.storeStateInFlow === true) {
-                        node.context().flow.set(`${node.itemName}_state`, event.state)
+                        node.context().flow.set(`${node.item}_state`, event.state)
                     }
                 }
             } catch (error) {
@@ -670,16 +684,16 @@ module.exports = function (RED) {
          */
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
-        openHABController.addListener(node.itemName + '/RawEvent', node.processRawEvent);
+        openHABController.addListener(node.item + '/RawEvent', node.processRawEvent);
         ['ItemCommandEvent', 'ItemStateEvent', 'ItemStateChangedEvent'].forEach(function (eventType) {
-            openHABController.addListener(node.itemName + `/${eventType}`, node.processStateEvent);
+            openHABController.addListener(node.item + `/${eventType}`, node.processStateEvent);
         });
 
         node.on('close', function () {
             ['ItemCommandEvent', 'ItemStateEvent', 'ItemStateChangedEvent'].forEach(function (eventType) {
-                openHABController.removeListener(node.itemName + `/${eventType}`, node.processStateEvent);
+                openHABController.removeListener(node.item + `/${eventType}`, node.processStateEvent);
             });
-            openHABController.removeListener(node.itemName + '/RawEvent', node.processRawEvent);
+            openHABController.removeListener(node.item + '/RawEvent', node.processRawEvent);
             openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
             node.log(`closing`);
         });
@@ -703,8 +717,10 @@ module.exports = function (RED) {
         }
 
         node.name = config.name;
-        node.itemName = config.itemName;
-        node.disabledNodeStates = [ STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED ];
+        node.item = config.item;
+        node.storeStateInFlow = config.storeStateInFlow;
+        node.eventSource = openHABController.getEventSource();
+        node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
          * Node methods
@@ -725,32 +741,90 @@ module.exports = function (RED) {
         node.updateNodeStatus(STATE.IDLE);
         node.context().set('currentState', undefined);
 
-
         /* 
          * Node event handlers
          */
+
+        node.on('input', function (message) {
+            // If the node has an item, topic and/or payload configured it will override what was sent in via incomming message
+            var item = config.item ? config.item : message.item;
+            var topic = config.topic;
+            var topicType = config.topicType;
+            var payload = config.payload;
+            var payloadType = config.payloadType;
+
+            switch (topicType) {
+                case 'msg': {
+                    topic = message[topic];
+                    break;
+                }
+                case 'str':
+                case 'oh_cmd':
+                default : {
+                    // Keep selected topic
+                    break;
+                }
+            }
+
+            switch (payloadType) {
+                case 'msg': {
+                    payload = message[payload];
+                    break;
+                }
+                case 'flow':
+                case 'global': {
+                    RED.util.evaluateNodeProperty(payload, payloadType, this, message, function(error, result) {
+                        if (error) {
+                            node.error(error, message);
+                        } else {
+                            payload = result;
+                        }
+    
+                    });
+                    break;
+                }
+                case 'date': {
+                    payload = Date.now();
+                    break;
+                }
+                case 'num':
+                case 'str':
+                default: {
+                    // Keep selected payload
+                    break;
+                }
+            }
+
+            if (item && topic) {
+                if (payload !== undefined) {
+                    openHABController.send(item, topic, payload, null, null);
+                } else {
+                    node.updateNodeStatus(STATE.NO_PAYLOAD);
+                }                
+            }
+            else {
+                node.updateNodeStatus(STATE.NO_TOPIC);
+            }
+        });
+
+        node.processStateEvent = function(event) {
+            node.context().set('currentState', event.state);
+            node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);           
+
+            if (node.storeStateInFlow === true) {
+                node.context().flow.set(`${node.item}_state`, event.state)
+            } 
+        }
 
         /* 
          * Attach event handlers
          */
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
-
-        node.on('input', function (message) {
-            // If the node has an item, topic and/or payload configured it will override what was sent in via incomming message
-            var item = (config.itemName && config.itemName.length) ? config.itemName : message.item;
-            var topic = (config.topic && config.topic.length) ? config.topic : message.topic;
-            var payload = (config.payload && config.payload.length) ? config.payload : message.payload;
-
-            if (item && topic && payload) {
-                openHABController.send(item, topic, payload, null, null);
-            }
-            else {
-                node.updateNodeStatus(STATE.NO_PAYLOAD);
-            }
-        });
+        openHABController.addListener(`${node.item}/ItemStateEvent`, node.processStateEvent);
 
         node.on('close', function () {
+            openHABController.removeListener(`${node.item}/ItemStateEvent`, node.processStateEvent);
             openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
             node.log(`closing`);
         });
@@ -774,7 +848,7 @@ module.exports = function (RED) {
         }
 
         node.name = config.name;
-        node.itemName = config.itemName;
+        node.item = config.item;
         node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
@@ -804,21 +878,21 @@ module.exports = function (RED) {
          * Attach event handlers
          */
 
-        node.on('input', function (message) {
-            var itemName = config.itemName ? config.itemName : message.item;
+        node.on('input', function (event) {
+            var item = config.item ? config.item : event.item;
 
             function success(body) {
-                message.payload_in = message.payload;
-                message.payload = JSON.parse(body);
-                node.send(message);
-                node.updateNodeStatus(STATE.CURRENT_STATE, `last state: ${message.payload.state}`);
+                event.payload_in = event.payload;
+                event.payload = JSON.parse(body);
+                node.send(event);
+                node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.payload.state}`);
             }
 
             function fail(errorMessage) {
                 node.warn(errorMessage);
             }
 
-            openHABController.send(itemName, null, null, success, fail);
+            openHABController.send(item, null, null, success, fail);
         });
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
@@ -829,4 +903,189 @@ module.exports = function (RED) {
         });
     }
     RED.nodes.registerType('openhab-v2-get', OpenHAB_get);
+
+    /**
+     * openhab-v2-proxy
+     * 
+     * Description
+     *
+     */
+    function OpenHAB_proxy(config) {
+        RED.nodes.createNode(this, config);
+
+        var node = this;
+        var openHABController = RED.nodes.getNode(config.controller);
+        var firstMessage = true;
+
+        if (!openHABController) {
+            return;
+        }
+
+        node.name = config.name;
+        node.items = config.items.filter(String);
+        node.proxyItem = config.proxyItem;
+        node.proxyDirection = config.proxyDirection;
+        node.storeStateInFlow = config.storeStateInFlow;
+        node.eventSource = openHABController.getEventSource();
+        node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
+
+        /* 
+         * Node methods
+         */
+
+        node.updateNodeStatus = function (state, customMessage = undefined) {
+            if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
+                updateNodeStatus(node, state, customMessage);
+            } else {
+                node.status({});
+            }
+        };
+
+        /* 
+         * Node initialization
+         */
+
+        node.updateNodeStatus(STATE.IDLE);
+        node.context().set('currentState', undefined);
+
+        /* 
+         * Node event handlers
+         */
+
+        node.on('input', function (message) {
+            var item = node.proxyItem;
+            var topic = config.topic;
+            var topicType = config.topicType;
+            var payload = config.payload;
+            var payloadType = config.payloadType;
+
+            switch (topicType) {
+                case 'msg': {
+                    topic = message[topic];
+                    break;
+                }
+                case 'str':
+                case 'oh_cmd':
+                default : {
+                    // Keep selected topic
+                    break;
+                }
+            }
+
+            switch (payloadType) {
+                case 'msg': {
+                    payload = message[payload];
+                    break;
+                }
+                case 'flow':
+                case 'global': {
+                    RED.util.evaluateNodeProperty(payload, payloadType, this, message, function(error, result) {
+                        if (error) {
+                            node.error(error, message);
+                        } else {
+                            payload = result;
+                        }
+    
+                    });
+                    break;
+                }
+                case 'date': {
+                    payload = Date.now();
+                    break;
+                }
+                case 'num':
+                case 'str':
+                default: {
+                    // Keep selected payload
+                    break;
+                }
+            }
+
+            if (item && topic) {
+                if (payload !== undefined) {
+                    openHABController.send(item, topic, payload, null, null);
+                } else {
+                    node.updateNodeStatus(STATE.NO_PAYLOAD);
+                }                
+            }
+            else {
+                node.updateNodeStatus(STATE.NO_TOPIC);
+            }
+        });
+
+        node.processStateEvent = function(event) {
+            node.context().set('currentState', event.state);
+            node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);
+
+            if (node.storeStateInFlow === true) {
+                node.context().flow.set(`${node.proxyItem}_state`, event.state)
+            }
+        }
+
+        node.itemUpdate = function (event) {
+            // If the node has an item, topic and/or payload configured it will override what was sent in via incomming event
+            var item = node.proxyItem;
+            var topic = 'ItemUpdate';
+            var payload = event.state;
+
+            if (item && topic && payload) {
+                openHABController.send(item, topic, payload, null, null);
+            }
+            else {
+                node.updateNodeStatus(STATE.NO_PAYLOAD);
+            }
+        }
+
+        node.proxyUpdate = function (event) {
+            // If the node has an item, topic and/or payload configured it will override what was sent in via incomming event
+            var topic = 'ItemUpdate';
+            var payload = event.state;
+
+            if (topic && payload) {
+                node.items.forEach(function (item) {
+                    openHABController.send(item, topic, payload, null, null);
+                });
+            }
+            else {
+                node.updateNodeStatus(STATE.NO_PAYLOAD);
+            }
+        }
+
+        /* 
+         * Attach event handlers
+         */
+
+        if (node.proxyDirection & PROXY_DIR.ITEM_TO_PROXY) {
+            // Item -> Proxy item
+            node.items.forEach(function (item) {
+                openHABController.addListener(`${item}/ItemStateEvent`, node.itemUpdate);
+            });
+        }
+
+        if (node.proxyDirection & PROXY_DIR.PROXY_TO_ITEM) {
+            // Item <- Proxy item
+            openHABController.addListener(`${node.proxyItem}/ItemStateEvent`, node.proxyUpdate);
+        }
+
+        openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
+        openHABController.addListener(`${node.proxyItem}/ItemStateEvent`, node.processStateEvent);
+
+        node.on('close', function () {
+            if (node.proxyDirection & PROXY_DIR.ITEM_TO_PROXY) {
+                node.items.forEach(function (item) {
+                    openHABController.removeListener(`${item}/ItemStateEvent`, node.itemUpdate);
+                });
+            }
+
+            if (node.proxyDirection & PROXY_DIR.PROXY_TO_ITEM) {
+                // Item <- Proxy item
+                openHABController.removeListener(`${node.proxyItem}/ItemStateEvent`, node.proxyUpdate);
+            }
+
+            openHABController.removeListener(`${node.proxyItem}/ItemStateEvent`, node.processStateEvent);
+            openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
+            node.log(`closing`);
+        });
+    }
+    RED.nodes.registerType('openhab-v2-proxy', OpenHAB_proxy);
 }
