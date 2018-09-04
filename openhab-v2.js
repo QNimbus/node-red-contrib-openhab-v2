@@ -775,7 +775,6 @@ module.exports = function (RED) {
 
         node.name = config.name;
         node.itemName = config.itemName;
-        node.listenNode = config.listenNode ? RED.nodes.getNode(config.listenNode) : undefined;
         node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
@@ -821,15 +820,6 @@ module.exports = function (RED) {
 
             openHABController.send(itemName, null, null, success, fail);
         });
-
-        node.test = function(event) {
-            var msgid = RED.util.generateId();
-            node.send({ _msgid: msgid, payload: event.payload, item: event.item, event: 'NodeEvent' });
-        }
-
-        if (node.listenNode) {
-            node.listenNode.addListener(`${node.listenNode.id}/NodeEvent`, node.test);
-        }
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
 

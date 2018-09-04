@@ -220,10 +220,6 @@
                 value: '',
                 required: false,
             },
-            listenNode: {
-                value: '',
-                required: false,
-            },
         },
         inputs: 1,
         outputs: 1,
@@ -236,7 +232,6 @@
         },
         oneditprepare: function () {
             getItemList(this, true);
-            getNodesList(this, '#node-input-listenNode');
         }
     });
 </script>
@@ -294,21 +289,6 @@
             var optionElement = document.createElement('option');
             selectedItemElement.append(optionElement).children().last().attr('selected', 'selected');
         }
-    }
-
-    function getNodesList(node, elementName) {
-        var selectedItemElement = $(elementName);
-        var selectedItem = selectedItemElement.val();
-
-        RED.nodes.eachNode(function (node) {
-            if (node.type.startsWith('openhab-v2-in')) {
-                var optionElement = document.createElement('option');
-                selectedItemElement.append(optionElement).children().last().attr('value', node.id).html(node.name || node.id);
-            }
-        });
-
-        // Set the value of the input select to the selected value
-        selectedItemElement.val(node.listenNode);
     }
 
     function getItemList(node, allowEmpty = false) {
@@ -680,12 +660,6 @@
         <select id="node-input-itemName" name="node-input-itemName">
         </select>
     </div>
-    <div class="form-row">
-        <label for="node-input-listenNode"><i class="fa fa-crosshairs"></i> Nodes</label>
-        <select id="node-input-listenNode" name="node-input-listenNode">
-        </select>
-    </div>
-
 </script>
 
 <!--
