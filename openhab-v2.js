@@ -433,7 +433,7 @@ module.exports = function (RED) {
                     node.emit(itemName + '/RawEvent', message);
                 }
 
-                node.emit(itemName + `/${parsedMessage.type}`, { type: parsedMessage.type, state: parsedMessage.payload.value, payload: parsedMessage.payload });
+                node.emit(itemName + `/${parsedMessage.type}`, { item: itemName, type: parsedMessage.type, state: parsedMessage.payload.value, payload: parsedMessage.payload });
             } catch (error) {
                 var errorMessage = `Error parsing message: ${error.type.Error} - ${message}`;
 
@@ -1023,13 +1023,19 @@ module.exports = function (RED) {
         }
 
         node.itemUpdate = function (event) {
-            // If the node has an item, topic and/or payload configured it will override what was sent in via incomming event
             var item = node.proxyItem;
             var topic = 'ItemUpdate';
             var payload = event.state;
 
             if (item && topic && payload) {
                 openHABController.send(item, topic, payload, null, null);
+
+                // Update all other items that below to the proxy item
+                node.items.forEach(function (item) {
+                    if (item !== event.item) {
+                        openHABController.send(item, topic, payload, null, null);
+                    }                    
+                });
             }
             else {
                 node.updateNodeStatus(STATE.NO_PAYLOAD);
@@ -1037,7 +1043,6 @@ module.exports = function (RED) {
         }
 
         node.proxyUpdate = function (event) {
-            // If the node has an item, topic and/or payload configured it will override what was sent in via incomming event
             var topic = 'ItemUpdate';
             var payload = event.state;
 
@@ -1058,13 +1063,13 @@ module.exports = function (RED) {
         if (node.proxyDirection & PROXY_DIR.ITEM_TO_PROXY) {
             // Item -> Proxy item
             node.items.forEach(function (item) {
-                openHABController.addListener(`${item}/ItemStateEvent`, node.itemUpdate);
+                openHABController.addListener(`${item}/ItemCommandEvent`, node.itemUpdate);
             });
         }
 
         if (node.proxyDirection & PROXY_DIR.PROXY_TO_ITEM) {
             // Item <- Proxy item
-            openHABController.addListener(`${node.proxyItem}/ItemStateEvent`, node.proxyUpdate);
+            openHABController.addListener(`${node.proxyItem}/ItemCommandEvent`, node.proxyUpdate);
         }
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
@@ -1073,13 +1078,13 @@ module.exports = function (RED) {
         node.on('close', function () {
             if (node.proxyDirection & PROXY_DIR.ITEM_TO_PROXY) {
                 node.items.forEach(function (item) {
-                    openHABController.removeListener(`${item}/ItemStateEvent`, node.itemUpdate);
+                    openHABController.removeListener(`${item}/ItemCommandEvent`, node.itemUpdate);
                 });
             }
 
             if (node.proxyDirection & PROXY_DIR.PROXY_TO_ITEM) {
                 // Item <- Proxy item
-                openHABController.removeListener(`${node.proxyItem}/ItemStateEvent`, node.proxyUpdate);
+                openHABController.removeListener(`${node.proxyItem}/ItemCommandEvent`, node.proxyUpdate);
             }
 
             openHABController.removeListener(`${node.proxyItem}/ItemStateEvent`, node.processStateEvent);
