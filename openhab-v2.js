@@ -59,6 +59,7 @@ var STATE_MSG = {
 var PROXY_DIR = {
     ITEM_TO_PROXY: 1,
     PROXY_TO_ITEM: 2,
+    BOTH: 3,
 }
 
 module.exports = function (RED) {
@@ -350,7 +351,7 @@ module.exports = function (RED) {
                         }
                         case 200: {
                             body.forEach(function (item) {
-                                node.emit(item.name + '/ItemStateEvent', { type: 'ItemStateEvent', state: item.state });
+                                node.emit(item.name + '/ItemStateEvent', { item: item.name, type: 'ItemStateEvent', state: item.state });
                             });
                             break;
                         }
@@ -760,7 +761,7 @@ module.exports = function (RED) {
                 }
                 case 'str':
                 case 'oh_cmd':
-                default : {
+                default: {
                     // Keep selected topic
                     break;
                 }
@@ -773,13 +774,13 @@ module.exports = function (RED) {
                 }
                 case 'flow':
                 case 'global': {
-                    RED.util.evaluateNodeProperty(payload, payloadType, this, message, function(error, result) {
+                    RED.util.evaluateNodeProperty(payload, payloadType, this, message, function (error, result) {
                         if (error) {
                             node.error(error, message);
                         } else {
                             payload = result;
                         }
-    
+
                     });
                     break;
                 }
@@ -800,20 +801,20 @@ module.exports = function (RED) {
                     openHABController.send(item, topic, payload, null, null);
                 } else {
                     node.updateNodeStatus(STATE.NO_PAYLOAD);
-                }                
+                }
             }
             else {
                 node.updateNodeStatus(STATE.NO_TOPIC);
             }
         });
 
-        node.processStateEvent = function(event) {
+        node.processStateEvent = function (event) {
             node.context().set('currentState', event.state);
-            node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);           
+            node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);
 
             if (node.storeStateInFlow === true) {
                 node.context().flow.set(`${node.item}_state`, event.state)
-            } 
+            }
         }
 
         /* 
@@ -922,7 +923,8 @@ module.exports = function (RED) {
         }
 
         node.name = config.name;
-        node.items = config.items.filter(String);
+        node.item = config.item;
+        node.itemPostfix = config.itemPostfix;
         node.proxyItem = config.proxyItem;
         node.proxyDirection = config.proxyDirection;
         node.storeStateInFlow = config.storeStateInFlow;
@@ -966,7 +968,7 @@ module.exports = function (RED) {
                 }
                 case 'str':
                 case 'oh_cmd':
-                default : {
+                default: {
                     // Keep selected topic
                     break;
                 }
@@ -979,13 +981,13 @@ module.exports = function (RED) {
                 }
                 case 'flow':
                 case 'global': {
-                    RED.util.evaluateNodeProperty(payload, payloadType, this, message, function(error, result) {
+                    RED.util.evaluateNodeProperty(payload, payloadType, this, message, function (error, result) {
                         if (error) {
                             node.error(error, message);
                         } else {
                             payload = result;
                         }
-    
+
                     });
                     break;
                 }
@@ -1006,19 +1008,22 @@ module.exports = function (RED) {
                     openHABController.send(item, topic, payload, null, null);
                 } else {
                     node.updateNodeStatus(STATE.NO_PAYLOAD);
-                }                
+                }
             }
             else {
                 node.updateNodeStatus(STATE.NO_TOPIC);
             }
         });
 
-        node.processStateEvent = function(event) {
-            node.context().set('currentState', event.state);
-            node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);
+        node.processStateEvent = function (event) {
+            node.context().set(`currentState_${event.item}`, event.state);
 
-            if (node.storeStateInFlow === true) {
-                node.context().flow.set(`${node.proxyItem}_state`, event.state)
+            if (event.item === node.proxyItem) {
+                node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);
+
+                if (node.storeStateInFlow === true) {
+                    node.context().flow.set(`${node.proxyItem}_state`, event.state)
+                }
             }
         }
 
@@ -1028,14 +1033,11 @@ module.exports = function (RED) {
             var payload = event.state;
 
             if (item && topic && payload) {
-                openHABController.send(item, topic, payload, null, null);
-
-                // Update all other items that below to the proxy item
-                node.items.forEach(function (item) {
-                    if (item !== event.item) {
-                        openHABController.send(item, topic, payload, null, null);
-                    }                    
-                });
+                if (node.context().get(`currentState_${item}`) !== payload) {
+                    node.context().set(`currentState_${item}`, payload);
+                    node.log(`Sending ${topic}:${payload} to ${item}`);
+                    openHABController.send(item, topic, payload, null, null);
+                }
             }
             else {
                 node.updateNodeStatus(STATE.NO_PAYLOAD);
@@ -1043,13 +1045,13 @@ module.exports = function (RED) {
         }
 
         node.proxyUpdate = function (event) {
-            var topic = 'ItemUpdate';
+            var topic = 'ItemCommand';
             var payload = event.state;
 
             if (topic && payload) {
-                node.items.forEach(function (item) {
-                    openHABController.send(item, topic, payload, null, null);
-                });
+                if (node.context().get(`currentState_${node.item}`) !== payload) {
+                    openHABController.send(node.item, topic, payload, null, null);
+                }
             }
             else {
                 node.updateNodeStatus(STATE.NO_PAYLOAD);
@@ -1061,10 +1063,15 @@ module.exports = function (RED) {
          */
 
         if (node.proxyDirection & PROXY_DIR.ITEM_TO_PROXY) {
-            // Item -> Proxy item
-            node.items.forEach(function (item) {
-                openHABController.addListener(`${item}/ItemCommandEvent`, node.itemUpdate);
-            });
+            if (node.proxyDirection & PROXY_DIR.BOTH) {
+                // Item -> Proxy item
+                node.log(`Adding listener for ${node.item}${node.itemPostfix}/ItemStateChangedEvent`);
+                openHABController.addListener(`${node.item}${node.itemPostfix}/ItemStateChangedEvent`, node.itemUpdate);
+            } else {
+                // Item -> Proxy item
+                node.log(`Adding listener for ${node.item}/ItemStateChangedEvent`);
+                openHABController.addListener(`${node.item}/ItemStateChangedEvent`, node.itemUpdate);
+            }
         }
 
         if (node.proxyDirection & PROXY_DIR.PROXY_TO_ITEM) {
@@ -1074,12 +1081,17 @@ module.exports = function (RED) {
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
         openHABController.addListener(`${node.proxyItem}/ItemStateEvent`, node.processStateEvent);
+        openHABController.addListener(`${node.item}/ItemStateEvent`, node.processStateEvent);
 
         node.on('close', function () {
             if (node.proxyDirection & PROXY_DIR.ITEM_TO_PROXY) {
-                node.items.forEach(function (item) {
-                    openHABController.removeListener(`${item}/ItemCommandEvent`, node.itemUpdate);
-                });
+                if (node.proxyDirection & PROXY_DIR.BOTH) {
+                    // Item -> Proxy item
+                    openHABController.removeListener(`${node.item}${node.itemPostfix}/ItemStateChangedEvent`, node.itemUpdate);
+                } else {
+                    // Item -> Proxy item
+                    openHABController.removeListener(`${node.item}/ItemStateChangedEvent`, node.itemUpdate);
+                }
             }
 
             if (node.proxyDirection & PROXY_DIR.PROXY_TO_ITEM) {
@@ -1087,6 +1099,7 @@ module.exports = function (RED) {
                 openHABController.removeListener(`${node.proxyItem}/ItemCommandEvent`, node.proxyUpdate);
             }
 
+            openHABController.removeListener(`${node.item}/ItemStateEvent`, node.processStateEvent);
             openHABController.removeListener(`${node.proxyItem}/ItemStateEvent`, node.processStateEvent);
             openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
             node.log(`closing`);

@@ -282,13 +282,17 @@
                 required: true,
             },
             proxyDirection: {
-                value: 3,
+                value: 2,
                 required: true,
                 validate: RED.validators.number(),
             },
-            items: {
-                value: [],
+            item: {
+                value: '',
                 required: true,
+            },
+            itemPostfix: {
+                value: '_Updates',
+                required: false,
             },
             proxyItem: {
                 value: '',
@@ -343,8 +347,18 @@
             $('#node-input-topicType').val(this.topicType);
             $('#node-input-payloadType').val(this.payloadType);
 
-            getItemList(this.items, '#node-input-items');
+            getItemList(this.item, '#node-input-item');
             getItemList(this.proxyItem, '#node-input-proxyItem');
+
+            // Hide Item postfix field by default; only if both directions are enabled
+            $('#itemPostfix_div').hide();
+            $('#node-input-proxyDirection').change(function(event) {
+                if ($('#node-input-proxyDirection').val() == 3) {
+                    $('#itemPostfix_div').show();
+                } else {
+                    $('#itemPostfix_div').hide();
+                }
+            })
         }
     });
 </script>
@@ -864,14 +878,19 @@
     <div class="form-row">
         <label for="node-input-proxyDirection"><i class="fa fa-arrows-h"></i> Direction </label>
         <select id="node-input-proxyDirection" name="node-input-proxyDirection">
-            <option value="3">proxy item &larr;&rarr; item(s)</option>
-            <option value="2">proxy item &nbsp;&nbsp;&rarr; item(s)</option>
-            <option value="1">item(s) &nbsp;&nbsp;&rarr; proxy item</option>
+            <option value="3">proxy item &larr;&rarr; item</option>
+            <option value="2">proxy item &rarr; item</option>
+            <option value="1">item &rarr; proxy item</option>
         </select>
-    </div>    
+    </div>
     <div class="form-row">
-        <label for="node-input-items"><i class="fa fa-crosshairs"></i> Item(s) </label>
-        <select id="node-input-items" name="node-input-items" multiple="multiple">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item </label>
+        <select id="node-input-item" name="node-input-item">
+        </select>
+    </div>
+    <div id="itemPostfix_div" class="form-row">
+        <label for="node-input-itemPostfix"><i class="fa fa-crosshairs"></i> Item postfix </label>
+        <input type="text" id="node-input-itemPostfix" name="node-input-itemPostfix" style="width:70%" placeholder="_Updates">
         </select>
     </div>
     <div class="form-row">
@@ -1127,9 +1146,12 @@
         <dt>Controller <span class="property-type">(object)</span></dt>
         <dd>Select the OpenHAB controller.</dd>
         <dt>Direction<span class="property-type">string</span></dt>
-        <dd>Select the direction to send updates (item(s) to proxy, proxy to item(s) or both ways)</dd>
-        <dt>Item name(s)<span class="property-type">string []</span></dt>
-        <dd>Specify item(s) to link to proxy item</dd>
+        <dd>Select the direction to send updates (item to proxy, proxy to item or both ways)</dd>
+        <dt>Item name<span class="property-type">string</span></dt>
+        <dd>Specify item to link to proxy item</dd>
+        <dt>Item postfix<span class="property-type">string</span></dt>
+        <dd>If the proxy item needs to be updated in both directions (i.e. item <--> proxy <--> item) then you need to create a copy of the item with the same binding that will receive the item updates.
+        This parameter defines the postfix used for the item copies. (e.g. <i>MyLightSwitch</i> and <i>MyLightSwitch_Updates</i>) Make sure the item name with postfix actually exist.</dd>        
         <dt>Proxy item<span class="property-type">string</span></dt>
         <dd>Specify the proxy item</dd>
         <dt class="optional">Topic <span class="property-type">string</span></dt>
