@@ -553,7 +553,7 @@ module.exports = function (RED) {
         node.processRawEvent = function (event) {
             try {
                 var sendevent = true;
-                var topicRegex = new RegExp('/^smarthome\/(?:items|things)\/([^\/]+).*$/');
+                var topicRegex = new RegExp('^smarthome\/(?:items|things)\/([^\/]+).*$');
 
                 event = JSON.parse(event.data);
                 if (event.payload && (event.payload.constructor === String))
@@ -562,12 +562,12 @@ module.exports = function (RED) {
                 if (node.items.length > 0) {
                     var matches = topicRegex.exec(event.topic);
 
-                    if (node.items.indexOf(matches[1]) < 0) {
+                    if (!matches || (matches.length > 0 && node.items.indexOf(matches[1])) < 0) {
                         sendevent = false;
                     }
                 }
 
-                if (sendMessage) {
+                if (sendevent) {
                     node.send(event);
                 }
             } catch (error) {
