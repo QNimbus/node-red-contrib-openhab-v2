@@ -364,73 +364,6 @@
 
 <script type='text/javascript'>
     $.getScript('openhab2/static/js/bootstrap-multiselect.js');
-    RED.nodes.registerType('openhab-v2-sensor', {
-        category: 'OpenHAB',
-        color: '#ff6600',
-        align: 'left',
-        defaults: {
-            name: {
-                value: '',
-            },
-            controller: {
-                value: '',
-                type: 'openhab-v2-controller',
-                required: true,
-            },
-            sensorItem: {
-                value: '',
-                required: false,
-            },
-            triggerArmedItem: {
-                value: '',
-                required: false,
-            },
-            passStates: {
-                value: 'BOTH',
-            },
-            repeat: {
-                value: '',
-            },
-            interval: {
-                value: 5,
-                validate: function (v) { return RED.validators.number(v) && (v >= 0); },
-            },
-            intervalUnits: {
-                value: 'seconds',
-            }
-        },
-        inputs: 0,
-        outputs: 2,
-        inputLabels: [],
-        outputLabels: ['Sensor out', 'Sensor out (armed)'],
-        icon: 'node-red-contrib-openhab-v2.png',
-        paletteLabel: 'sensor',
-        label: function () {
-            return (this.name || this.sensorItem || 'sensor');
-        },
-        oneditprepare: function () {
-            getItemList(this.sensorItem, '#node-input-sensorItem');
-            getItemList(this.sensorArmedItem, '#node-input-sensorArmedItem');
-
-            $('#node-input-interval').spinner({ min: 1 });
-
-            $('.ui-spinner-button').click(function () {
-                $(this).siblings('input').change();
-            });
-
-            $('#node-input-repeat').change(function () {
-                if ($('#node-input-repeat').val() == 'repeat') {
-                    $('#interval-row').show();
-                } else {
-                    $('#interval-row').hide();
-                }
-            });
-        },
-    });
-</script>
-
-<script type='text/javascript'>
-    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
 
     RED.nodes.registerType('openhab-v2-trigger', {
         category: 'OpenHAB',
@@ -1208,94 +1141,6 @@
     </div>
 </script>
 
-<script type="text/x-red" data-template-name="openhab-v2-sensor">
-    <style type='text/css'>
-        .btn-group {
-            width: 70%;
-        }
-        
-        .multiselect {
-            width: 100%;
-        }
-        
-        .form-row input.multiselect-search {
-            width: 100%;
-        }
-        
-        .multiselect-clear-filter {
-            display: none;
-        }
-        
-        .dropdown-menu {
-            width: 100% !important;
-        }
-        
-        .multiselect-container input[type='checkbox'] {
-            display: none;
-        }
-        
-        .multiselect-container > li > a > label.radio {
-            margin: 5px;
-            width: 90%;
-            height: 100%;
-            cursor: pointer;
-            font-weight: 400;
-            padding: 3px 20px 3px 20px;
-        }
-        
-        .multiselect-container label.radio input[type='radio'] {
-            display: none;
-        }
-    </style>
-    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
-        <input type="text" id="node-input-controller">
-    </div>
-    <div class="form-row">
-        <label for="node-input-sensorItem"><i class="fa fa-crosshairs"></i> Sensor</label>
-        <select id="node-input-sensorItem" name="node-input-sensorItem">
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-sensorArmedItem"><i class="fa fa-bullseye"></i> Arm/Disarm</label>
-        <select id="node-input-sensorArmedItem" name="node-input-sensorArmedItem">
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-passStates">&nbsp;&nbsp;&nbsp;&nbsp;Send</label>
-        <select id="node-input-passStates" name="node-input-passStates">
-            <option value="BOTH" selected>both states</option>
-            <option value="ON">'ON' state</option>
-            <option value="OFF">'OFF' state</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-repeat">&nbsp;&nbsp;&nbsp;&nbsp;Then</label>
-        <select id="node-input-repeat" name="node-input-repeat">
-            <option value="" selected>Do nothing</option>
-            <option value="repeat">Repeat every</option>
-        </select>
-    </div>
-    <div class="form-row" id="interval-row">
-            <label for="node-input-interval"><i class="fa fa-clock-o"></i> Interval</label>
-            <input type="text" id="node-input-interval" style="text-align:end; width:50px !important">
-            <select id="node-input-intervalUnits" style="width:200px !important">
-              <option value="milliseconds">milliseconds</option>
-              <option value="seconds">seconds</option>
-              <option value="minutes">minutes</option>
-            </select>
-        </div>
-    <div class="form-row">
-        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
-        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
-    </div>
-</script>
-
 <script type="text/x-red" data-template-name="openhab-v2-trigger">
     <style type='text/css'>
         .btn-group {
@@ -1683,7 +1528,7 @@
     <p>Detailed description.</p>
 </script>
 
-<script type="text/x-red" data-help-name="openhab-v2-sensor">
+<script type="text/x-red" data-help-name="openhab-v2-trigger">
     <p>Description</p>
     <h3>Configuration</h3>
     <dl class="message-properties">
