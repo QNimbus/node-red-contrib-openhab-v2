@@ -30,6 +30,7 @@ var EventSource = require('@joeybaker/eventsource');
 var NODE_PATH = '/openhab2/';
 var EVENTS_PATH = '/rest/events/';
 var ITEMS_PATH = '/rest/items/';
+var THINGS_PATH = '/rest/things/';
 
 var STATE = {
     EVENT_NAME: 'state',
@@ -39,7 +40,11 @@ var STATE = {
     CURRENT_STATE: 4,
     IDLE: 5,
     NO_PAYLOAD: 6,
-    OK: 7,
+    ARMED: 7,
+    DISARMED: 8,
+    TRIGGERED: 9,
+    TRIGGERED_DISARMED: 10,
+    OK: 20,
     WARN: 98,
     ERROR: 99
 };
@@ -51,6 +56,10 @@ var STATE_MSG = {
     IDLE: '',
     NO_PAYLOAD: 'No payload specified',
     NO_TOPIC: 'No topic specified',
+    ARMED: 'Armed',
+    DISARMED: 'Disarmed',
+    TRIGGERED: 'Triggered',
+    TRIGGERED_DISARMED: 'Triggered',
     OK: 'Ok',
     WARN: 'Warning',
     ERROR: 'Error'
@@ -90,7 +99,7 @@ module.exports = function (RED) {
         var forceRefresh = config.forceRefresh ? ['1', 'yes', 'true'].includes(config.forceRefresh.toLowerCase()) : false;
 
         if (controller && controller instanceof OpenHAB_controller_node) {
-            controller.getItemsList(function (items) {
+            controller.getItemList(function (items) {
                 if (items) {
                     res.json(items).end();
                 } else {
@@ -141,6 +150,22 @@ module.exports = function (RED) {
                 node.status({ fill: 'red', shape: 'ring', text: customMessage ? customMessage : STATE_MSG.NO_TOPIC });
                 break;
             }
+            case STATE.ARMED: {
+                node.status({ fill: 'blue', shape: 'dot', text: customMessage ? customMessage : STATE_MSG.ARMED });
+                break;
+            }
+            case STATE.DISARMED: {
+                node.status({ fill: 'blue', shape: 'ring', text: customMessage ? customMessage : STATE_MSG.DISARMED });
+                break;
+            }
+            case STATE.TRIGGERED: {
+                node.status({ fill: 'red', shape: 'dot', text: customMessage ? customMessage : STATE_MSG.TRIGGERED });
+                break;
+            }
+            case STATE.TRIGGERED_DISARMED: {
+                node.status({ fill: 'red', shape: 'ring', text: customMessage ? customMessage : STATE_MSG.TRIGGERED_DISARMED });
+                break;
+            }
             case STATE.OK: {
                 node.status({ fill: 'green', shape: 'dot', text: customMessage ? customMessage : STATE_MSG.OK });
                 break;
@@ -162,16 +187,22 @@ module.exports = function (RED) {
      * Holds the configuration (hostname, port, creds, etc) of the OpenHAB server
      *
      */
+    /**
+     *
+     *
+     * @param {*} config
+     */
     function OpenHAB_controller_node(config) {
         RED.nodes.createNode(this, config);
 
         var globalContext = this.context().global;
         var node = this;
-        var itemList = globalContext.get('openhab-v2-itemList');
+        var itemList = globalContext.get('openhab-v2-itemlist');
         node.name = config.name;
         node.allowRawEvents = config.allowRawEvents;
         node._eventSource = undefined;
         node._itemList = itemList ? itemList : undefined;
+        node._thingList = undefined;
         node._url = undefined;
 
         // Temporary workaround for issue #3 (https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/3)
@@ -293,24 +324,25 @@ module.exports = function (RED) {
         }
 
         /**
-         * getItemsList
+         * getItemList
          * 
          * Accepts a callback function that will either receive NULL in case of error or a sorted JSON item list from OpenHAB
          *
          */
-        node.getItemsList = function (callback, forceRefresh = false) {
+        node.getItemList = function (callback, forceRefresh = false) {
             // Sort of singleton construct
             if (forceRefresh || node._itemList === undefined) {
                 var options = {
                     method: 'GET',
                     json: true,
                 }
+
                 node.request(ITEMS_PATH, options, function (error, response, body) {
                     if (error) {
                         node._itemList = undefined;
                     } else {
                         node._itemList = body;
-                        globalContext.set('openhab-v2-itemList', body)
+                        globalContext.set('openhab-v2-itemlist', body);
                     }
                     console.log(`Refreshing itemlist.....`);
                     callback(node._itemList);
@@ -436,7 +468,7 @@ module.exports = function (RED) {
 
                 node.emit(itemName + `/${parsedMessage.type}`, { item: itemName, type: parsedMessage.type, state: parsedMessage.payload.value, payload: parsedMessage.payload });
             } catch (error) {
-                var errorMessage = `Error parsing message: ${error.type.Error} - ${message}`;
+                var errorMessage = `Error parsing message: ${error} - ${util.inspect(message)}`;
 
                 node.emit(STATE.EVENT_NAME, STATE.ERROR, errorMessage);
                 node.error(`Unexpected Error: ${error}`);
@@ -468,16 +500,16 @@ module.exports = function (RED) {
                 eventSource.on('open', node.onOpen);
                 eventSource.on('error', node.onError);
                 eventSource.on('message', node.onMessage);
-            }
 
-            // Allow for custom event handlers getting passed to eventSource object
+                // Allow for custom event handlers getting passed to eventSource object
 
-            if (callbacks.hasOwnProperty('onOpen') && typeof callbacks.onOpen === 'function') {
-                eventSource.on('open', callbacks.onOpen);
-            }
+                if (callbacks.hasOwnProperty('onOpen') && typeof callbacks.onOpen === 'function') {
+                    eventSource.on('open', callbacks.onOpen);
+                }
 
-            if (callbacks.hasOwnProperty('onMessage') && typeof callbacks.onMessage === 'function') {
-                eventSource.on('message', callbacks.onMessage);
+                if (callbacks.hasOwnProperty('onMessage') && typeof callbacks.onMessage === 'function') {
+                    eventSource.on('message', callbacks.onMessage);
+                }
             }
 
             node._eventSource = eventSource;
@@ -616,7 +648,7 @@ module.exports = function (RED) {
         node.storeStateInFlow = config.storeStateInFlow;
         node.eventTypes = config.eventTypes.filter(String);
         node.eventSource = openHABController.getEventSource();
-        node.disabledNodeStatesnode = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
+        node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
         /* 
          * Node methods
@@ -879,14 +911,15 @@ module.exports = function (RED) {
          * Attach event handlers
          */
 
-        node.on('input', function (event) {
-            var item = config.item ? config.item : event.item;
+        node.on('input', function (message) {
+            var item = config.item ? config.item : message.item;
 
             function success(body) {
-                event.payload_in = event.payload;
-                event.payload = JSON.parse(body);
-                node.send(event);
-                node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.payload.state}`);
+                var outMessage = RED.util.cloneMessage(message);
+                outMessage.payload_in = message.payload;
+                outMessage.payload = JSON.parse(body);
+                node.send(outMessage);
+                node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${outMessage.payload.state}`);
             }
 
             function fail(errorMessage) {
@@ -1065,11 +1098,9 @@ module.exports = function (RED) {
         if (node.proxyDirection & PROXY_DIR.ITEM_TO_PROXY) {
             if (node.proxyDirection & PROXY_DIR.BOTH) {
                 // Item -> Proxy item
-                node.log(`Adding listener for ${node.item}${node.itemPostfix}/ItemStateChangedEvent`);
                 openHABController.addListener(`${node.item}${node.itemPostfix}/ItemStateChangedEvent`, node.itemUpdate);
             } else {
                 // Item -> Proxy item
-                node.log(`Adding listener for ${node.item}/ItemStateChangedEvent`);
                 openHABController.addListener(`${node.item}/ItemStateChangedEvent`, node.itemUpdate);
             }
         }
@@ -1106,4 +1137,346 @@ module.exports = function (RED) {
         });
     }
     RED.nodes.registerType('openhab-v2-proxy', OpenHAB_proxy);
+
+    /**
+     * openhab-v2-sensor
+     * 
+     * ...
+     *
+     */
+    function OpenHAB_sensor(config) {
+        RED.nodes.createNode(this, config);
+
+        var node = this;
+        var openHABController = RED.nodes.getNode(config.controller);
+
+        if (!openHABController) {
+            return;
+        }
+
+        node.name = config.name;
+        node.sensorItem = config.sensorItem;
+        node.sensorArmedItem = config.sensorArmedItem;
+        node.passStates = config.passStates;
+        node.repeat = config.repeat === 'repeat' ? true : false;
+        node.interval = config.interval;
+        node.intervalUnits = config.intervalUnits;
+        node.eventSource = openHABController.getEventSource();
+        node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
+
+        if (node.intervalUnits === 'milliseconds') {
+            node.interval = node.interval;
+        } else if (node.intervalUnits === 'minutes') {
+            node.interval *= (60 * 1000);
+        } else {   // Default to seconds
+            node.interval *= 1000;
+        }
+
+        /* 
+         * Node methods
+         */
+
+        node.updateNodeStatus = function (state, customMessage = undefined) {
+            if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
+                updateNodeStatus(node, state, customMessage);
+            } else {
+                node.status({});
+            }
+        };
+
+        /* 
+         * Node initialization
+         */
+
+        node.updateNodeStatus(STATE.CONNECTING);
+        node.context().set('currentState', undefined);
+        node.context().set('armed', undefined);
+
+        /* 
+         * Node event handlers
+         */
+
+        node.processStateEvent = function (event) {
+            // Send message to node output 1
+            var armed = node.context().get('armed');
+            var msgid = RED.util.generateId();
+
+            // Clear running interval function (if any)
+            clearInterval(node.intervalObject);
+
+            if (['BOTH', event.state].includes(node.passStates)) {
+                node.send([armed ? { _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type } : null, { _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type }]);
+
+                if (node.repeat) {
+                    node.intervalObject = setInterval(() => {
+                        node.send([armed ? { _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type } : null, { _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type }]);
+                    }, node.interval);
+                }
+            }
+
+            node.context().set(`currentState`, event.state);
+            if (['ON', 'OPEN'].includes(event.state)) {
+                node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
+            } else {
+                node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+            }
+        }
+
+        node.armSensor = function (event) {
+            var armed = event.state === 'ON';
+
+            node.context().set('armed', armed);
+
+            node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+        }
+
+        /* 
+         * Attach event handlers
+         */
+
+        openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
+        openHABController.addListener(`${node.sensorItem}/ItemStateEvent`, node.processStateEvent);
+        openHABController.addListener(`${node.sensorArmedItem}/ItemStateEvent`, node.armSensor);
+
+        node.on('close', function () {
+            clearInterval(node.intervalObject);
+
+            openHABController.removeListener(`${node.sensorItem}/ItemStateEvent`, node.processStateEvent);
+            openHABController.removeListener(`${node.sensorArmedItem}/ItemStateEvent`, node.armSensor);
+            openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
+            node.log(`closing`);
+        });
+    }
+    RED.nodes.registerType('openhab-v2-sensor', OpenHAB_sensor);
+
+    /**
+     * openhab-v2-sensor-timer
+     * 
+     * ...
+     *
+     */
+    function OpenHAB_trigger(config) {
+        RED.nodes.createNode(this, config);
+
+        var node = this;
+        var openHABController = RED.nodes.getNode(config.controller);
+
+        if (!openHABController) {
+            return;
+        }
+
+        node.name = config.name;
+        node.triggerItem = config.triggerItem;
+        node.triggerArmedItem = config.triggerArmedItem;
+        node.isTriggerArmedByDefault = config.isTriggerArmedByDefault !== 'item' ? config.isTriggerArmedByDefault === 'true' : false;
+        node.allowInput = config.allowInput;
+        node.trigger = config.trigger;
+
+        node.comparator = {
+            'eq': function (a, b) {
+                return a === b;
+            },
+            'neq': function (a, b) {
+                return a !== b;
+            },
+            'lt': function (a, b) {
+                return a < b;
+            },
+            'lte': function (a, b) {
+                return a <= b;
+            },
+            'gt': function (a, b) {
+                return a > b;
+            },
+            'gte': function (a, b) {
+                return a >= b;
+            },
+        }[config.comparator];
+        node.condition = config.condition;
+        node.conditionType = config.conditionType;
+
+        node.topic = config.topic;
+        node.payload = config.payload;
+        node.topicEnd = config.topicEnd;
+        node.payloadEnd = config.payloadEnd;
+        node.topicType = config.topicType;
+        node.payloadType = config.payloadType;
+        node.topicTypeEnd = config.topicTypeEnd;
+        node.payloadTypeEnd = config.payloadTypeEnd;
+
+        node.timer = config.timer;
+        node.timerUnits = config.timerUnits;
+        node.timerObject = undefined;
+        node.triggered = false;
+        node.eventSource = openHABController.getEventSource();
+        node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
+
+        if (node.timerUnits === 'milliseconds') {
+            node.timer = node.timer;
+        } else if (node.timerUnits === 'minutes') {
+            node.timer *= (60 * 1000);
+        } else if (node.timerUnits === 'hours') {
+            node.timer *= (60 * 60 * 1000);
+        } else {   // Default to seconds
+            node.timer *= 1000;
+        }
+
+        switch (node.conditionType) {
+            case 'num': {
+                node.condition = parseFloat(node.condition);
+                break;
+            }
+            default:
+            case 'str': {
+                node.condition = String(node.condition);
+                break;
+            }
+        }
+
+        /* 
+         * Node methods
+         */
+
+        node.updateNodeStatus = function (state, customMessage = undefined) {
+            if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
+                updateNodeStatus(node, state, customMessage);
+            } else {
+                node.status({});
+            }
+        };
+
+        /* 
+         * Node initialization
+         */
+
+        node.updateNodeStatus(STATE.CONNECTING);
+        node.context().set('currentState', undefined);
+        node.context().set('armed', node.isTriggerArmedByDefault);
+        node.eventSource.on('open', () => {
+            node.updateNodeStatus(node.context().get('armed') ? STATE.ARMED : STATE.DISARMED);
+        })
+
+        /* 
+         * Node event handlers
+         */
+
+        node.allowInput && node.on('input', function (message) {
+            message.state = message.payload;
+            node.armTrigger(message);
+        });
+
+        node.processStateEvent = function (event) {
+            var armed = node.context().get('armed');
+            var useTimer = node.trigger === 'TIMER';
+            var message = { _msgid: RED.util.generateId(), payload: node.payload, topic: node.topic };
+            var messageEnd = { _msgid: RED.util.generateId(), payload: node.payloadEnd, topic: node.topicEnd };
+            var eventStateAsFloat = parseFloat(event.state);
+            var currentState = isNaN(eventStateAsFloat) ? event.state : eventStateAsFloat;
+
+            var sendMessage = function (message) {
+                if (node.outputs > 1) {
+                    node.send([armed ? message : null, message]);
+                } else {
+                    node.send([armed ? message : null]);
+                }
+            }
+
+            if (!armed) {
+                return;
+            }
+
+            // Save sensor state in node context
+            node.context().set(`currentState`, currentState);
+
+            // If: Sensor triggered
+            if (node.comparator(currentState, node.condition)) {
+                // Only send start message the first time around when using a timer
+                if (!node.triggered) {
+                    sendMessage(message);
+                }
+
+                node.triggered = true;
+
+                if (useTimer) {
+                    var timerFunc = function () {
+                        var armed = node.context().get('armed');
+
+                        // If: When timer expires and trigger condition is still true, restart the timer
+                        if (node.comparator(node.context().get('currentState'), node.condition)) {
+                            node.log(`Rescheduling for ${node.timer} miliseconds`);
+                            clearTimeout(node.timerObject);
+                            node.timerObject = setTimeout(timerFunc, node.timer);
+                            // Else: Clear timer and send 'end'
+                        } else {
+                            node.triggered = false;
+
+                            sendMessage(messageEnd);
+
+                            clearTimeout(node.timerObject);
+                            delete node.timerObject;
+
+                            node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                        }
+                    }
+
+                    clearTimeout(node.timerObject);
+                    node.timerObject = setTimeout(timerFunc, node.timer);
+                }
+
+                node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
+                // Else if: Sensor reset/untriggered and not using a timer
+            } else {
+                if (!useTimer && node.triggered) {
+                    node.triggered = false;
+
+                    sendMessage(messageEnd);
+
+                    node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                }
+            }
+        }
+
+        node.armTrigger = function (event) {
+            var armed = event.state === 'ON';
+            var changed = armed !== node.context().get('armed');
+
+            if (!changed || !['ON', 'OFF'].includes(event.state)) {
+                return;
+            }
+
+            node.context().set('armed', armed);
+
+            if (!armed) {
+                clearTimeout(node.timerObject);
+                delete node.timerObject;
+
+                node.triggered = false;
+                node.updateNodeStatus(STATE.DISARMED);
+            } else {
+                node.updateNodeStatus(STATE.ARMED);
+            }
+
+
+        }
+
+        /* 
+         * Attach event handlers
+         */
+
+        openHABController.addListener(`${node.triggerItem}/ItemStateEvent`, node.processStateEvent);
+        openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
+        config.isTriggerArmedByDefault === 'item' && openHABController.addListener(`${node.triggerArmedItem}/ItemStateEvent`, node.armTrigger);
+
+        node.on('close', function () {
+            clearTimeout(node.timerObject);
+            delete node.timerObject;
+
+            openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
+            config.isTriggerArmedByDefault === 'item' && openHABController.removeListener(`${node.triggerArmedItem}/ItemStateEvent`, node.armTrigger);
+            openHABController.removeListener(`${node.triggerItem}/ItemStateEvent`, node.processStateEvent);
+
+            node.log(`closing`);
+        });
+    }
+    RED.nodes.registerType('openhab-v2-trigger', OpenHAB_trigger);
 }

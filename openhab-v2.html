@@ -47,7 +47,6 @@
             },
             path: {
                 value: '',
-                required: false,
             },
             username: {
                 value: '',
@@ -63,7 +62,7 @@
             }
         },
         paletteLabel: 'openhab-v2-controller',
-        label: function() {
+        label: function () {
             return this.name;
         }
     });
@@ -95,13 +94,13 @@
         outputLabels: ['RawEvents'],
         icon: 'node-red-contrib-openhab-v2.png',
         paletteLabel: 'events',
-        label: function() {
+        label: function () {
             return (this.name || 'events');
         },
-        oneditprepare: function() {
+        oneditprepare: function () {
             getItemList(this.items, '#node-input-items', false, true);
         },
-        oneditsave: function() {
+        oneditsave: function () {
             workaroundForEmptyItemsList(this, '#node-input-items');
         }
     });
@@ -145,14 +144,14 @@
         outputLabels: ['StateEvent', 'RawEvent'],
         icon: 'node-red-contrib-openhab-v2.png',
         paletteLabel: 'in',
-        label: function() {
+        label: function () {
             return (this.name || this.item || 'in');
         },
-        oneditprepare: function() {
+        oneditprepare: function () {
             getItemList(this.item, '#node-input-item');
             getEventTypeList(this);
         },
-        oneditsave: function() {
+        oneditsave: function () {
             workaroundForEmptyItemsList(this, '#node-input-eventTypes');
         }
     });
@@ -200,10 +199,10 @@
         outputLabels: [],
         icon: 'node-red-contrib-openhab-v2.png',
         paletteLabel: 'out',
-        label: function() {
+        label: function () {
             return (this.name || this.item || 'out');
         },
-        oneditprepare: function() {
+        oneditprepare: function () {
             var OpenHABTypes = {
                 value: 'oh_cmd',
                 label: 'OpenHAB',
@@ -257,10 +256,10 @@
         outputLabels: [],
         icon: 'node-red-contrib-openhab-v2.png',
         paletteLabel: 'get',
-        label: function() {
+        label: function () {
             return (this.name || 'get');
         },
-        oneditprepare: function() {
+        oneditprepare: function () {
             getItemList(this.item, '#node-input-item', false, true);
         }
     });
@@ -321,10 +320,10 @@
         outputLabels: [],
         icon: 'node-red-contrib-openhab-v2.png',
         paletteLabel: 'proxy',
-        label: function() {
+        label: function () {
             return (this.name || this.proxyItem || 'proxy');
         },
-        oneditprepare: function() {
+        oneditprepare: function () {
             var OpenHABTypes = {
                 value: 'oh_cmd',
                 label: 'OpenHAB',
@@ -352,7 +351,7 @@
 
             // Hide Item postfix field by default; only if both directions are enabled
             $('#itemPostfix_div').hide();
-            $('#node-input-proxyDirection').change(function(event) {
+            $('#node-input-proxyDirection').change(function (event) {
                 if ($('#node-input-proxyDirection').val() == 3) {
                     $('#itemPostfix_div').show();
                 } else {
@@ -360,6 +359,287 @@
                 }
             })
         }
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+    RED.nodes.registerType('openhab-v2-sensor', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'left',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            sensorItem: {
+                value: '',
+                required: false,
+            },
+            triggerArmedItem: {
+                value: '',
+                required: false,
+            },
+            passStates: {
+                value: 'BOTH',
+            },
+            repeat: {
+                value: '',
+            },
+            interval: {
+                value: 5,
+                validate: function (v) { return RED.validators.number(v) && (v >= 0); },
+            },
+            intervalUnits: {
+                value: 'seconds',
+            }
+        },
+        inputs: 0,
+        outputs: 2,
+        inputLabels: [],
+        outputLabels: ['Sensor out', 'Sensor out (armed)'],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'sensor',
+        label: function () {
+            return (this.name || this.sensorItem || 'sensor');
+        },
+        oneditprepare: function () {
+            getItemList(this.sensorItem, '#node-input-sensorItem');
+            getItemList(this.sensorArmedItem, '#node-input-sensorArmedItem');
+
+            $('#node-input-interval').spinner({ min: 1 });
+
+            $('.ui-spinner-button').click(function () {
+                $(this).siblings('input').change();
+            });
+
+            $('#node-input-repeat').change(function () {
+                if ($('#node-input-repeat').val() == 'repeat') {
+                    $('#interval-row').show();
+                } else {
+                    $('#interval-row').hide();
+                }
+            });
+        },
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+
+    RED.nodes.registerType('openhab-v2-trigger', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'left',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            triggerItem: {
+                value: '',
+                required: false,
+            },
+            triggerArmedItem: {
+                value: '',
+                required: false,
+            },
+            isTriggerArmedByDefault: {
+                value: false,
+            },
+            allowInput: {
+                value: false,
+            },
+            trigger: {
+                value: 'TIMER',
+            },
+            comparator: {
+                value: '==',
+                required: true,
+            },
+            condition: {
+                value: ''
+            },
+            conditionType: {
+                value: ''
+            },
+            topic: {
+                value: 'topic',
+            },
+            topicType: {
+                value: 'oh_cmd',
+            },
+            payload: {
+                value: 'ON',
+            },
+            payloadType: {
+                value: 'str',
+            },
+            timer: {
+                value: 10,
+                validate: function (v) { return RED.validators.number(v) && (v >= 0); },
+            },
+            timerUnits: {
+                value: 'seconds',
+            },
+            topicEnd: {
+                value: 'topic',
+            },
+            topicEndType: {
+                value: 'oh_cmd',
+            },
+            payloadEnd: {
+                value: 'OFF',
+            },
+            payloadEndType: {
+                value: 'str',
+            },
+        },
+        inputs: 0,
+        outputs: 1,
+        inputLabels: [],
+        outputLabels: [],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'trigger',
+        label: function () {
+            return (this.name || this.triggerItem || 'trigger');
+        },
+        oneditprepare: function () {
+            var node = this;
+
+            getItemList(this.triggerItem, '#node-input-triggerItem');
+            getItemList(this.triggerArmedItem, '#node-input-triggerArmedItem', false, false, ['Switch']);
+
+            $('#node-input-timer').spinner({ min: 1 });
+
+            $('.ui-spinner-button').click(function () {
+                $(this).siblings('input').change();
+            });
+
+            var NothingType = {
+                value: undefined,
+                label: 'nothing',
+                hasValue: false
+            };
+
+            var OpenHABTypes = {
+                value: 'oh_cmd',
+                label: 'OpenHAB',
+                icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
+                options: ['ItemCommand', 'ItemUpdate']
+            };
+
+            var OpenHABPayload = {
+                value: 'oh_payload',
+                label: 'OpenHAB',
+                icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
+                options: ['ON', 'OFF','OPEN', 'CLOSED'],
+            }
+
+            $('#node-input-topic').typedInput({
+                types: [OpenHABTypes, 'str', NothingType],
+                default: 'oh_cmd',
+                value: 'topic',
+                typeField: $('#node-input-topicType'),
+            });
+            $('#node-input-payload').typedInput({
+                types: ['flow', 'global', 'str', 'num', 'date'],
+                default: 'str',
+                value: 'payload',
+                typeField: $('#node-input-payloadType'),
+            });
+            $('#node-input-topicEnd').typedInput({
+                types: [OpenHABTypes, 'str', NothingType],
+                default: 'oh_cmd',
+                value: 'topic',
+                typeField: $('#node-input-topicEndType'),
+            });
+            $('#node-input-payloadEnd').typedInput({
+                types: ['flow', 'global', 'str', 'num', 'date'],
+                default: 'str',
+                value: 'payload',
+                typeField: $('#node-input-payloadEndType'),
+            });
+            $('#node-input-condition').typedInput({
+                types: [OpenHABPayload, 'str', 'num'],
+                default: 'str',
+                value: '',
+                typeField: $('#node-input-conditionType'),
+            });
+
+            $('#node-input-topicType').val(this.topicType);
+            $('#node-input-payloadType').val(this.payloadType);
+            $('#node-input-topicEndType').val(this.topicType);
+            $('#node-input-payloadEndType').val(this.payloadType);
+            $('#node-input-conditionType').val(this.conditionType);
+
+            $('input[type=hidden]').filter((index, element) => {
+                return element.id.match(/^node-input-topic(End)?$/);
+            }).change((event) => {
+                var element = $(event.target);
+                var value = element.val();
+                var elementId = element.attr('id');
+
+                if (value !== '') {
+                    switch (elementId) {
+                        case 'node-input-topic': {
+                            $('#node-input-payload-row').show();
+                            break;
+                        }
+                        case 'node-input-topicEnd': {
+                            $('#node-input-payloadEnd-row').show();
+                            break;
+                        }
+                    }
+                } else {
+                    switch (elementId) {
+                        case 'node-input-topic': {
+                            $('#node-input-payload-row').hide();
+                            break;
+                        }
+                        case 'node-input-topicEnd': {
+                            $('#node-input-payloadEnd-row').hide();
+                            break;
+                        }
+                    }
+                }
+            });
+
+            $('#node-input-allowInput').change(() => {
+                if ($('#node-input-allowInput').is(':checked')) {
+                    node.inputs = 1;
+                } else {
+                    node.inputs = 0;
+                }
+            });
+
+            $('#node-input-isTriggerArmedByDefault').change(() => {
+                if ($('#node-input-isTriggerArmedByDefault').val() === 'item') {
+                    $('#triggerArmedItemRow').show();
+                    node.outputs = 2;
+                } else {
+                    $('#triggerArmedItemRow').hide();
+                    node.outputs = 1;
+                }
+            });
+
+            $('#node-input-trigger').change(() => {
+                if ($('#node-input-trigger').val() === 'TIMER') {
+                    $('#timer-row').show();
+                } else {
+                    $('#timer-row').hide();
+                }
+            });
+        },
     });
 </script>
 
@@ -380,7 +660,7 @@
      */
     function sortBy(sortObject, sortProperty, caseSensitive = true, sortDesc = false) {
         try {
-            sortObject.sort(function(a, b) {
+            sortObject.sort(function (a, b) {
                 a = caseSensitive ? a[sortProperty] : a[sortProperty].toLowerCase();
                 b = caseSensitive ? b[sortProperty] : b[sortProperty].toLowerCase();
 
@@ -423,19 +703,19 @@
      * To do...
      *
      */
-    function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEmpty = false) {
+    function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEmpty = false, itemTypeFilter = []) {
 
-        function updateItemList(controller, selectedItemElement, itemName, refresh = false) {
+        function updateItemList(controller, selectedItemElement, itemName, refresh = false, itemTypeFilter = []) {
 
             // Remove all previous and/or static (if any) elements from 'select' input element
             selectedItemElement.children().remove();
 
             if (controller) {
                 $.getJSON('/openhab2/itemlist', {
-                        controllerID: controller.id,
-                        forceRefresh: refresh
-                    })
-                    .done(function(data, textStatus, jqXHR) {
+                    controllerID: controller.id,
+                    forceRefresh: refresh
+                })
+                    .done(function (data, textStatus, jqXHR) {
                         try {
                             var items = sortBy(data, 'name');
 
@@ -447,9 +727,19 @@
                                 selectedItemElement.append(optionElement).children().last().attr('value', '');
                             }
 
-                            items.forEach(function(item) {
+                            items.forEach(function (item) {
                                 var optionElement = document.createElement('option');
-                                selectedItemElement.append(optionElement).children().last().attr('value', item.name).html(item.name);
+                                var addItem = true;
+                                
+                                if (itemTypeFilter.length > 0) {
+                                    if (!itemTypeFilter.includes(item.type)) {
+                                        addItem = false;
+                                    }
+                                } 
+                            
+                                if (addItem) {
+                                    selectedItemElement.append(optionElement).children().last().attr('value', item.name).html(item.name);
+                                }
                             });
 
                             // Enable item selection
@@ -465,7 +755,7 @@
                         }
 
                     })
-                    .fail(function(jqXHR, textStatus, errorThrown) {
+                    .fail(function (jqXHR, textStatus, errorThrown) {
                         // Disable item selection if no items were retrieved
                         selectedItemElement.multiselect('disable');
                         selectedItemElement.multiselect('refresh');
@@ -501,19 +791,19 @@
         });
 
         // Initial call to populate item list
-        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem);
+        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, false, itemTypeFilter);
 
         // onChange event handler in case a new controller gets selected
-        openHABControllerElement.change(function(event) {
+        openHABControllerElement.change(function (event) {
             // Only handle event if the value has actually changed
             if (openHABControllerValue !== openHABControllerElement.val()) {
-                updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true);
+                updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter);
             }
         });
 
-        refreshListElement.click(function(event) {
+        refreshListElement.click(function (event) {
             // Force a refresh of the item list
-            updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true);
+            updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter);
         });
     }
 
@@ -918,6 +1208,236 @@
     </div>
 </script>
 
+<script type="text/x-red" data-template-name="openhab-v2-sensor">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        
+        .multiselect {
+            width: 100%;
+        }
+        
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        
+        .multiselect-clear-filter {
+            display: none;
+        }
+        
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }
+        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-sensorItem"><i class="fa fa-crosshairs"></i> Sensor</label>
+        <select id="node-input-sensorItem" name="node-input-sensorItem">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-sensorArmedItem"><i class="fa fa-bullseye"></i> Arm/Disarm</label>
+        <select id="node-input-sensorArmedItem" name="node-input-sensorArmedItem">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-passStates">&nbsp;&nbsp;&nbsp;&nbsp;Send</label>
+        <select id="node-input-passStates" name="node-input-passStates">
+            <option value="BOTH" selected>both states</option>
+            <option value="ON">'ON' state</option>
+            <option value="OFF">'OFF' state</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-repeat">&nbsp;&nbsp;&nbsp;&nbsp;Then</label>
+        <select id="node-input-repeat" name="node-input-repeat">
+            <option value="" selected>Do nothing</option>
+            <option value="repeat">Repeat every</option>
+        </select>
+    </div>
+    <div class="form-row" id="interval-row">
+            <label for="node-input-interval"><i class="fa fa-clock-o"></i> Interval</label>
+            <input type="text" id="node-input-interval" style="text-align:end; width:50px !important">
+            <select id="node-input-intervalUnits" style="width:200px !important">
+              <option value="milliseconds">milliseconds</option>
+              <option value="seconds">seconds</option>
+              <option value="minutes">minutes</option>
+            </select>
+        </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-trigger">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        
+        .multiselect {
+            width: 100%;
+        }
+        
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        
+        .multiselect-clear-filter {
+            display: none;
+        }
+        
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }
+        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-isTriggerArmedByDefault"></label>
+        <select id="node-input-isTriggerArmedByDefault" name="node-input-isTriggerArmedByDefault" style="width: 70%;">
+            <option value="item">Use arm/disarm item</option>
+            <option value="true">Trigger is armed by default</option>
+            <option value="false" selected>Trigger is disarmed by default</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-allowInput" style="margin-left: 0px; vertical-align: top; width: auto !important;"> <label style="width:auto !important;" for="node-input-allowInput"> enable input to arm/disarm trigger</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-triggerItem"><i class="fa fa-crosshairs"></i> Trigger</label>
+        <select id="node-input-triggerItem" name="node-input-triggerItem">
+        </select>
+    </div>
+    <div class="form-row" id="triggerArmedItemRow">
+        <label for="node-input-triggerArmedItem"><i class="fa fa-bullseye"></i> Arm/Disarm</label>
+        <select id="node-input-triggerArmedItem" name="node-input-triggerArmedItem">
+        </select>
+    </div>
+    <div class="form-row">
+        <label></label>
+        <strong>Trigger when</strong>
+    </div>
+    <div class="form-row">
+        <label for="node-input-condition">Trigger.state</label>
+        <select id="node-input-comparator" style="text-align: center; width: 75px;">
+                <option value="eq" selected>==</option>
+                <option value="neq">!=</option>
+                <option value="lt">&lt;</option>
+                <option value="lte">&lt;=</option>
+                <option value="gt">&gt;</option>
+                <option value="gte">&gt;=</option>
+        </select>
+        <input type="text" id="node-input-condition" style="width:fit-content">
+        <input type="hidden" id="node-input-conditionType">
+    </div>
+    <div class="form-row">
+            <label></label>
+            <strong>Send when triggered</strong>
+    </div>
+    <div class="form-row">
+            <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+            <input type="text" id="node-input-topic" style="width:70%">
+            <input type="hidden" id="node-input-topicType">
+    </div>
+    <div class="form-row" id="node-input-payload-row">
+            <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+            <input type="text" id="node-input-payload" style="width:70%">
+            <input type="hidden" id="node-input-payloadType">
+    </div>
+    <div class="form-row">
+            <label></label>
+            <strong>Then</strong>
+    </div>
+    <div class="form-row">
+        <label for="node-input-trigger"></label>
+        <select id="node-input-trigger" name="node-input-trigger" style="width: 70%;">
+            <option value="TIMER" selected>Start timer</option>
+            <option value="">Wait until trigger condition is false</option>
+        </select>
+    </div>
+    <div class="form-row" id="timer-row">
+            <label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
+            <input type="text" id="node-input-timer" style="text-align:end; width:50px !important">
+            <select id="node-input-timerUnits" style="width:200px !important">
+                    <option value="milliseconds">milliseconds</option>
+                    <option value="seconds" selected>seconds</option>
+                    <option value="minutes">minutes</option>
+            </select>
+    </div>
+    <div class="form-row">
+            <label></label>
+            <strong>And then send</strong>
+    </div>
+    <div class="form-row">
+            <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
+            <input type="text" id="node-input-topicEnd" style="width:70%">
+            <input type="hidden" id="node-input-topicEndType">
+    </div>
+    <div class="form-row" id="node-input-payloadEnd-row">
+            <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
+            <input type="text" id="node-input-payloadEnd" style="width:70%">
+            <input type="hidden" id="node-input-payloadEndType">
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+
 <!--
     *******************
     * Node help texts *
@@ -1161,4 +1681,26 @@
     </dl>    
     <h3>Details</h3>
     <p>Detailed description.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-sensor">
+    <p>Description</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item to send message to.</dd>
+    </dl>    
+    <h3>Outputs</h3>
+    <h3>Details</h3>
+    <p>Details</p>
 </script>

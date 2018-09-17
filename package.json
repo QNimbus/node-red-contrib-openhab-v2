@@ -36,6 +36,6 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "node-red": "^0.19.2",
-        "nodemon": "^1.18.3"
+        "nodemon": "^1.18.4"
     }
 }
