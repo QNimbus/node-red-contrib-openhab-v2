@@ -458,7 +458,7 @@ module.exports = function (RED) {
                 parsedMessage = JSON.parse(parsedMessage.data);
                 parsedMessage.payload = JSON.parse(parsedMessage.payload);
 
-                const itemStart = ('smarthome/items/').length;
+                const itemStart = 'smarthome/items/'.length;
                 var itemName = parsedMessage.topic.substring(itemStart, parsedMessage.topic.indexOf('/', itemStart));
 
                 if (node.allowRawEvents === true) {
@@ -1158,6 +1158,7 @@ module.exports = function (RED) {
         node.triggerItem = config.triggerItem;
         node.triggerArmedItem = config.triggerArmedItem;
         node.isTriggerArmedByDefault = config.isTriggerArmedByDefault !== 'item' ? config.isTriggerArmedByDefault === 'true' : false;
+        node.armDisarmTrigger = config.armDisarm === 'arm' || config.armDisarm === 'disarm' ? config.armDisarm : false;
         node.allowInput = config.allowInput;
         node.trigger = config.trigger;
 
@@ -1197,6 +1198,7 @@ module.exports = function (RED) {
         node.timerUnits = config.timerUnits;
         node.timerObject = undefined;
         node.triggered = false;
+        node.resetTimerIfExpired = config.timerExpiresAction === 'continue' ? false : true;
         node.eventSource = openHABController.getEventSource();
         node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
 
@@ -1210,14 +1212,36 @@ module.exports = function (RED) {
             node.timer *= 1000;
         }
 
-        switch (node.conditionType) {
-            case 'num': {
-                node.condition = parseFloat(node.condition);
+        switch (node.topicType) {
+            case 'nothing':
+            case 'oh_cmd':
+            case 'str':
+            default: {
+                // Keep selected topic
                 break;
             }
-            default:
-            case 'str': {
-                node.condition = String(node.condition);
+        }
+
+        switch (node.payloadType) {
+            case 'flow': {
+                node.log(`node.payload: ${node.payload}`);
+                node.payload = node.context().flow.get(node.payload);
+                node.log(`node.payload: ${node.payload}`);
+                break;
+            }
+            case 'global': {
+                node.payload = node.context().global.get(node.payload);
+                break;
+            }
+            case 'date': {
+                node.payload = Date.now();
+                break;
+            }
+            case 'oh_payload':
+            case 'num':
+            case 'str':
+            default: {
+                // Keep selected payload
                 break;
             }
         }
@@ -1256,7 +1280,8 @@ module.exports = function (RED) {
 
         node.processStateEvent = function (event) {
             var armed = node.context().get('armed');
-            var useTimer = node.trigger === 'TIMER';
+            var useTimer = node.trigger === 'timer' || node.trigger === 'nodelay';
+            var doNothing = node.trigger === 'nothing';
             var message = { _msgid: RED.util.generateId(), payload: node.payload, topic: node.topic };
             var messageEnd = { _msgid: RED.util.generateId(), payload: node.payloadEnd, topic: node.topicEnd };
             var eventStateAsFloat = parseFloat(event.state);
@@ -1274,6 +1299,27 @@ module.exports = function (RED) {
                 return;
             }
 
+            switch (node.conditionType) {
+                case 'flow': {
+                    node.condition = node.context().flow.get(node.condition);
+                    break;
+                }
+                case 'global': {
+                    node.condition = node.context().global.get(node.condition);
+                    break;
+                }
+                case 'num': {
+                    node.condition = parseFloat(node.condition);
+                    break;
+                }
+                case 'oh_payload':                
+                case 'str':
+                default: {
+                    node.condition = String(node.condition);
+                    break;
+                }
+            }
+
             // Save sensor state in node context
             node.context().set(`currentState`, currentState);
 
@@ -1282,16 +1328,17 @@ module.exports = function (RED) {
                 // Only send start message the first time around when using a timer
                 if (!node.triggered) {
                     sendMessage(message);
+                    node.updateNodeStatus(STATE.TRIGGERED);
                 }
 
                 node.triggered = true;
 
-                if (useTimer) {
+                if (useTimer && !doNothing) {
                     var timerFunc = function () {
                         var armed = node.context().get('armed');
 
                         // If: When timer expires and trigger condition is still true, restart the timer
-                        if (node.comparator(node.context().get('currentState'), node.condition)) {
+                        if (node.resetTimerIfExpired && node.comparator(node.context().get('currentState'), node.condition)) {
                             node.log(`Rescheduling for ${node.timer} miliseconds`);
                             clearTimeout(node.timerObject);
                             node.timerObject = setTimeout(timerFunc, node.timer);
@@ -1304,23 +1351,37 @@ module.exports = function (RED) {
                             clearTimeout(node.timerObject);
                             delete node.timerObject;
 
-                            node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                            if (node.armDisarmTrigger === false) {
+                                node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                            } else {
+                                node.armTrigger(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
+                            }
                         }
                     }
 
                     clearTimeout(node.timerObject);
-                    node.timerObject = setTimeout(timerFunc, node.timer);
-                }
+                    node.timerObject = node.trigger === 'nodelay' ? setImmediate(timerFunc) : setTimeout(timerFunc, node.timer);
+                } else {
+                    if (node.armDisarmTrigger === false) {
+                        node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                    } else {
+                        node.armTrigger(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
+                    }
 
-                node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
+                    node.triggered = false;
+                }
                 // Else if: Sensor reset/untriggered and not using a timer
             } else {
                 if (!useTimer && node.triggered) {
-                    node.triggered = false;
-
                     sendMessage(messageEnd);
 
-                    node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                    if (node.armDisarmTrigger === false) {
+                        node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                    } else {
+                        node.armTrigger(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
+                    }
+
+                    node.triggered = false;
                 }
             }
         }
@@ -1340,12 +1401,11 @@ module.exports = function (RED) {
                 delete node.timerObject;
 
                 node.triggered = false;
+                node.log(`Updating node status STATE.DISARMED`);
                 node.updateNodeStatus(STATE.DISARMED);
             } else {
                 node.updateNodeStatus(STATE.ARMED);
             }
-
-
         }
 
         /* 

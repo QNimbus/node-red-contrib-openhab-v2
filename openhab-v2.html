@@ -387,23 +387,23 @@
                 required: false,
             },
             isTriggerArmedByDefault: {
-                value: false,
+                value: 'false',
             },
             allowInput: {
                 value: false,
             },
             trigger: {
-                value: 'TIMER',
+                value: 'nodelay',
             },
             comparator: {
-                value: '==',
+                value: 'eq',
                 required: true,
             },
             condition: {
-                value: ''
+                value: 'ON',
             },
             conditionType: {
-                value: ''
+                value: 'oh_payload',
             },
             topic: {
                 value: 'topic',
@@ -424,11 +424,14 @@
             timerUnits: {
                 value: 'seconds',
             },
+            timerExpiresAction: {
+                value: 'continue',
+            },
             topicEnd: {
                 value: 'topic',
             },
             topicEndType: {
-                value: 'oh_cmd',
+                value: 'ItemCommand',
             },
             payloadEnd: {
                 value: 'OFF',
@@ -436,6 +439,9 @@
             payloadEndType: {
                 value: 'str',
             },
+            armDisarm: {
+                value: '',
+            }
         },
         inputs: 0,
         outputs: 1,
@@ -459,9 +465,9 @@
             });
 
             var NothingType = {
-                value: undefined,
+                value: 'nothing',
                 label: 'nothing',
-                hasValue: false
+                hasValue: false,
             };
 
             var OpenHABTypes = {
@@ -485,35 +491,39 @@
                 typeField: $('#node-input-topicType'),
             });
             $('#node-input-payload').typedInput({
-                types: ['flow', 'global', 'str', 'num', 'date'],
+                types: [OpenHABPayload, 'flow', 'global', 'str', 'num', 'date'],
                 default: 'str',
                 value: 'payload',
                 typeField: $('#node-input-payloadType'),
             });
             $('#node-input-topicEnd').typedInput({
-                types: [OpenHABTypes, 'str', NothingType],
+                types: [OpenHABTypes, 'str'],
                 default: 'oh_cmd',
                 value: 'topic',
                 typeField: $('#node-input-topicEndType'),
             });
             $('#node-input-payloadEnd').typedInput({
-                types: ['flow', 'global', 'str', 'num', 'date'],
+                types: [OpenHABPayload, 'flow', 'global', 'str', 'num', 'date'],
                 default: 'str',
                 value: 'payload',
                 typeField: $('#node-input-payloadEndType'),
             });
             $('#node-input-condition').typedInput({
-                types: [OpenHABPayload, 'str', 'num'],
+                types: [OpenHABPayload, 'global', 'flow', 'str', 'num'],
                 default: 'str',
                 value: '',
                 typeField: $('#node-input-conditionType'),
             });
 
+            $('#node-input-condition').val(this.condition);
+            $('#node-input-conditionType').val(this.conditionType);
             $('#node-input-topicType').val(this.topicType);
             $('#node-input-payloadType').val(this.payloadType);
-            $('#node-input-topicEndType').val(this.topicType);
-            $('#node-input-payloadEndType').val(this.payloadType);
+            $('#node-input-topicEndType').val(this.topicEndType);
+            $('#node-input-payloadEndType').val(this.payloadEndType);
             $('#node-input-conditionType').val(this.conditionType);
+            $('#node-input-timerExpiresAction').val(this.timerExpiresAction);
+            $('#node-input-trigger').val(this.trigger);
 
             $('input[type=hidden]').filter((index, element) => {
                 return element.id.match(/^node-input-topic(End)?$/);
@@ -525,22 +535,24 @@
                 if (value !== '') {
                     switch (elementId) {
                         case 'node-input-topic': {
-                            $('#node-input-payload-row').show();
+                            $('#message-row2').show();
                             break;
                         }
                         case 'node-input-topicEnd': {
-                            $('#node-input-payloadEnd-row').show();
+                            if ($('#node-input-trigger').val() !== 'nothing') {
+                                $('#endmessage-row2').show();
+                            }
                             break;
                         }
                     }
                 } else {
                     switch (elementId) {
                         case 'node-input-topic': {
-                            $('#node-input-payload-row').hide();
+                            $('#message-row2').hide();
                             break;
                         }
                         case 'node-input-topicEnd': {
-                            $('#node-input-payloadEnd-row').hide();
+                            $('#endmessage-row2').hide();
                             break;
                         }
                     }
@@ -566,10 +578,32 @@
             });
 
             $('#node-input-trigger').change(() => {
-                if ($('#node-input-trigger').val() === 'TIMER') {
-                    $('#timer-row').show();
-                } else {
-                    $('#timer-row').hide();
+                switch($('#node-input-trigger').val()) {
+                    case 'timer': {
+                        $('[id^=timer-row]').show();
+                        $('[id^=endmessage-row1]').show();
+                        if ($('#node-input-topicEndType').val() !== 'nothing') {
+                            $('[id^=endmessage-row2]').show();
+                        } else {
+                            $('[id^=endmessage-row2]').hide();
+                        }                        
+                        break;
+                    };
+                    case 'nothing': {
+                        $('[id^=timer-row]').hide();
+                        $('[id^=endmessage-row]').hide();
+                        break;
+                    };
+                    default: {
+                        $('[id^=timer-row]').hide();
+                        $('[id^=endmessage-row1]').show();
+                        if ($('#node-input-topicEndType').val() !== 'nothing') {    
+                            $('[id^=endmessage-row2]').show();
+                        } else {
+                            $('[id^=endmessage-row2]').hide();
+                        } 
+                        break;
+                    }
                 }
             });
         },
@@ -920,9 +954,9 @@
     <div class="form-row">
         <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> Event types</label>
         <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple">
-            <option value="ItemCommandEvent" selected>ItemCommand</option>
-            <option value="ItemStateEvent" selected>ItemStateEvent</option>
-            <option value="ItemStateChangedEvent" selected>ItemStateChanged</option>
+            <option value="ItemCommandEvent">ItemCommand</option>
+            <option value="ItemStateEvent">ItemStateEvent</option>
+            <option value="ItemStateChangedEvent">ItemStateChanged</option>
         </select>
     </div>
     <div class='form-row'>
@@ -1194,7 +1228,7 @@
         <select id="node-input-isTriggerArmedByDefault" name="node-input-isTriggerArmedByDefault" style="width: 70%;">
             <option value="item">Use arm/disarm item</option>
             <option value="true">Trigger is armed by default</option>
-            <option value="false" selected>Trigger is disarmed by default</option>
+            <option value="false">Trigger is disarmed by default</option>
         </select>
     </div>
     <div class="form-row">
@@ -1218,7 +1252,7 @@
     <div class="form-row">
         <label for="node-input-condition">Trigger.state</label>
         <select id="node-input-comparator" style="text-align: center; width: 75px;">
-                <option value="eq" selected>==</option>
+                <option value="eq">==</option>
                 <option value="neq">!=</option>
                 <option value="lt">&lt;</option>
                 <option value="lte">&lt;=</option>
@@ -1232,12 +1266,12 @@
             <label></label>
             <strong>Send when triggered</strong>
     </div>
-    <div class="form-row">
+    <div class="form-row" id="message-row1">
             <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
             <input type="text" id="node-input-topic" style="width:70%">
             <input type="hidden" id="node-input-topicType">
     </div>
-    <div class="form-row" id="node-input-payload-row">
+    <div class="form-row" id="message-row2">
             <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
             <input type="text" id="node-input-payload" style="width:70%">
             <input type="hidden" id="node-input-payloadType">
@@ -1249,33 +1283,58 @@
     <div class="form-row">
         <label for="node-input-trigger"></label>
         <select id="node-input-trigger" name="node-input-trigger" style="width: 70%;">
-            <option value="TIMER" selected>Start timer</option>
+            <option value="nothing">Do nothing</option>
+            <option value="nodelay">Do not wait</option>
+            <option value="timer">Start timer</option>
             <option value="">Wait until trigger condition is false</option>
         </select>
     </div>
-    <div class="form-row" id="timer-row">
+    <div class="form-row" id="timer-row1">
             <label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
             <input type="text" id="node-input-timer" style="text-align:end; width:50px !important">
             <select id="node-input-timerUnits" style="width:200px !important">
-                    <option value="milliseconds">milliseconds</option>
-                    <option value="seconds" selected>seconds</option>
-                    <option value="minutes">minutes</option>
+                <option value="milliseconds">milliseconds</option>
+                <option value="seconds">seconds</option>
+                <option value="minutes">minutes</option>
             </select>
     </div>
-    <div class="form-row">
-            <label></label>
-            <strong>And then send</strong>
+    <div class="form-row" id="timer-row2">
+        <label></label>
+        <strong>When timer expires</strong>        
     </div>
-    <div class="form-row">
+    <div class="form-row" id="timer-row3">
+        <label for="node-input-timerExpiresAction"></label>
+        <select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction" style="width: 70%;">
+            <option value="continue">Continue</option>
+            <option value="continue_false">Continue only if trigger condition is false</option>
+        </select>
+    </div>
+    <div class="form-row" id="endmessage-row0">
+        <label></label>
+        <strong>Then send</strong>
+    </div>
+    <div class="form-row" id="endmessage-row1">
             <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
             <input type="text" id="node-input-topicEnd" style="width:70%">
             <input type="hidden" id="node-input-topicEndType">
     </div>
-    <div class="form-row" id="node-input-payloadEnd-row">
+    <div class="form-row" id="endmessage-row2">
             <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
             <input type="text" id="node-input-payloadEnd" style="width:70%">
             <input type="hidden" id="node-input-payloadEndType">
     </div>
+    <div class="form-row">
+        <label></label>
+        <strong>Finally</strong>
+    </div>
+    <div class="form-row">
+        <label for="node-input-armDisarm"><i class="fa fa-bullseye"></i> Trigger</label>
+        <select id="node-input-armDisarm" name="node-input-armDisarm" style="width: 70%;">
+            <option value="">Leave trigger arm/disarm state as is</option>
+            <option value="arm">Arm trigger</option>
+            <option value="disarm">Disarm trigger</option>
+        </select>
+    </div>       
     <div class="form-row">
         <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
         <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
