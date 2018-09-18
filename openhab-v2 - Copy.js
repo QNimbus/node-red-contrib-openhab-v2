@@ -720,12 +720,12 @@ module.exports = function (RED) {
 
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
         openHABController.addListener(node.item + '/RawEvent', node.processRawEvent);
-        ['ItemCommandEvent', 'ItemStateEvent', 'ItemStateChangedEvent', 'GroupItemStateChangedEvent'].forEach(function (eventType) {
+        ['ItemCommandEvent', 'ItemStateEvent', 'ItemStateChangedEvent'].forEach(function (eventType) {
             openHABController.addListener(node.item + `/${eventType}`, node.processStateEvent);
         });
 
         node.on('close', function () {
-            ['ItemCommandEvent', 'ItemStateEvent', 'ItemStateChangedEvent', 'GroupItemStateChangedEvent'].forEach(function (eventType) {
+            ['ItemCommandEvent', 'ItemStateEvent', 'ItemStateChangedEvent'].forEach(function (eventType) {
                 openHABController.removeListener(node.item + `/${eventType}`, node.processStateEvent);
             });
             openHABController.removeListener(node.item + '/RawEvent', node.processRawEvent);
@@ -1152,22 +1152,24 @@ module.exports = function (RED) {
         var node = this;
         var openHABController = RED.nodes.getNode(config.controller);
 
-        node.triggerItems = config.triggerItems.filter(String);                                 // Trigger item(s) that will trigger the node
-        node.eventSource = openHABController ? openHABController.getEventSource() : undefined;  // Evensource object for connecting to the OpenHAB instance
-        node.triggered = false;                                                                 // Keep track of trigger state
-
-        // Disable node if no controller or no trigger items were defined
-        if (!openHABController || !node.eventSource || node.triggerItems.length === 0) {
+        if (!openHABController) {
             return;
         }
 
-        // Comparator functions for trigger condition
-        node.comparators = {
+        node.name = config.name;
+        node.triggerItem = config.triggerItem;
+        node.triggerArmedItem = config.triggerArmedItem;
+        node.isTriggerArmedByDefault = config.isTriggerArmedByDefault !== 'item' ? config.isTriggerArmedByDefault === 'true' : false;
+        node.armDisarmTrigger = config.armDisarm === 'arm' || config.armDisarm === 'disarm' ? config.armDisarm : false;
+        node.allowInput = config.allowInput;
+        node.trigger = config.trigger;
+
+        node.comparator = {
             'eq': function (a, b) {
-                return a == b;
+                return a === b;
             },
             'neq': function (a, b) {
-                return a != b;
+                return a !== b;
             },
             'lt': function (a, b) {
                 return a < b;
@@ -1181,67 +1183,31 @@ module.exports = function (RED) {
             'gte': function (a, b) {
                 return a >= b;
             },
-        };
+        }[config.comparator];
+        node.condition = config.condition;
+        node.conditionType = config.conditionType;
 
-        // Node statuses that will not be displayed
+        node.timer = config.timer;
+        node.timerUnits = config.timerUnits;
+        node.timerObject = undefined;
+        node.triggered = false;
+        node.resetTimerIfExpired = config.timerExpiresAction === 'continue' ? false : true;
+        node.eventSource = openHABController.getEventSource();
         node.disabledNodeStates = [STATE.CONNECTING, STATE.CONNECTED, STATE.DISCONNECTED];
+
+        if (node.timerUnits === 'milliseconds') {
+            node.timer = node.timer;
+        } else if (node.timerUnits === 'minutes') {
+            node.timer *= (60 * 1000);
+        } else if (node.timerUnits === 'hours') {
+            node.timer *= (60 * 60 * 1000);
+        } else {   // Default to seconds
+            node.timer *= 1000;
+        }
 
         /* 
          * Node methods
          */
-
-        node.triggerItemsTriggered = function (excludeItem = undefined) {
-            return node.triggerItems.some((triggerItem) => {
-                if (excludeItem !== undefined && excludeItem === triggerItem) {
-                    return false;
-                } else {
-                    return node.context().get(triggerItem) ? true : false;
-                }
-            })
-        }
-
-        // Compile additional conditions
-        node.additionalConditions = function () {
-            return config.conditions.every((condition) => {
-                var comparator = node.comparators[condition.type];
-                var value1 = node.getTypeInputValue(condition.typeValue1, condition.value1);
-                var value2 = node.getTypeInputValue(condition.typeValue2, condition.value2);
-
-                return comparator(value1, value2);
-            });
-        }
-
-        node.getTypeInputValue = function (type, value) {
-            switch (type) {
-                case 'flow': {
-                    value = node.context().flow.get(value);
-                    break;
-                }
-                case 'global': {
-                    value = node.context().global.get(value);
-                    break;
-                }
-                case 'date': {
-                    value = Date.now();
-                    break;
-                }
-                case 'num': {
-                    value = parseFloat(value);
-                    break;
-                }
-                case 'nothing': {
-                    value = undefined;
-                    break;
-                }
-                case 'oh_payload':
-                case 'str':
-                default: {
-                    value = String(value);
-                    break;
-                }
-            };
-            return value;
-        }
 
         node.updateNodeStatus = function (state, customMessage = undefined) {
             if (!node.disabledNodeStates || !node.disabledNodeStates.includes(state)) {
@@ -1255,212 +1221,204 @@ module.exports = function (RED) {
          * Node initialization
          */
 
-        node.triggerArmedState = config.triggerArmedState !== 'item' ? config.triggerArmedState === 'armed' : false;
-
         node.updateNodeStatus(STATE.CONNECTING);
-        node.context().set('triggered', false);
-        node.context().set('currentState', false);
-        node.context().set('armed', node.triggerArmedState);
-
-        node.comparator = node.comparators[config.comparator];
-
-        // Initialize armed status on node
+        node.context().set('currentState', undefined);
+        node.context().set('armed', node.isTriggerArmedByDefault);
         node.eventSource.on('open', () => {
             node.updateNodeStatus(node.context().get('armed') ? STATE.ARMED : STATE.DISARMED);
         })
-
-        switch (config.timerUnits) {
-            case 'milliseconds': {
-                node.timer = config.timer;
-                break;
-            }
-            case 'minutes': {
-                node.timer = config.timer * (60 * 1000);
-                break;
-            }
-            case 'hours': {
-                node.timer = config.timer * (60 * 60 * 1000);
-                break;
-            }
-            default: {
-                node.timer = config.timer * (1000);
-                break;
-            }
-        }
 
         /* 
          * Node event handlers
          */
 
-        node.armDisarm = function (message) {
-            var armed = !['OFF', 0, '0', 'CLOSE'].includes(message.state);
-            var changed = armed !== node.context().get('armed');
+        node.allowInput && node.on('input', function (message) {            
 
-            // If armed state has not changed, return immediately
-            if (!changed) {
-                return;
-            }
-
-            if (armed) {
-
-            } else {
-                // Reset trigger
-                node.context().set('triggered', false);
-                node.context().set('currentState', false);
-                clearTimeout(node.timerObject);
-                delete node.timerObject;
-            }
-
-            // Persist armed state
-            node.context().set('armed', armed);
-
-            // Update node status
-            node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
-        }
-
-        config.enableInput && node.on('input', function (message) {
             if (message.payload === 'RESET') {
                 setImmediate(() => {
                     var armed = node.context().get('armed');
 
-                    // Set arm/disarm state
-                    if (node.armDisarmTrigger !== false) {
-                        node.armDisarm(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
-                    } else {
+                    if (node.armDisarmTrigger === false) {
                         node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                    } else {
+                        node.armTrigger(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
                     }
-
-                    // Reset trigger
-                    node.context().set('triggered', false);
-                    node.context().set('currentState', false);
+    
+                    node.triggered = false;
                     clearTimeout(node.timerObject);
-                    delete node.timerObject;
                 });
             } else {
                 message.state = message.payload;
-                node.armDisarm(message);
+                node.armTrigger(message);
             }
         });
 
-        node.processStateChangedEvent = function (message) {
+        node.processStateEvent = function (event) {
             var armed = node.context().get('armed');
 
-            var sendMessage = function (topic, topicType, payload, payloadType) {
-                topic = node.getTypeInputValue(topicType, topic);
-                payload = node.getTypeInputValue(payloadType, payload);
+            node.topic = config.topic;
+            node.payload = config.payload;
+            node.topicEnd = config.topicEnd;
+            node.payloadEnd = config.payloadEnd;
+            node.topicType = config.topicType;
+            node.payloadType = config.payloadType;
+            node.topicTypeEnd = config.topicTypeEnd;
+            node.payloadTypeEnd = config.payloadTypeEnd;
 
-                if (topic) {
-                    var message = { _msgid: RED.util.generateId(), payload: payload, topic: topic };
-
-                    if (config.outputs > 1) {
-                        node.send([armed ? message : null, message]);
-                    } else {
-                        node.send([armed ? message : null]);
-                    }
+            var sendMessage = function (message) {
+                if (node.outputs > 1) {
+                    node.send([armed ? message : null, message]);
+                } else {
+                    node.send([armed ? message : null]);
                 }
-            };
+            }
 
-            // Determine arm/disarm state after trigger has fired
-            node.armDisarmTrigger = config.armDisarm === 'arm' || config.armDisarm === 'disarm' ? config.armDisarm : false;
-
-            // Test for trigger condition and additional conditions
-            node.conditionValue = node.getTypeInputValue(config.triggerConditionType, config.triggerCondition);
-            node.triggerCondition = node.comparator(message.state, node.conditionValue);
-            node.context().set(message.item, node.triggerCondition);
-
-            // If trigger is not armed and we're not using a second output, return immediately
-            if (!armed && config.outputs < 2) {
+            if (!armed) {
                 return;
             }
 
-            if (node.triggerCondition) {
-                // IF TRIGGERED
-                if (node.context().get('currentState') || node.additionalConditions()) {
-                    // Send trigger message only when first triggered
-                    if (!node.context().get('currentState')) {
-                        sendMessage(config.topic, config.topicType, config.payload, config.payloadType);
-                    }
-
-                    // Set/Reset triggered state
-                    node.context().set('triggered', true);
-                    node.context().set('currentState', true);
-                    node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
-                } else {
-                    // Stop further execution
-                    return;
+            switch (node.topicType) {
+                case 'nothing':
+                case 'oh_cmd':
+                case 'str':
+                default: {
+                    // Keep selected topic
+                    break;
                 }
-            } else {
-                // IF UN-TRIGGERED
-                if (node.context().get('currentState')) {
-                    if (node.context().get('triggered') && !node.triggerItemsTriggered(message.item)) {
-                        // Reset trigger
-                        node.context().set('triggered', false);
-
-                        // Set arm/disarm state
-                        if (node.armDisarmTrigger !== false) {
-                            node.armDisarm(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
-                        } else {
-                            node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
-                        }
-                    }
-                } else {
-                    // Stop further execution
-                    return;
+            }
+    
+            switch (node.payloadType) {
+                case 'flow': {
+                    node.payload = node.context().flow.get(node.payload);
+                    break;
+                }
+                case 'global': {
+                    node.payload = node.context().global.get(node.payload);
+                    break;
+                }
+                case 'date': {
+                    node.payload = Date.now();
+                    break;
+                }
+                case 'oh_payload':
+                case 'num':
+                case 'str':
+                default: {
+                    // Keep selected payload
+                    break;
                 }
             }
 
-            // Then
-            switch (config.afterTrigger) {
-                case 'nodelay':
-                case 'timer': {
-                    var delayFunction = function () {
-                        clearTimeout(node.timerObject);
-                        delete node.timerObject;
+            switch (node.conditionType) {
+                case 'flow': {
+                    node.condition = node.context().flow.get(node.condition);
+                    break;
+                }
+                case 'global': {
+                    node.condition = node.context().global.get(node.condition);
+                    break;
+                }
+                case 'num': {
+                    node.condition = parseFloat(node.condition);
+                    break;
+                }
+                case 'oh_payload':
+                case 'str':
+                default: {
+                    node.condition = String(node.condition);
+                    break;
+                }
+            }
 
-                        if (config.afterTrigger === 'timer' && config.timerExpiresAction === 'if_false_reset' && node.context().get('triggered') && node.context().get('armed')) {
-                            node.timerObject = setTimeout(delayFunction, node.timer);
+            var useTimer = node.trigger === 'timer' || node.trigger === 'nodelay';
+            var doNothing = node.trigger === 'nothing';
+            var message = { _msgid: RED.util.generateId(), payload: node.payload, topic: node.topic };
+            var messageEnd = { _msgid: RED.util.generateId(), payload: node.payloadEnd, topic: node.topicEnd };
+            var eventStateAsFloat = parseFloat(event.state);
+            var currentState = isNaN(eventStateAsFloat) ? event.state : eventStateAsFloat;            
+
+            // Save sensor state in node context
+            node.context().set(`currentState`, currentState);
+
+            // If: Sensor triggered
+            if (node.comparator(currentState, node.condition)) {
+                // Only send start message the first time around when using a timer
+                if (!node.triggered) {
+                    sendMessage(message);
+                    node.triggered = true;
+                    node.updateNodeStatus(STATE.TRIGGERED);
+                }
+
+                if (useTimer) {
+                    var timerFunc = function () {
+                        var armed = node.context().get('armed');
+
+                        // If: When timer expires and trigger condition is still true, restart the timer
+                        if (node.resetTimerIfExpired && node.comparator(node.context().get('currentState'), node.condition)) {
+                            node.log(`Rescheduling for ${node.timer} miliseconds`);
+                            clearTimeout(node.timerObject);
+                            node.timerObject = setTimeout(timerFunc, node.timer);
+                            // Else: Clear timer and send 'end'
                         } else {
-                            sendMessage(config.topicEnd, config.topicEndType, config.payloadEnd, config.payloadEndType);
+                            node.triggered = false;
 
-                            // Reset trigger
-                            node.context().set('currentState', false);
+                            sendMessage(messageEnd);
 
-                            // Set arm/disarm state
-                            if (node.armDisarmTrigger !== false) {
-                                node.armDisarm(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
-                            } else {
+                            clearTimeout(node.timerObject);
+
+                            if (node.armDisarmTrigger === false) {
                                 node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                            } else {
+                                node.armTrigger(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
                             }
                         }
                     }
 
-                    if (config.timerExpiresAction === 'if_false_reset' || !node.timerObject) {
-                        clearTimeout(node.timerObject);
-                        delete node.timerObject;
-                        node.timerObject = config.afterTrigger === 'nodelay' ? setImmediate(delayFunction) : setTimeout(delayFunction, node.timer);
-                    }
-                    break;
+                    clearTimeout(node.timerObject);
+                    node.timerObject = node.trigger === 'nodelay' ? setImmediate(timerFunc) : setTimeout(timerFunc, node.timer);                   
                 }
-                case 'untrigger': {
-                    if (node.context().get('currentState') && !node.context().get('triggered')) {
-                        node.context().set('currentState', false);
-                        sendMessage(config.topicEnd, config.topicEndType, config.payloadEnd, config.payloadEndType);
-                    }
-                    break;
-                }
-                default:
-                case 'nothing': {
-                    // Reset trigger
-                    node.context().set('currentState', false);
 
-                    // Set arm/disarm state
-                    if (node.armDisarmTrigger !== false) {
-                        node.armDisarm(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
-                    } else {
+                if (doNothing) {
+                    if (node.armDisarmTrigger === false) {
                         node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                    } else {
+                        node.armTrigger(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
                     }
-                    break;
+
+                    node.triggered = false;
                 }
+            } else {
+                if (!useTimer && !doNothing && node.triggered) {
+                    sendMessage(messageEnd);
+
+                    if (node.armDisarmTrigger === false) {
+                        node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                    } else {
+                        node.armTrigger(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
+                    }
+                }
+
+                node.triggered = false;
+            }
+        }
+
+        node.armTrigger = function (event) {
+            var armed = !['OFF', 0, '0', 'CLOSE'].includes(event.state);
+            var changed = armed !== node.context().get('armed');
+
+            if (!changed) {
+                return;
+            }
+
+            node.context().set('armed', armed);
+
+            if (!armed) {
+                clearTimeout(node.timerObject);
+
+                node.triggered = false;
+                node.updateNodeStatus(STATE.DISARMED);
+            } else {
+                node.updateNodeStatus(STATE.ARMED);
             }
         }
 
@@ -1468,20 +1426,17 @@ module.exports = function (RED) {
          * Attach event handlers
          */
 
+        openHABController.addListener(`${node.triggerItem}/ItemStateChangedEvent`, node.processStateEvent);
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
-        config.triggerArmedState === 'item' && openHABController.addListener(`${config.triggerArmedItem}/ItemStateEvent`, node.armDisarm);
-        node.triggerItems.forEach(function (triggerItem) {
-            openHABController.addListener(triggerItem + `/ItemStateChangedEvent`, node.processStateChangedEvent);
-            openHABController.addListener(triggerItem + `/GroupItemStateChangedEvent`, node.processStateChangedEvent);
-        });
+        config.isTriggerArmedByDefault === 'item' && openHABController.addListener(`${node.triggerArmedItem}/ItemStateEvent`, node.armTrigger);
 
         node.on('close', function () {
-            node.triggerItems.forEach(function (triggerItem) {
-                openHABController.removeListener(triggerItem + `/ItemStateChangedEvent`, node.processStateChangedEvent);
-                openHABController.removeListener(triggerItem + `/GroupItemStateChangedEvent`, node.processStateChangedEvent);
-            });
-            config.triggerArmedState === 'item' && openHABController.removeListener(`${config.triggerArmedItem}/ItemStateEvent`, node.armDisarm);
+            clearTimeout(node.timerObject);
+            delete node.timerObject;
+
             openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
+            config.isTriggerArmedByDefault === 'item' && openHABController.removeListener(`${node.triggerArmedItem}/ItemStateEvent`, node.armTrigger);
+            openHABController.removeListener(`${node.triggerItem}/ItemStateChangedEvent`, node.processStateEvent);
 
             node.log(`closing`);
         });

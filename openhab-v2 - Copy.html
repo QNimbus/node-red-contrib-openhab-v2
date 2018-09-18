@@ -1,0 +1,1617 @@
+<!--
+    OpenHAB nodes for IBM's Node-Red
+    https://github.com/QNimbus/node-red-contrib-openhab2
+    (c) 2018, Bas van Wetten <bas.van.wetten@gmail.com>
+    
+    Licensed under the Apache License, Version 2.0 (the 'License');
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an 'AS IS' BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    
+-->
+
+<!--
+    ********************
+    * Node definitions *
+    ********************
+    
+-->
+
+<script type='text/javascript'>
+    RED.nodes.registerType('openhab-v2-controller', {
+        category: 'config',
+        defaults: {
+            name: {
+                value: '',
+                required: true,
+            },
+            protocol: {
+                value: 'http',
+                required: true,
+            },
+            host: {
+                value: 'localhost',
+                required: true,
+            },
+            port: {
+                value: 8080,
+                validate: RED.validators.number(),
+                required: false,
+            },
+            path: {
+                value: '',
+            },
+            username: {
+                value: '',
+                required: false,
+            },
+            password: {
+                value: '',
+                required: false,
+            },
+            allowRawEvents: {
+                value: true,
+                required: true,
+            }
+        },
+        paletteLabel: 'openhab-v2-controller',
+        label: function () {
+            return this.name;
+        }
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+    RED.nodes.registerType('openhab-v2-events', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'left',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            items: {
+                value: [],
+                required: true,
+            },
+        },
+        inputs: 0,
+        outputs: 1,
+        inputLabels: [],
+        outputLabels: ['RawEvents'],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'events',
+        label: function () {
+            return (this.name || 'events');
+        },
+        oneditprepare: function () {
+            getItemList(this.items, '#node-input-items', false, true);
+        },
+        oneditsave: function () {
+            workaroundForEmptyItemsList(this, '#node-input-items');
+        }
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+    RED.nodes.registerType('openhab-v2-in', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'left',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            item: {
+                value: '',
+                required: false,
+            },
+            eventTypes: {
+                value: [],
+                required: true,
+            },
+            outputAtStartup: {
+                value: true,
+                required: true,
+            },
+            storeStateInFlow: {
+                value: false,
+                required: true,
+            },
+        },
+        inputs: 0,
+        outputs: 2,
+        inputLabels: [],
+        outputLabels: ['StateEvent', 'RawEvent'],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'in',
+        label: function () {
+            return (this.name || this.item || 'in');
+        },
+        oneditprepare: function () {
+            getItemList(this.item, '#node-input-item');
+            getEventTypeList(this);
+        },
+        oneditsave: function () {
+            workaroundForEmptyItemsList(this, '#node-input-eventTypes');
+        }
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+    RED.nodes.registerType('openhab-v2-out', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'right',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            item: {
+                value: '',
+                required: false,
+            },
+            topic: {
+                value: 'topic',
+            },
+            topicType: {
+                value: 'msg',
+            },
+            payload: {
+                value: 'payload',
+            },
+            payloadType: {
+                value: 'msg',
+            },
+            storeStateInFlow: {
+                value: false,
+                required: true,
+            },
+        },
+        inputs: 1,
+        outputs: 0,
+        inputLabels: ['OpenHAB command'],
+        outputLabels: [],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'out',
+        label: function () {
+            return (this.name || this.item || 'out');
+        },
+        oneditprepare: function () {
+            var OpenHABTypes = {
+                value: 'oh_cmd',
+                label: 'OpenHAB',
+                icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
+                options: ['ItemCommand', 'ItemUpdate']
+            };
+
+            var OpenHABPayload = {
+                value: 'oh_payload',
+                label: 'OpenHAB',
+                icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
+                options: ['ON', 'OFF', 'OPEN', 'CLOSED'],
+            }
+
+            $('#node-input-topic').typedInput({
+                types: [OpenHABTypes, 'str', 'msg'],
+                default: 'msg',
+                value: 'topic',
+                typeField: $('#node-input-topicType'),
+            });
+            $('#node-input-payload').typedInput({
+                types: [OpenHABPayload, 'msg', 'flow', 'global', 'str', 'num', 'date'],
+                default: 'msg',
+                value: 'payload',
+                typeField: $('#node-input-payloadType'),
+            });
+            $('#node-input-topicType').val(this.topicType);
+            $('#node-input-payloadType').val(this.payloadType);
+
+            getItemList(this.item, '#node-input-item', false, true);
+        },
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+    RED.nodes.registerType('openhab-v2-get', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'left',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            item: {
+                value: '',
+                required: false,
+            },
+        },
+        inputs: 1,
+        outputs: 1,
+        inputLabels: ['Item'],
+        outputLabels: [],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'get',
+        label: function () {
+            return (this.name || 'get');
+        },
+        oneditprepare: function () {
+            getItemList(this.item, '#node-input-item', false, true);
+        }
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+    RED.nodes.registerType('openhab-v2-proxy', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'right',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            proxyDirection: {
+                value: 2,
+                required: true,
+                validate: RED.validators.number(),
+            },
+            item: {
+                value: '',
+                required: true,
+            },
+            itemPostfix: {
+                value: '_Updates',
+                required: false,
+            },
+            proxyItem: {
+                value: '',
+                required: true,
+            },
+            topic: {
+                value: 'topic',
+            },
+            topicType: {
+                value: 'msg',
+            },
+            payload: {
+                value: 'payload',
+            },
+            payloadType: {
+                value: 'msg',
+            },
+            storeStateInFlow: {
+                value: false,
+                required: true,
+            },
+        },
+        inputs: 1,
+        outputs: 0,
+        inputLabels: ['OpenHAB command'],
+        outputLabels: [],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'proxy',
+        label: function () {
+            return (this.name || this.proxyItem || 'proxy');
+        },
+        oneditprepare: function () {
+            var OpenHABTypes = {
+                value: 'oh_cmd',
+                label: 'OpenHAB',
+                icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
+                options: ['ItemCommand', 'ItemUpdate']
+            };
+
+            $('#node-input-topic').typedInput({
+                types: [OpenHABTypes, 'str', 'msg'],
+                default: 'msg',
+                value: 'topic',
+                typeField: $('#node-input-topicType'),
+            });
+            $('#node-input-payload').typedInput({
+                types: ['msg', 'flow', 'global', 'str', 'num', 'date'],
+                default: 'msg',
+                value: 'payload',
+                typeField: $('#node-input-payloadType'),
+            });
+            $('#node-input-topicType').val(this.topicType);
+            $('#node-input-payloadType').val(this.payloadType);
+
+            getItemList(this.item, '#node-input-item');
+            getItemList(this.proxyItem, '#node-input-proxyItem');
+
+            // Hide Item postfix field by default; only if both directions are enabled
+            $('#itemPostfix_div').hide();
+            $('#node-input-proxyDirection').change(function (event) {
+                if ($('#node-input-proxyDirection').val() == 3) {
+                    $('#itemPostfix_div').show();
+                } else {
+                    $('#itemPostfix_div').hide();
+                }
+            })
+        }
+    });
+</script>
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+
+    RED.nodes.registerType('openhab-v2-trigger', {
+        category: 'OpenHAB',
+        color: '#ff6600',
+        align: 'left',
+        defaults: {
+            name: {
+                value: '',
+            },
+            controller: {
+                value: '',
+                type: 'openhab-v2-controller',
+                required: true,
+            },
+            triggerItem: {
+                value: '',
+                required: false,
+            },
+            triggerArmedItem: {
+                value: '',
+                required: false,
+            },
+            isTriggerArmedByDefault: {
+                value: 'false',
+            },
+            allowInput: {
+                value: false,
+            },
+            trigger: {
+                value: 'nodelay',
+            },
+            comparator: {
+                value: 'eq',
+                required: true,
+            },
+            condition: {
+                value: 'ON',
+            },
+            conditionType: {
+                value: 'oh_payload',
+            },
+            topic: {
+                value: 'topic',
+            },
+            topicType: {
+                value: 'oh_cmd',
+            },
+            payload: {
+                value: 'ON',
+            },
+            payloadType: {
+                value: 'str',
+            },
+            timer: {
+                value: 10,
+                validate: function (v) { return RED.validators.number(v) && (v >= 0); },
+            },
+            timerUnits: {
+                value: 'seconds',
+            },
+            timerExpiresAction: {
+                value: 'continue',
+            },
+            topicEnd: {
+                value: 'topic',
+            },
+            topicEndType: {
+                value: 'ItemCommand',
+            },
+            payloadEnd: {
+                value: 'OFF',
+            },
+            payloadEndType: {
+                value: 'str',
+            },
+            armDisarm: {
+                value: '',
+            }
+        },
+        inputs: 0,
+        outputs: 1,
+        inputLabels: [],
+        outputLabels: [],
+        icon: 'node-red-contrib-openhab-v2.png',
+        paletteLabel: 'trigger',
+        label: function () {
+            return (this.name || this.triggerItem || 'trigger');
+        },
+        oneditprepare: function () {
+            var node = this;
+
+            getItemList(this.triggerItem, '#node-input-triggerItem');
+            getItemList(this.triggerArmedItem, '#node-input-triggerArmedItem', false, false, ['Switch']);
+
+            $('#node-input-timer').spinner({ min: 1 });
+
+            $('.ui-spinner-button').click(function () {
+                $(this).siblings('input').change();
+            });
+
+            var NothingType = {
+                value: 'nothing',
+                label: 'nothing',
+                hasValue: false,
+            };
+
+            var OpenHABTypes = {
+                value: 'oh_cmd',
+                label: 'OpenHAB',
+                icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
+                options: ['ItemCommand', 'ItemUpdate']
+            };
+
+            var OpenHABPayload = {
+                value: 'oh_payload',
+                label: 'OpenHAB',
+                icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
+                options: ['ON', 'OFF', 'OPEN', 'CLOSED'],
+            }
+
+            $('#node-input-topic').typedInput({
+                types: [OpenHABTypes, 'str', NothingType],
+                default: 'oh_cmd',
+                value: 'topic',
+                typeField: $('#node-input-topicType'),
+            });
+            $('#node-input-payload').typedInput({
+                types: [OpenHABPayload, 'flow', 'global', 'str', 'num', 'date'],
+                default: 'str',
+                value: 'payload',
+                typeField: $('#node-input-payloadType'),
+            });
+            $('#node-input-topicEnd').typedInput({
+                types: [OpenHABTypes, 'str'],
+                default: 'oh_cmd',
+                value: 'topic',
+                typeField: $('#node-input-topicEndType'),
+            });
+            $('#node-input-payloadEnd').typedInput({
+                types: [OpenHABPayload, 'flow', 'global', 'str', 'num', 'date'],
+                default: 'str',
+                value: 'payload',
+                typeField: $('#node-input-payloadEndType'),
+            });
+            $('#node-input-condition').typedInput({
+                types: [OpenHABPayload, 'global', 'flow', 'str', 'num'],
+                default: 'str',
+                value: '',
+                typeField: $('#node-input-conditionType'),
+            });
+
+            $('#node-input-condition').val(this.condition);
+            $('#node-input-conditionType').val(this.conditionType);
+            $('#node-input-topicType').val(this.topicType);
+            $('#node-input-payloadType').val(this.payloadType);
+            $('#node-input-topicEndType').val(this.topicEndType);
+            $('#node-input-payloadEndType').val(this.payloadEndType);
+            $('#node-input-conditionType').val(this.conditionType);
+            $('#node-input-timerExpiresAction').val(this.timerExpiresAction);
+            $('#node-input-trigger').val(this.trigger);
+
+            $('input[type=hidden]').filter((index, element) => {
+                return element.id.match(/^node-input-topic(End)?$/);
+            }).change((event) => {
+                var element = $(event.target);
+                var value = element.val();
+                var elementId = element.attr('id');
+
+                if (value !== '') {
+                    switch (elementId) {
+                        case 'node-input-topic': {
+                            $('#message-row2').show();
+                            break;
+                        }
+                        case 'node-input-topicEnd': {
+                            if ($('#node-input-trigger').val() !== 'nothing') {
+                                $('#endmessage-row2').show();
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    switch (elementId) {
+                        case 'node-input-topic': {
+                            $('#message-row2').hide();
+                            break;
+                        }
+                        case 'node-input-topicEnd': {
+                            $('#endmessage-row2').hide();
+                            break;
+                        }
+                    }
+                }
+            });
+
+            $('#node-input-allowInput').change(() => {
+                if ($('#node-input-allowInput').is(':checked')) {
+                    node.inputs = 1;
+                } else {
+                    node.inputs = 0;
+                }
+            });
+
+            $('#node-input-isTriggerArmedByDefault').change(() => {
+                if ($('#node-input-isTriggerArmedByDefault').val() === 'item') {
+                    $('#triggerArmedItemRow').show();
+                    // node.outputs = 2;
+                } else {
+                    $('#triggerArmedItemRow').hide();
+                    // node.outputs = 1;
+                }
+            });
+
+            $('#node-input-trigger').change(() => {
+                switch ($('#node-input-trigger').val()) {
+                    case 'timer': {
+                        $('[id^=timer-row]').show();
+                        $('[id^=endmessage-row1]').show();
+                        if ($('#node-input-topicEndType').val() !== 'nothing') {
+                            $('[id^=endmessage-row2]').show();
+                        } else {
+                            $('[id^=endmessage-row2]').hide();
+                        }
+                        break;
+                    };
+                    case 'nothing': {
+                        $('[id^=timer-row]').hide();
+                        $('[id^=endmessage-row]').hide();
+                        break;
+                    };
+                    default: {
+                        $('[id^=timer-row]').hide();
+                        $('[id^=endmessage-row1]').show();
+                        if ($('#node-input-topicEndType').val() !== 'nothing') {
+                            $('[id^=endmessage-row2]').show();
+                        } else {
+                            $('[id^=endmessage-row2]').hide();
+                        }
+                        break;
+                    }
+                }
+            });
+        },
+    });
+</script>
+
+<!--
+
+    *************************
+    * Miscellaneous scripts *
+    *************************
+    
+-->
+
+<script type='text/javascript'>
+    /**
+     * sortBy
+     * 
+     * Utility function to sort items object (e.g. by name)
+     *
+     */
+    function sortBy(sortObject, sortProperty, caseSensitive = true, sortDesc = false) {
+        try {
+            sortObject.sort(function (a, b) {
+                a = caseSensitive ? a[sortProperty] : a[sortProperty].toLowerCase();
+                b = caseSensitive ? b[sortProperty] : b[sortProperty].toLowerCase();
+
+                if (a < b)
+                    return sortDesc ? 1 : -1;
+                else if (a > b)
+                    return sortDesc ? -1 : 1;
+                else
+                    return 0;
+            });
+        } catch (error) {
+            // Unable to sort (i.e. unknown property?)
+        }
+
+        return sortObject;
+    }
+
+    /**
+     * workaroundForEmptyItemsList
+     * 
+     * Since 'invalid' form elements do not get POSTed (an empty multiselect input element is considered 'invalid'), the NodeRED frontend
+     * will not allow user to deploy the node/flow when no items are selected. To workaround this issue, an empty option will be added
+     * dynamically to trick the DOM into POSTing the form with the SELECT input element. Backend needs to account for a single '' (empty string)
+     * value being passed in case nothing is selected.
+     *
+     */
+    function workaroundForEmptyItemsList(node, elementName) {
+        var selectedItemElement = $(elementName);
+        var selectedItems = selectedItemElement.find('option').filter(':selected');
+
+        if (selectedItems && selectedItems.length === 0) {
+            var optionElement = document.createElement('option');
+            selectedItemElement.append(optionElement).children().last().attr('selected', 'selected');
+        }
+    }
+
+    /**
+     * getItemList
+     * 
+     * To do...
+     *
+     */
+    function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEmpty = false, itemTypeFilter = []) {
+
+        function updateItemList(controller, selectedItemElement, itemName, refresh = false, itemTypeFilter = []) {
+
+            // Remove all previous and/or static (if any) elements from 'select' input element
+            selectedItemElement.children().remove();
+
+            if (controller) {
+                $.getJSON('/openhab2/itemlist', {
+                    controllerID: controller.id,
+                    forceRefresh: refresh
+                })
+                    .done(function (data, textStatus, jqXHR) {
+                        try {
+                            var items = sortBy(data, 'name');
+
+                            // Remove all previous and/or static (if any) elements from 'select' input element
+                            selectedItemElement.children().remove();
+
+                            if (allowEmpty) {
+                                var optionElement = document.createElement('option');
+                                selectedItemElement.append(optionElement).children().last().attr('value', '');
+                            }
+
+                            items.forEach(function (item) {
+                                var optionElement = document.createElement('option');
+                                var addItem = true;
+
+                                if (itemTypeFilter.length > 0) {
+                                    if (!itemTypeFilter.includes(item.type)) {
+                                        addItem = false;
+                                    }
+                                }
+
+                                if (addItem) {
+                                    selectedItemElement.append(optionElement).children().last().attr('value', item.name).html(item.name);
+                                }
+                            });
+
+                            // Enable item selection
+                            selectedItemElement.multiselect('enable');
+
+                            // Finally, set the value of the input select to the selected value
+                            selectedItemElement.val(itemName);
+
+                            // Rebuild bootstrap multiselect form
+                            selectedItemElement.multiselect('rebuild');
+                        } catch (error) {
+                            console.error(`Error: ${error}`);
+                        }
+
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        // Disable item selection if no items were retrieved
+                        selectedItemElement.multiselect('disable');
+                        selectedItemElement.multiselect('refresh');
+
+                        console.error(`Error: ${errorThrown}`);
+                    });
+            } else {
+                // Disable item selection if no (valid) controller was selected
+                selectedItemElement.multiselect('disable');
+                selectedItemElement.multiselect('refresh');
+            }
+        }
+
+        var selectedItemElement = $(selectedItemElementName);
+        var selectedItem = selectedItemElement.val();
+        var openHABControllerElement = $('#node-input-controller');
+        var openHABControllerValue = openHABControllerElement.val();
+        var openHABController = RED.nodes.node(openHABControllerValue);
+        var refreshListElement = $('#force-refresh');
+
+        // Initialize bootstrap multiselect form
+        selectedItemElement.multiselect({
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            filterPlaceholder: 'Filter items...',
+            includeResetOption: true,
+            includeResetDivider: true,
+            numberDisplayed: 1,
+            maxHeight: 300,
+            disableIfEmpty: true,
+            nSelectedText: 'selected',
+            nonSelectedText: 'None selected',
+        });
+
+        // Initial call to populate item list
+        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, false, itemTypeFilter);
+
+        // onChange event handler in case a new controller gets selected
+        openHABControllerElement.change(function (event) {
+            // Only handle event if the value has actually changed
+            if (openHABControllerValue !== openHABControllerElement.val()) {
+                updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter);
+            }
+        });
+
+        refreshListElement.click(function (event) {
+            // Force a refresh of the item list
+            updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter);
+        });
+    }
+
+
+    /**
+     * workaroundForEmptyItemsList
+     * 
+     * To do...
+     *
+     */
+    function getEventTypeList(node) {
+
+        var selectedEventsElement = $('#node-input-eventTypes');
+        var selectedEvents = selectedEventsElement.val();
+        var openHABControllerElement = $('#node-input-controller');
+        var openHABController = RED.nodes.node(openHABControllerElement.val());
+
+        // Initialize bootstrap multiselect form
+        selectedEventsElement.multiselect({
+            enableFiltering: false,
+            numberDisplayed: 1,
+            maxHeight: 300,
+            disableIfEmpty: true,
+            nSelectedText: 'selected',
+            nonSelectedText: 'None selected',
+        });
+    }
+</script>
+
+<!--
+    ***********************
+    * Node edit templates *
+    ***********************
+    
+-->
+
+<script type='text/x-red' data-template-name='openhab-v2-controller'>
+    <div class='form-row'>
+        <label for='node-config-input-name'><i class='fa fa-tag'></i> Name</label>
+        <input type='text' id='node-config-input-name' placeholder='Name'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-protocol'><i class='fa fa-unlock-alt'></i> Protocol</label>
+        <select id='node-config-input-protocol' name='node-config-input-protocol' style='width: 250px;'>
+    <option value='http'>http</option>
+    <option value='https'>https</option>
+        </select>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-host'><i class='fa fa-globe'></i> Host</label>
+        <input type='text' id='node-config-input-host'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-port'><i class='icon-bookmark'></i> Port</label>
+        <input type='text' id='node-config-input-port'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-path'><i class='fa fa-chevron-right'></i> Path</label>
+        <input type='text' id='node-config-input-path'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-username'><i class='fa fa-user'></i> Username</label>
+        <input type='text' id='node-config-input-username'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-password'><i class='fa fa-user-secret'></i> Password</label>
+        <input type='password' id='node-config-input-password'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-allowRawEvents'><i class='fa fa-bars'></i> Raw events</label>
+        <input type='checkbox' id='node-config-input-allowRawEvents' style='width:auto; margin: 0;' disabled="disabled" checked="checked">
+    </div>
+</script>
+
+<script type='text/x-red' data-template-name='openhab-v2-events'>
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        .multiselect {
+            width: 100%;
+        }
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        .multiselect-clear-filter {
+            display: none;
+        }
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        .multiselect-container > li > a > label.checkbox {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }       
+        .multiselect-container label.checkbox input[type='checkbox'] {
+            display: none;
+        } 
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />      
+    <div class='form-row'>
+        <label for='node-input-name'><i class='fa fa-tag'></i> Name</label>
+        <input type='text' id='node-input-name' placeholder='Name'>
+    </div>
+    <div class='form-row'>
+        <label for='node-input-controller'><i class='fa fa-globe'></i> Controller</label>
+        <input type='text' id='node-input-controller'>
+    </div>
+    <div class="form-row">
+        <label for="node-input-items"><i class="fa fa-crosshairs"></i> Item name(s)</label>
+        <select id="node-input-items" name="node-input-items" multiple="multiple">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-in">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        .multiselect {
+            width: 100%;
+        }
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        .multiselect-clear-filter {
+            display: none;
+        }
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />    
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item name</label>
+        <select id="node-input-item" name="node-input-item">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> Event types</label>
+        <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple">
+            <option value="ItemCommandEvent">ItemCommand</option>
+            <option value="ItemStateEvent">ItemStateEvent</option>
+            <option value="ItemStateChangedEvent">ItemStateChanged</option>
+        </select>
+    </div>
+    <div class='form-row'>
+        <label for='node-input-outputAtStartup'><i class='fa fa-share-square'></i> Start output</label>
+        <input type='checkbox' id='node-input-outputAtStartup' style='width:auto; margin: 0;' checked="checked">
+    </div>
+    <div class='form-row'>
+        <label for='node-input-storeStateInFlow'><i class='fa fa-edit'></i> Store state</label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-out">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        .multiselect {
+            width: 100%;
+        }
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        .multiselect-clear-filter {
+            display: none;
+        }
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />     
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item name</label>
+        <select id="node-input-item" name="node-input-item">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" style="width:70%">
+        <input type="hidden" id="node-input-topicType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+        <input type="text" id="node-input-payload" style="width:70%">
+        <input type="hidden" id="node-input-payloadType">
+    </div>
+    <div class='form-row'>
+        <label for='node-input-storeStateInFlow'><i class='fa fa-edit'></i> Store state</label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-get">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        .multiselect {
+            width: 100%;
+        }
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        .multiselect-clear-filter {
+            display: none;
+        }
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />     
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item name</label>
+        <select id="node-input-item" name="node-input-item">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-proxy">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        .multiselect {
+            width: 100%;
+        }
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        .multiselect-clear-filter {
+            display: none;
+        }
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />     
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-proxyDirection"><i class="fa fa-arrows-h"></i> Direction </label>
+        <select id="node-input-proxyDirection" name="node-input-proxyDirection">
+            <option value="3">proxy item &larr;&rarr; item</option>
+            <option value="2">proxy item &rarr; item</option>
+            <option value="1">item &rarr; proxy item</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item </label>
+        <select id="node-input-item" name="node-input-item">
+        </select>
+    </div>
+    <div id="itemPostfix_div" class="form-row">
+        <label for="node-input-itemPostfix"><i class="fa fa-crosshairs"></i> Item postfix </label>
+        <input type="text" id="node-input-itemPostfix" name="node-input-itemPostfix" style="width:70%" placeholder="_Updates">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-proxyItem"><i class="fa fa-crosshairs"></i> Proxy item </label>
+        <select id="node-input-proxyItem" name="node-input-proxyItem">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" style="width:70%">
+        <input type="hidden" id="node-input-topicType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+        <input type="text" id="node-input-payload" style="width:70%">
+        <input type="hidden" id="node-input-payloadType">
+    </div>    
+    <div class='form-row'>
+        <label for='node-input-storeStateInFlow'><i class='fa fa-edit'></i> Store state</label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-trigger">
+    <style type='text/css'>
+        .btn-group {
+            width: 70%;
+        }
+        
+        .multiselect {
+            width: 100%;
+        }
+        
+        .form-row input.multiselect-search {
+            width: 100%;
+        }
+        
+        .multiselect-clear-filter {
+            display: none;
+        }
+        
+        .dropdown-menu {
+            width: 100% !important;
+        }
+        
+        .multiselect-container input[type='checkbox'] {
+            display: none;
+        }
+        
+        .multiselect-container > li > a > label.radio {
+            margin: 5px;
+            width: 90%;
+            height: 100%;
+            cursor: pointer;
+            font-weight: 400;
+            padding: 3px 20px 3px 20px;
+        }
+        
+        .multiselect-container label.radio input[type='radio'] {
+            display: none;
+        }
+    </style>
+    <link rel='stylesheet' href='openhab2/static/css/bootstrap-multiselect.css' type='text/css' />
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-isTriggerArmedByDefault"></label>
+        <select id="node-input-isTriggerArmedByDefault" name="node-input-isTriggerArmedByDefault" style="width: 70%;">
+            <option value="item">Use arm/disarm item</option>
+            <option value="true">Trigger is armed by default</option>
+            <option value="false">Trigger is disarmed by default</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-allowInput" style="margin-left: 0px; vertical-align: top; width: auto !important;"> <label style="width:auto !important;" for="node-input-allowInput"> enable input to arm/disarm trigger</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-triggerItem"><i class="fa fa-crosshairs"></i> Trigger</label>
+        <select id="node-input-triggerItem" name="node-input-triggerItem">
+        </select>
+    </div>
+    <div class="form-row" id="triggerArmedItemRow">
+        <label for="node-input-triggerArmedItem"><i class="fa fa-bullseye"></i> Arm/Disarm</label>
+        <select id="node-input-triggerArmedItem" name="node-input-triggerArmedItem">
+        </select>
+    </div>
+    <div class="form-row">
+        <label></label>
+        <strong>Trigger when</strong>
+    </div>
+    <div class="form-row">
+        <label for="node-input-condition">Trigger.state</label>
+        <select id="node-input-comparator" style="text-align: center; width: 75px;">
+                <option value="eq">==</option>
+                <option value="neq">!=</option>
+                <option value="lt">&lt;</option>
+                <option value="lte">&lt;=</option>
+                <option value="gt">&gt;</option>
+                <option value="gte">&gt;=</option>
+        </select>
+        <input type="text" id="node-input-condition" style="width:fit-content">
+        <input type="hidden" id="node-input-conditionType">
+    </div>
+    <div class="form-row">
+            <label></label>
+            <strong>Send when triggered</strong>
+    </div>
+    <div class="form-row" id="message-row1">
+            <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+            <input type="text" id="node-input-topic" style="width:70%">
+            <input type="hidden" id="node-input-topicType">
+    </div>
+    <div class="form-row" id="message-row2">
+            <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+            <input type="text" id="node-input-payload" style="width:70%">
+            <input type="hidden" id="node-input-payloadType">
+    </div>
+    <div class="form-row">
+            <label></label>
+            <strong>Then</strong>
+    </div>
+    <div class="form-row">
+        <label for="node-input-trigger"></label>
+        <select id="node-input-trigger" name="node-input-trigger" style="width: 70%;">
+            <option value="nothing">Do nothing</option>
+            <option value="nodelay">Do not wait</option>
+            <option value="timer">Start timer</option>
+            <option value="">Wait until trigger condition is false</option>
+        </select>
+    </div>
+    <div class="form-row" id="timer-row1">
+            <label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
+            <input type="text" id="node-input-timer" style="text-align:end; width:50px !important">
+            <select id="node-input-timerUnits" style="width:200px !important">
+                <option value="milliseconds">milliseconds</option>
+                <option value="seconds">seconds</option>
+                <option value="minutes">minutes</option>
+            </select>
+    </div>
+    <div class="form-row" id="timer-row2">
+        <label></label>
+        <strong>When timer expires</strong>        
+    </div>
+    <div class="form-row" id="timer-row3">
+        <label for="node-input-timerExpiresAction"></label>
+        <select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction" style="width: 70%;">
+            <option value="continue">Continue</option>
+            <option value="continue_false">Continue only if trigger condition is false</option>
+        </select>
+    </div>
+    <div class="form-row" id="endmessage-row0">
+        <label></label>
+        <strong>Then send</strong>
+    </div>
+    <div class="form-row" id="endmessage-row1">
+            <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
+            <input type="text" id="node-input-topicEnd" style="width:70%">
+            <input type="hidden" id="node-input-topicEndType">
+    </div>
+    <div class="form-row" id="endmessage-row2">
+            <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
+            <input type="text" id="node-input-payloadEnd" style="width:70%">
+            <input type="hidden" id="node-input-payloadEndType">
+    </div>
+    <div class="form-row">
+        <label></label>
+        <strong>Finally</strong>
+    </div>
+    <div class="form-row">
+        <label for="node-input-armDisarm"><i class="fa fa-bullseye"></i> Trigger</label>
+        <select id="node-input-armDisarm" name="node-input-armDisarm" style="width: 70%;">
+            <option value="">Leave trigger arm/disarm state as is</option>
+            <option value="arm">Arm trigger</option>
+            <option value="disarm">Disarm trigger</option>
+        </select>
+    </div>       
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" class="btn btn-warning" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+
+<!--
+    *******************
+    * Node help texts *
+    *******************
+    
+-->
+
+<script type='text/x-red' data-help-name='openhab-v2-controller'>
+    <p>Configuration node for communication with an OpenHAB controller.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Protocol
+            <span class="property-type">string</span>
+        </dt>
+        <dd>'http' or 'https'</dd>
+        <dt>Host
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the controllers hostname.</dd>       
+        <dt>Port
+            <span class="property-type">number</span>
+        </dt>
+        <dd>Specify the controllers ip port.</dd>
+        <dt class="optional">Path
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the additional base path.</dd>
+        <dt class="optional">Username
+                <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the username to authenticate with.</dd>
+        <dt class="optional">Password
+                <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the password to authenticate with.</dd>
+        <dt>Raw events
+                <span class="property-type">boolean</span>
+        </dt>
+        <dd>Enables/disabled the emitting of raw events.</dd>
+        <dd><sub>currently disabled, see <a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1">issue #1</a></sub></dd>
+    </dl> 
+</script>
+
+<script type='text/x-red' data-help-name='openhab-v2-events'>
+    <p>Listens to events on the OpenHAB eventbus.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name(s)
+                <span class="property-type">string []</span>
+            </dt>
+            <dd>Item(s) to watch for events.</dd>        
+    </dl>    
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>topic
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Topic of the event (e.g. <i>smarthome/items/MyItemName/state</i>).</dd>
+        <dt>payload
+            <span class="property-type">string</span>
+        </dt>
+        <dd>State of the event item.</dd>
+        <dt>type
+                <span class="property-type">string</span>
+            </dt>
+            <dd>Message type. (e.g. <i>ItemStateEvent</i>, <i>ItemStateChangeEvent</i>, <i>ItemCommandEvent</i>, etc)</dd>              
+    </dl>
+    <h3>Details</h3>
+    <p>Will output any events it gets from the openhab-v2-controller (Eventbus) for all items or (a) specific item(s).</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-in">
+    <p>Listens to state changes of a selected OpenHAB Item. Will only watch for selected event types for the 1st output channel. The 2nd channel (Raw events) are all passed into the flow without filtering for specific event types.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item to send message to.</dd>
+        <dt class="optional">Event types
+            <span class="property-type">string []</span>
+        </dt>
+        <dd>Output state at startup.</dd>
+        <dt>Start output
+            <span class="property-type">boolean</span>
+        </dt>
+        <dd>Whether or not to emit state at start of flow.</dd>
+        <dd>Store node state in flow context.</dd>
+        <dt>Store state
+            <span class="property-type">boolean</span>
+        </dt>
+        <dd>Whether or not to store the node state in the flow context in a variable with the same name as the OpenHAB item.</dd> 
+    </dl>    
+    <h3>Outputs</h3>
+    <h5>StateEvent</h5>
+    <dl class="message-properties">
+        <dt>item
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item name.</dd>
+        <dt>topic
+            <span class="property-type">string</span>
+        </dt>
+        <dd>"<i>StateEvent</i>"</dd>
+        <dt>payload
+                <span class="property-type">string</span>
+            </dt>
+            <dd>New state of the selected item.</dd>            
+    </dl>
+    <h5>RawEvent</h5>
+    <dl class="message-properties">
+            <dt>item
+                    <span class="property-type">string</span>
+                </dt>
+                <dd>Item name.</dd>
+                <dt>topic
+                    <span class="property-type">string</span>
+                </dt>
+                <dd>"<i>RawEvent</i>"</dd>
+                <dt>payload
+                        <span class="property-type">string</span>
+                    </dt>
+                    <dd>Raw (unprocessed) event of the item.</dd>        
+        </dl>
+    <h3>Details</h3>
+    <p>This node will retrieve OpenHAB item state information as soon as it receives a message on it's input.
+    The item state information will be retrieved for the item specified by <code>msg.item</code> on the input message.
+    If the node config has an item name configured this will override the <code>msg.item</code> on the input message.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-out">
+    <p>Output a message to the openab-v2-controller. Can be overridden by the configured item, topic and/or payload on the node itself.</p>
+    <p>e.g. "ON", "OFF", "REFRESH", "50", et cetera</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt>Item name<span class="property-type">string</span></dt>
+        <dd>Item to send message to</dd>
+        <dt class="optional">Topic <span class="property-type">string</span></dt>
+        <dd>An optional property that can be configured in the node.</dd>
+        <dt>Payload<span class="property-type">various</span></dt>
+        <dd>The configured payload of the message.</dd>            
+    </dl>    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">item<span class="property-type">string</span></dt>
+        <dd>Item name.</dd>       
+    </dl>
+    <h3>Details</h3>
+    <p>This node will send a message to the selected OpenHAB controller. If the item name, topic and/or payload are not configured it will get these properties from the input message.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-get">
+    <p>Fetch item state information based on incomming message payload. Can be overriden by the configured item on the node itself.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item to send message to.</dd>
+    </dl>    
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt class="optional">item
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item name.</dd>
+    </dl>
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">as per input</span>
+        </dt>
+        <dd>State information of the item.</dd>
+        <dt>payload_in
+            <span class="property-type">as per input</span>
+        </dt>
+        <dd>Copy of the incomming message.</dd>        
+    </dl>
+    <h3>Details</h3>
+    <p>This node will retrieve OpenHAB item state information as soon as it receives a message on it's input.
+    The item state information will be retrieved for the item specified by <code>msg.item</code> on the input message.
+    If the node config has an item name configured this will override the <code>msg.item</code> on the input message.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-proxy">
+    <p>Description.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name</dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller <span class="property-type">(object)</span></dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt>Direction<span class="property-type">string</span></dt>
+        <dd>Select the direction to send updates (item to proxy, proxy to item or both ways)</dd>
+        <dt>Item name<span class="property-type">string</span></dt>
+        <dd>Specify item to link to proxy item</dd>
+        <dt>Item postfix<span class="property-type">string</span></dt>
+        <dd>If the proxy item needs to be updated in both directions (i.e. item <--> proxy <--> item) then you need to create a copy of the item with the same binding that will receive the item updates.
+        This parameter defines the postfix used for the item copies. (e.g. <i>MyLightSwitch</i> and <i>MyLightSwitch_Updates</i>) Make sure the item name with postfix actually exist.</dd>        
+        <dt>Proxy item<span class="property-type">string</span></dt>
+        <dd>Specify the proxy item</dd>
+        <dt class="optional">Topic <span class="property-type">string</span></dt>
+        <dd>An optional property that can be configured in the node.</dd>
+        <dt>Payload<span class="property-type">various</span></dt>
+        <dd>The configured payload of the message.</dd>
+    </dl>    
+    <h3>Details</h3>
+    <p>Detailed description.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-trigger">
+    <p>Description</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item to send message to.</dd>
+    </dl>    
+    <h3>Outputs</h3>
+    <h3>Details</h3>
+    <p>Details</p>
+</script>
