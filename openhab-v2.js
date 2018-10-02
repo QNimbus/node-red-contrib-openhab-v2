@@ -1354,6 +1354,8 @@ module.exports = function (RED) {
                 topic = node.getTypeInputValue(topicType, topic);
                 payload = node.getTypeInputValue(payloadType, payload);
 
+                node.log(`Send message payload: ${payload}`);
+
                 if (topic) {
                     var message = { _msgid: RED.util.generateId(), payload: payload, topic: topic };
 

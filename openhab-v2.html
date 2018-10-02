@@ -442,7 +442,7 @@
 				value: 'oh_payload',
 			},
 			afterTrigger: {
-				value: 'timer',
+				value: 'untrigger',
 			},
 			timer: {
 				value: 10,
@@ -452,7 +452,7 @@
 				value: 'seconds',
 			},
 			advancedTimerToggle: {
-				value: true,
+				value: false,
 			},
 			advancedTimer: {
 				value: 10000,
@@ -500,7 +500,7 @@
 				}
 			};
 
-			selectField.val(node.comparator);
+			// selectField.val(node.comparator);
 
 			// Enable/Disable input
 			$('#node-input-enableInput').change(() => {
@@ -521,7 +521,7 @@
 				}
 			});
 
-			// Trigger condition
+			// // Trigger condition
 			$('#node-input-triggerCondition').typedInput({
 				types: [OpenHABPayload, 'global', 'flow', 'str', 'num'],
 				default: 'oh_payload',
@@ -684,21 +684,25 @@
 
 			// Enable/Disable advanced timer options
 			$('#node-input-advancedTimerToggle').change(() => {
-				if ($('#node-input-advancedTimerToggle').is(':checked')) {
-					$('#timer-row0').hide();
-					$('#timer-row1').show();
+				if ($('#node-input-afterTrigger').val() === 'timer') {
+					if ($('#node-input-advancedTimerToggle').is(':checked')) {
+						$('#timer-row0').hide();
+						$('#timer-row1').show();
+						
+						// Advanced timer
+						$('#node-input-advancedTimer').typedInput({
+							types: ['global', 'flow', 'num'],
+							default: 'num',
+							value: '10000',
+							typeField: $('#node-input-advancedTimerType'),
+						});
+					} else {
+						$('#timer-row0').show();
+						$('#timer-row1').hide();
+					}
 				} else {
-					$('#timer-row0').show();
-					$('#timer-row1').hide();
+					$('#node-input-afterTrigger').trigger('change');
 				}
-			});
-
-			// Advanced timer
-			$('#node-input-advancedTimer').typedInput({
-				types: ['global', 'flow', 'num'],
-				default: 'num',
-				value: '10000',
-				typeField: $('#node-input-advancedTimerType'),
 			});
 
 			// Send when triggered
