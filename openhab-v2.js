@@ -1269,24 +1269,29 @@ module.exports = function (RED) {
             node.updateNodeStatus(node.context().get('armed') ? STATE.ARMED : STATE.DISARMED);
         })
 
-        switch (config.timerUnits) {
-            case 'milliseconds': {
-                node.timer = config.timer;
-                break;
-            }
-            case 'minutes': {
-                node.timer = config.timer * (60 * 1000);
-                break;
-            }
-            case 'hours': {
-                node.timer = config.timer * (60 * 60 * 1000);
-                break;
-            }
-            default: {
-                node.timer = config.timer * (1000);
-                break;
+        if (config.advancedTimerToggle === true) {
+            node.timer = node.getTypeInputValue(config.advancedTimerType, config.advancedTimer);
+        } else {
+            switch (config.timerUnits) {
+                case 'milliseconds': {
+                    node.timer = config.timer;
+                    break;
+                }
+                case 'minutes': {
+                    node.timer = config.timer * (60 * 1000);
+                    break;
+                }
+                case 'hours': {
+                    node.timer = config.timer * (60 * 60 * 1000);
+                    break;
+                }
+                default: {
+                    node.timer = config.timer * (1000);
+                    break;
+                }
             }
         }
+
 
         /* 
          * Node event handlers

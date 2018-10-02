@@ -442,7 +442,7 @@
 				value: 'oh_payload',
 			},
 			afterTrigger: {
-				value: 'untrigger',
+				value: 'timer',
 			},
 			timer: {
 				value: 10,
@@ -450,6 +450,15 @@
 			},
 			timerUnits: {
 				value: 'seconds',
+			},
+			advancedTimerToggle: {
+				value: true,
+			},
+			advancedTimer: {
+				value: 10000,
+			},
+			advancedTimerType: {
+				value: 'num',
 			},
 			timerExpiresAction: {
 				value: 'if_false_reset',
@@ -491,15 +500,17 @@
 				}
 			};
 
+			selectField.val(node.comparator);
+
 			// Enable/Disable input
 			$('#node-input-enableInput').change(() => {
 				if ($('#node-input-enableInput').is(':checked')) {
 					inputCount.val(JSON.stringify(1));
-				} else {					
+				} else {
 					inputCount.val(JSON.stringify(0));
 				}
 				node.inputs = parseInt(inputCount.val());
-			});			
+			});
 
 			// Enable/Disable 2nd output
 			$('#node-input-enableSecondOutput').change(() => {
@@ -527,17 +538,6 @@
 				}
 			});
 
-			// Set default values
-			$('#node-input-comparator').val(node.comparator);
-			$('#node-input-triggerCondition').val(node.triggerCondition);
-			$('#node-input-triggerConditionType').val(node.triggerConditionType);
-			$('#node-input-afterTrigger').val(node.afterTrigger);
-			$('#node-input-topicEndType').val(node.topicEndType);
-			$('#node-input-payloadEndType').val(node.payloadEndType);
-			$('#node-input-timer').val(node.timer);
-			$('#node-input-timerUnits').val(node.timerUnits);
-			$('#node-input-timerExpiresAction').val(node.timerExpiresAction);
-
 			// Hide payload fields if topic 'nothing' is selected
 			$('input[type=text]').filter((index, element) => {
 				return element.id.match(/^node-input-topic(End)?$/);
@@ -549,12 +549,12 @@
 				if (value !== '') {
 					switch (elementId) {
 						case 'node-input-topic': {
-							$('#message-row2').show();
+							$('#message-row3').show();
 							break;
 						}
 						case 'node-input-topicEnd': {
 							if ($('#node-input-afterTrigger').val() !== 'nothing') {
-								$('#endmessage-row2').show();
+								$('#endmessage-row3').show();
 							}
 							break;
 						}
@@ -562,11 +562,11 @@
 				} else {
 					switch (elementId) {
 						case 'node-input-topic': {
-							$('#message-row2').hide();
+							$('#message-row3').hide();
 							break;
 						}
 						case 'node-input-topicEnd': {
-							$('#endmessage-row2').hide();
+							$('#endmessage-row3').hide();
 							break;
 						}
 					}
@@ -682,6 +682,25 @@
 			// Enable spinner for timer selection
 			$('#node-input-timer').spinner({ min: 1 });
 
+			// Enable/Disable advanced timer options
+			$('#node-input-advancedTimerToggle').change(() => {
+				if ($('#node-input-advancedTimerToggle').is(':checked')) {
+					$('#timer-row0').hide();
+					$('#timer-row1').show();
+				} else {
+					$('#timer-row0').show();
+					$('#timer-row1').hide();
+				}
+			});
+
+			// Advanced timer
+			$('#node-input-advancedTimer').typedInput({
+				types: ['global', 'flow', 'num'],
+				default: 'num',
+				value: '10000',
+				typeField: $('#node-input-advancedTimerType'),
+			});
+
 			// Send when triggered
 			$('#node-input-topic').typedInput({
 				types: [OpenHABTypes, 'str', NothingType],
@@ -718,21 +737,28 @@
 					};
 					case 'timer': {
 						$('div[id^=timer-row]').show();
-						$('div[id^=endmessage-row1]').show();
-						if ($('#node-input-topicEndType').val() !== 'nothing') {
-							$('div[id^=endmessage-row2]').show();
+						$('div[id^=endmessage-row]').show();
+						if ($('#node-input-advancedTimer').is(':checked')) {
+							$('#timer-row0').hide();
+							$('#timer-row1').show();
 						} else {
-							$('div[id^=endmessage-row2]').hide();
+							$('#timer-row0').show();
+							$('#timer-row1').hide();
+						}
+						if ($('#node-input-topicEndType').val() !== 'nothing') {
+							$('div[id^=endmessage-row3]').show();
+						} else {
+							$('div[id^=endmessage-row3]').hide();
 						}
 						break;
 					};
 					default: {
 						$('div[id^=timer-row]').hide();
-						$('div[id^=endmessage-row1]').show();
+						$('div[id^=endmessage-row]').show();
 						if ($('#node-input-topicEndType').val() !== 'nothing') {
-							$('div[id^=endmessage-row2]').show();
+							$('div[id^=endmessage-row3]').show();
 						} else {
-							$('div[id^=endmessage-row2]').hide();
+							$('div[id^=endmessage-row3]').hide();
 						}
 						break;
 					}
@@ -1210,9 +1236,9 @@
         <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> Event types</label>
         <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple" style="width: 70%">
             <option value="ItemCommandEvent">ItemCommand</option>
-            <option value="ItemStateEvent">ItemStateEvent</option>
+            <option value="ItemStateEvent">ItemState</option>
 			<option value="ItemStateChangedEvent">ItemStateChanged</option>
-			<option value="GroupItemStateChangedEvent">GroupItemStateChangedEvent</option>
+			<option value="GroupItemStateChangedEvent">GroupItemStateChanged</option>
         </select>
     </div>
     <div class='form-row'>
@@ -1604,7 +1630,7 @@
             <option value="untrigger">Wait until trigger condition is false</option>
         </select>
 	</div>
-    <div class="form-row" id="timer-row1">
+    <div class="form-row" id="timer-row0">
 		<label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
 		<input type="text" id="node-input-timer" style="text-align:end; width:50px !important">
 		<select id="node-input-timerUnits" style="width:200px !important">
@@ -1613,30 +1639,39 @@
 			<option value="minutes">minutes</option>
 		</select>
 	</div>
-	<div class="form-row" id="timer-row2">
+    <div class="form-row" id="timer-row1">
+		<label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> Time for</label>
+        <input type="text" id="node-input-advancedTimer" style="width:50%"> milliseconds
+        <input type="hidden" id="node-input-advancedTimerType">
+	</div>
+    <div class="form-row" id="timer-row2">
+        <label></label>
+        <input type="checkbox" id="node-input-advancedTimerToggle" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-advancedTimerToggle"> Advanced timer setting</label>
+	</div>	
+	<div class="form-row" id="timer-row3">
 		<label></label>
 			<strong>When timer expires...</strong>        
 	</div>
-	<div class="form-row" id="timer-row3">
+	<div class="form-row" id="timer-row4">
 		<label for="node-input-timerExpiresAction"></label>
 		<select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction" style="width: 70%;">
 			<option value="always_reset">Continue</option>
 			<option value="if_false_reset">Continue when trigger condition is false</option>
 		</select>
 	</div>
-    <div class="form-row">
+    <div class="form-row" id="endmessage-row0">
         <hr/>
     </div>
-    <div class="form-row" id="endmessage-row0">
+    <div class="form-row" id="endmessage-row1">
         <label></label>
         <strong>Then send...</strong>
     </div>
-    <div class="form-row" id="endmessage-row1">
+    <div class="form-row" id="endmessage-row2">
         <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
         <input type="text" id="node-input-topicEnd" style="width:70%">
         <input type="hidden" id="node-input-topicEndType">
     </div>
-    <div class="form-row" id="endmessage-row2">
+    <div class="form-row" id="endmessage-row3">
         <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
         <input type="text" id="node-input-payloadEnd" style="width:70%">
         <input type="hidden" id="node-input-payloadEndType">
