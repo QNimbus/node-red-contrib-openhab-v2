@@ -1292,13 +1292,12 @@ module.exports = function (RED) {
             }
         }
 
-
         /* 
          * Node event handlers
          */
 
         node.armDisarm = function (message) {
-            var armed = !['OFF', 0, '0', 'CLOSE'].includes(message.state);
+            var armed = !['OFF', 0, '0', 'CLOSE', 'NULL'].includes(message.state);
             var changed = armed !== node.context().get('armed');
 
             // If armed state has not changed, return immediately
@@ -1306,9 +1305,7 @@ module.exports = function (RED) {
                 return;
             }
 
-            if (armed) {
-
-            } else {
+            if (!armed) {
                 // Reset trigger
                 node.context().set('triggered', false);
                 node.context().set('currentState', false);
@@ -1381,17 +1378,30 @@ module.exports = function (RED) {
             }
 
             if (node.triggerCondition) {
+                var additionalConditions = node.additionalConditions();
                 // IF TRIGGERED
-                if (node.context().get('currentState') || node.additionalConditions()) {
+                if (node.context().get('currentState') || additionalConditions) {
                     // Send trigger message only when first triggered
                     if (!node.context().get('currentState')) {
                         sendMessage(config.topic, config.topicType, config.payload, config.payloadType);
                     }
 
                     // Set/Reset triggered state
-                    node.context().set('triggered', true);
-                    node.context().set('currentState', true);
-                    node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
+                    if (config.triggerAdditionalConditions ? additionalConditions : true) {
+                        node.context().set('triggered', true);
+                        node.context().set('currentState', true);
+                        node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
+                    } else {
+                        // Reset trigger
+                        node.context().set('triggered', false);
+
+                        // Set arm/disarm state
+                        if (node.armDisarmTrigger !== false) {
+                            node.armDisarm(node.armDisarmTrigger === 'arm' ? { state: 'ON' } : { state: 'OFF' });
+                        } else {
+                            node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
+                        }
+                    }
                 } else {
                     // Stop further execution
                     return;
