@@ -417,6 +417,9 @@
 			conditions: {
 				value: [],
 			},
+			triggerAdditionalConditions: {
+				value: false,
+			},
 			topic: {
 				value: 'topic',
 			},
@@ -474,7 +477,7 @@
 		icon: 'node-red-contrib-openhab-v2.png',
 		paletteLabel: 'trigger',
 		label: function () {
-			return (this.name || 'trigger');
+			return (this.name || this.triggerItems[0] || 'trigger');
 		},
 		oneditprepare: function () {
 			var node = this;
@@ -500,7 +503,7 @@
 				}
 			};
 
-			// selectField.val(node.comparator);
+			selectField.val(node.comparator);
 
 			// Enable/Disable input
 			$('#node-input-enableInput').change(() => {
@@ -591,9 +594,9 @@
 
 					// Build row
 					var row = $('<div/>').appendTo(container);
-					var innerRow1 = $('<div/>', { style: 'width: 70%; float: left; padding-bottom: 5px;' }).appendTo(row);
-					var innerRow2 = $('<div/>', { style: 'width: 70%; float: left;' }).appendTo(row);
-					var selectField = $('<select/>', { style: 'width: 105px; float: left; margin-left: 10px; margin-top: -20px; text-align: center;' }).appendTo(row);
+					var innerRow1 = $('<div/>', { style: 'width: 80%; float: left; padding-bottom: 5px;' }).appendTo(row);
+					var innerRow2 = $('<div/>', { style: 'width: 80%; float: left;' }).appendTo(row);
+					var selectField = $('<select/>', { style: 'width: 15%; float: right; margin-top: -20px; text-align: center;' }).appendTo(row);
 					var clearRow = $('<div/>', { style: 'clear: both;' }).appendTo(row);
 
 					// Input fields
@@ -674,10 +677,19 @@
 			});
 
 			// Populate container list
-			for (var i = 0; i < this.conditions.length; i++) {
-				var condition = this.conditions[i];
+			for (var i = 0; i < node.conditions.length; i++) {
+				var condition = node.conditions[i];
 				$('#node-input-condition-container').editableList('addItem', { condition: condition, index: i });
 			};
+
+			// Test for additional conditions every trigger or just the 1st trigger
+			$('#node-input-triggerAdditionalConditions').change(() => {
+				if ($('#node-input-triggerAdditionalConditions').is(':checked')) {
+					node.triggerAdditionalConditions = true;
+				} else {
+					node.triggerAdditionalConditions = false;
+				}
+			});
 
 			// Enable spinner for timer selection
 			$('#node-input-timer').spinner({ min: 1 });
@@ -688,7 +700,7 @@
 					if ($('#node-input-advancedTimerToggle').is(':checked')) {
 						$('#timer-row0').hide();
 						$('#timer-row1').show();
-						
+
 						// Advanced timer
 						$('#node-input-advancedTimer').typedInput({
 							types: ['global', 'flow', 'num'],
@@ -718,18 +730,6 @@
 				value: 'payload',
 				typeField: $('#node-input-payloadType'),
 			});
-			$('#node-input-topicEnd').typedInput({
-				types: [OpenHABTypes, 'str', NothingType],
-				default: 'oh_cmd',
-				value: 'topic',
-				typeField: $('#node-input-topicEndType'),
-			});
-			$('#node-input-payloadEnd').typedInput({
-				types: [OpenHABPayload, 'flow', 'global', 'str', 'num', 'date'],
-				default: 'str',
-				value: 'payload',
-				typeField: $('#node-input-payloadEndType'),
-			});
 
 			// Then
 			$('#node-input-afterTrigger').change(() => {
@@ -754,6 +754,21 @@
 						} else {
 							$('div[id^=endmessage-row3]').hide();
 						}
+
+						// Enable typedInputs for topic & payload 'end' message
+						$('#node-input-topicEnd').typedInput({
+							types: [OpenHABTypes, 'str', NothingType],
+							default: 'oh_cmd',
+							value: 'topic',
+							typeField: $('#node-input-topicEndType'),
+						});
+						$('#node-input-payloadEnd').typedInput({
+							types: [OpenHABPayload, 'flow', 'global', 'str', 'num', 'date'],
+							default: 'str',
+							value: 'payload',
+							typeField: $('#node-input-payloadEndType'),
+						});
+
 						break;
 					};
 					default: {
@@ -764,6 +779,21 @@
 						} else {
 							$('div[id^=endmessage-row3]').hide();
 						}
+
+						// Enable typedInputs for topic & payload 'end' message
+						$('#node-input-topicEnd').typedInput({
+							types: [OpenHABTypes, 'str', NothingType],
+							default: 'oh_cmd',
+							value: 'topic',
+							typeField: $('#node-input-topicEndType'),
+						});
+						$('#node-input-payloadEnd').typedInput({
+							types: [OpenHABPayload, 'flow', 'global', 'str', 'num', 'date'],
+							default: 'str',
+							value: 'payload',
+							typeField: $('#node-input-payloadEndType'),
+						});
+
 						break;
 					}
 				}
@@ -1585,9 +1615,9 @@
 	</div>
     <div class="form-row">
         <label for="node-input-triggerCondition">Trigger.state</label>
-        <select id="node-input-comparator" style="text-align: center; width: 75px;">
+        <select id="node-input-comparator" style="text-align: center; width:55px;">
         </select>
-        <input type="text" id="node-input-triggerCondition" style="width:fit-content"/>
+        <input type="text" id="node-input-triggerCondition" style="width:calc(70% - 60px);"/>
         <input type="hidden" id="node-input-triggerConditionType"/>
 	</div>
     <div class="form-row">
@@ -1597,8 +1627,11 @@
 		<label></label>
 		<strong>Additional conditions...</strong>
 	</div>
+    <div class="form-row">
+		<label for="node-input-triggerAdditionalConditions"></label>
+		<input type="checkbox" id="node-input-triggerAdditionalConditions" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-triggerAdditionalConditions"> Test additional conditions every trigger</label>
+	</div>	
     <div class="form-row node-input-condition-container-row">
-        <input id="node-input-condition1" type="hidden"/>
         <ol id="node-input-condition-container"></ol>
     </div>
     <div class="form-row">
@@ -1645,8 +1678,10 @@
 	</div>
     <div class="form-row" id="timer-row1">
 		<label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> Time for</label>
-        <input type="text" id="node-input-advancedTimer" style="width:50%"> milliseconds
-        <input type="hidden" id="node-input-advancedTimerType">
+		<div style="width: 70%; display: inline;">
+			<input type="text" id="node-input-advancedTimer" style="width: calc(70% - 100px);"><span style="width: 100px"> milliseconds</span>
+			<input type="hidden" id="node-input-advancedTimerType">
+		</div>
 	</div>
     <div class="form-row" id="timer-row2">
         <label></label>
