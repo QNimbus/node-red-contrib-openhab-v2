@@ -1351,8 +1351,6 @@ module.exports = function (RED) {
                 topic = node.getTypeInputValue(topicType, topic);
                 payload = node.getTypeInputValue(payloadType, payload);
 
-                node.log(`Send message payload: ${payload}`);
-
                 if (topic) {
                     var message = { _msgid: RED.util.generateId(), payload: payload, topic: topic };
 
@@ -1401,6 +1399,9 @@ module.exports = function (RED) {
                         } else {
                             node.updateNodeStatus(armed ? STATE.ARMED : STATE.DISARMED);
                         }
+
+                        // Stop further execution
+                        return;
                     }
                 } else {
                     // Stop further execution
@@ -1451,7 +1452,7 @@ module.exports = function (RED) {
                         }
                     }
 
-                    if (config.timerExpiresAction === 'if_false_reset' || !node.timerObject) {
+                    if (node.context().get('triggered') && (config.timerExpiresAction === 'if_false_reset' || !node.timerObject)) {
                         clearTimeout(node.timerObject);
                         delete node.timerObject;
                         node.timerObject = config.afterTrigger === 'nodelay' ? setImmediate(delayFunction) : setTimeout(delayFunction, node.timer);
