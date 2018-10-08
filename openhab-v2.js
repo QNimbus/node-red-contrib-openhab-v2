@@ -1270,7 +1270,19 @@ module.exports = function (RED) {
         })
 
         if (config.advancedTimerToggle === true) {
-            node.timer = node.getTypeInputValue(config.advancedTimerType, config.advancedTimer);
+            // Attempt to read timer value
+            // In case a flow or global variable is used it will make 3 attempts (at increasing intervals) to read the variable
+            var delay = 500;
+            var attempts = 3;
+            
+            setTimeout(function readAdvancedTimerValue(node) {
+                node.timer = node.getTypeInputValue(config.advancedTimerType, config.advancedTimer);
+
+                if (!node.timer && --attempts > 0) {
+                    delay *= 2; // Increase delay by factor of 2
+                    retry = setTimeout(readAdvancedTimerValue, delay, node); // Schedule next attempt
+                }
+            }, delay, node);
         } else {
             switch (config.timerUnits) {
                 case 'milliseconds': {
@@ -1309,8 +1321,10 @@ module.exports = function (RED) {
                 // Reset trigger
                 node.context().set('triggered', false);
                 node.context().set('currentState', false);
-                clearTimeout(node.timerObject);
-                delete node.timerObject;
+                if (config.cancelTimerWhenDisarmed) {
+                    clearTimeout(node.timerObject);
+                    delete node.timerObject;
+                }
             }
 
             // Persist armed state
@@ -1335,8 +1349,10 @@ module.exports = function (RED) {
                     // Reset trigger
                     node.context().set('triggered', false);
                     node.context().set('currentState', false);
-                    clearTimeout(node.timerObject);
-                    delete node.timerObject;
+                    if (config.cancelTimerWhenDisarmed) {
+                        clearTimeout(node.timerObject);
+                        delete node.timerObject;
+                    }
                 });
             } else {
                 message.state = message.payload;
@@ -1431,12 +1447,16 @@ module.exports = function (RED) {
             switch (config.afterTrigger) {
                 case 'nodelay':
                 case 'timer': {
+                    var timerValue = node.timer ? node.timer : 1000; // Default to 1 second if timer variable is undefined
                     var delayFunction = function () {
+                        var armed = node.context().get('armed');
+                        var triggered = node.context().get('triggered');
+
                         clearTimeout(node.timerObject);
                         delete node.timerObject;
 
-                        if (config.afterTrigger === 'timer' && config.timerExpiresAction === 'if_false_reset' && node.context().get('triggered') && node.context().get('armed')) {
-                            node.timerObject = setTimeout(delayFunction, node.timer);
+                        if (config.afterTrigger === 'timer' && config.timerExpiresAction === 'if_false_reset' && triggered && armed) {
+                            node.timerObject = setTimeout(delayFunction, timerValue);
                         } else {
                             sendMessage(config.topicEnd, config.topicEndType, config.payloadEnd, config.payloadEndType);
 
@@ -1455,7 +1475,7 @@ module.exports = function (RED) {
                     if (node.context().get('triggered') && (config.timerExpiresAction === 'if_false_reset' || !node.timerObject)) {
                         clearTimeout(node.timerObject);
                         delete node.timerObject;
-                        node.timerObject = config.afterTrigger === 'nodelay' ? setImmediate(delayFunction) : setTimeout(delayFunction, node.timer);
+                        node.timerObject = config.afterTrigger === 'nodelay' ? setImmediate(delayFunction) : setTimeout(delayFunction, timerValue);
                     }
                     break;
                 }

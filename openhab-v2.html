@@ -463,6 +463,9 @@
 			advancedTimerType: {
 				value: 'num',
 			},
+			cancelTimerWhenDisarmed: {
+				value: false,
+			},
 			timerExpiresAction: {
 				value: 'if_false_reset',
 			},
@@ -1686,12 +1689,16 @@
     <div class="form-row" id="timer-row2">
         <label></label>
         <input type="checkbox" id="node-input-advancedTimerToggle" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-advancedTimerToggle"> Advanced timer setting</label>
+	</div>
+    <div class="form-row" id="timer-row3">
+        <label></label>
+        <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-cancelTimerWhenDisarmed"> When trigger disarmed cancel active timer</label>
 	</div>	
-	<div class="form-row" id="timer-row3">
+	<div class="form-row" id="timer-row4">
 		<label></label>
 			<strong>When timer expires...</strong>        
 	</div>
-	<div class="form-row" id="timer-row4">
+	<div class="form-row" id="timer-row5">
 		<label for="node-input-timerExpiresAction"></label>
 		<select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction" style="width: 70%;">
 			<option value="always_reset">Continue</option>
