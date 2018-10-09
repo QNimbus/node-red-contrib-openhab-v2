@@ -1251,6 +1251,27 @@ module.exports = function (RED) {
             }
         };
 
+        node.getTimerValue = function () {
+            if (config.advancedTimerToggle === true) {
+                return node.getTypeInputValue(config.advancedTimerType, config.advancedTimer);
+            } else {
+                switch (config.timerUnits) {
+                    case 'milliseconds': {
+                        return config.timer;
+                    }
+                    case 'minutes': {
+                        return config.timer * (60 * 1000);
+                    }
+                    case 'hours': {
+                        return config.timer * (60 * 60 * 1000);
+                    }
+                    default: {
+                        return config.timer * (1000);
+                    }
+                }
+            }
+        }
+
         /* 
          * Node initialization
          */
@@ -1268,41 +1289,6 @@ module.exports = function (RED) {
         node.eventSource.on('open', () => {
             node.updateNodeStatus(node.context().get('armed') ? STATE.ARMED : STATE.DISARMED);
         })
-
-        if (config.advancedTimerToggle === true) {
-            // Attempt to read timer value
-            // In case a flow or global variable is used it will make 3 attempts (at increasing intervals) to read the variable
-            var delay = 500;
-            var attempts = 3;
-            
-            setTimeout(function readAdvancedTimerValue(node) {
-                node.timer = node.getTypeInputValue(config.advancedTimerType, config.advancedTimer);
-
-                if (!node.timer && --attempts > 0) {
-                    delay *= 2; // Increase delay by factor of 2
-                    retry = setTimeout(readAdvancedTimerValue, delay, node); // Schedule next attempt
-                }
-            }, delay, node);
-        } else {
-            switch (config.timerUnits) {
-                case 'milliseconds': {
-                    node.timer = config.timer;
-                    break;
-                }
-                case 'minutes': {
-                    node.timer = config.timer * (60 * 1000);
-                    break;
-                }
-                case 'hours': {
-                    node.timer = config.timer * (60 * 60 * 1000);
-                    break;
-                }
-                default: {
-                    node.timer = config.timer * (1000);
-                    break;
-                }
-            }
-        }
 
         /* 
          * Node event handlers
@@ -1378,7 +1364,7 @@ module.exports = function (RED) {
                 }
             };
 
-            // Determine arm/disarm state after trigger has fired
+            // Determine if arm/disarm status needs to be changed after trigger has fired (config option)
             node.armDisarmTrigger = config.armDisarm === 'arm' || config.armDisarm === 'disarm' ? config.armDisarm : false;
 
             // Test for trigger condition and additional conditions
@@ -1393,20 +1379,20 @@ module.exports = function (RED) {
 
             if (node.triggerCondition) {
                 var additionalConditions = node.additionalConditions();
-                // IF TRIGGERED
+                // If trigger condition is true
                 if (node.context().get('currentState') || additionalConditions) {
-                    // Send trigger message only when first triggered
+                    // Send message only after initial trigger
                     if (!node.context().get('currentState')) {
                         sendMessage(config.topic, config.topicType, config.payload, config.payloadType);
                     }
 
-                    // Set/Reset triggered state
+                    // Set/Reset triggered state (recheck additionalConditions when config option was selected)
                     if (config.triggerAdditionalConditions ? additionalConditions : true) {
                         node.context().set('triggered', true);
                         node.context().set('currentState', true);
                         node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
                     } else {
-                        // Reset trigger
+                        // Otherwise, reset trigger and return to armed/disarmed state according to config
                         node.context().set('triggered', false);
 
                         // Set arm/disarm state
@@ -1424,8 +1410,9 @@ module.exports = function (RED) {
                     return;
                 }
             } else {
-                // IF UN-TRIGGERED
+                // If trigger condition is false
                 if (node.context().get('currentState')) {
+                    // If trigger condition was previously true....
                     if (node.context().get('triggered') && !node.triggerItemsTriggered(message.item)) {
                         // Reset trigger
                         node.context().set('triggered', false);
@@ -1447,7 +1434,7 @@ module.exports = function (RED) {
             switch (config.afterTrigger) {
                 case 'nodelay':
                 case 'timer': {
-                    var timerValue = node.timer ? node.timer : 1000; // Default to 1 second if timer variable is undefined
+                    var timerValue = node.getTimerValue() || 1000;
                     var delayFunction = function () {
                         var armed = node.context().get('armed');
                         var triggered = node.context().get('triggered');
