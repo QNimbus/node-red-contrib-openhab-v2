@@ -782,7 +782,7 @@ module.exports = function (RED) {
 
         node.on('input', function (message) {
             // If the node has an item, topic and/or payload configured it will override what was sent in via incomming message
-            var item = config.item ? config.item : message.item;
+            var item = message.item ? message.item : config.item;
             var topic = config.topic;
             var topicType = config.topicType;
             var payload = config.payload;

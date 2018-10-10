@@ -1892,28 +1892,32 @@
 
 <script type="text/x-red" data-help-name="openhab-v2-out">
     <p>Output a message to the openab-v2-controller. Can be overridden by the configured item, topic and/or payload on the node itself.</p>
-    <p>e.g. "ON", "OFF", "REFRESH", "50", et cetera</p>
+    <p>e.g. item -> 'MyLightSwitch', topic -> 'ItemCommand', payload -> 'ON'.</p>
     <h3>Configuration</h3>
     <dl class="message-properties">
-        <dt class="optional">Name
+        <dt class="optional">name
             <span class="property-type">string</span>
         </dt>
         <dd>Provide a custom name for this node.</dd>
-        <dt>Controller
+        <dt>controller
             <span class="property-type">(object)</span>
         </dt>
         <dd>Select the OpenHAB controller.</dd>
-        <dt>Item name<span class="property-type">string</span></dt>
-        <dd>Item to send message to</dd>
-        <dt class="optional">Topic <span class="property-type">string</span></dt>
-        <dd>An optional property that can be configured in the node.</dd>
-        <dt>Payload<span class="property-type">various</span></dt>
-        <dd>The configured payload of the message.</dd>            
+        <dt class="optional">item<span class="property-type">string</span></dt>
+        <dd>Item to send message to. Can be overridden using input message.</dd>
+        <dt class="optional">topic <span class="property-type">string</span></dt>
+        <dd>Message topic. Can be overridden using input message.</dd>   
+        <dt class="optional">payload<span class="property-type">various</span></dt>
+        <dd>Message payload. Can be overridden using input message.</dd>            
     </dl>    
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt class="optional">item<span class="property-type">string</span></dt>
-        <dd>Item name.</dd>       
+		<dd>Item name.</dd>
+        <dt class="optional">topic<span class="property-type">string</span></dt>
+		<dd>Message topic.</dd>
+        <dt class="optional">payload<span class="property-type">string</span></dt>
+        <dd>Message payload.</dd> 
     </dl>
     <h3>Details</h3>
     <p>This node will send a message to the selected OpenHAB controller. If the item name, topic and/or payload are not configured it will get these properties from the input message.</p>
