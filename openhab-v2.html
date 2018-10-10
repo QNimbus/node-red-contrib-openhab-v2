@@ -405,6 +405,9 @@
 			enableSecondOutput: {
 				value: false,
 			},
+			ohCompatibleTimestamp: {
+				value: false,
+			},
 			enableInput: {
 				value: false,
 			},
@@ -524,6 +527,15 @@
 					outputCount.val(JSON.stringify(2));
 				} else {
 					outputCount.val(JSON.stringify(1));
+				}
+			});
+
+			// Enable/Disable OpenHAB compatible timestamp
+			$('#node-input-ohCompatibleTimestamp').change(() => {
+				if ($('#node-input-ohCompatibleTimestamp').is(':checked')) {
+					node.ohCompatibleTimestamp = true;
+				} else {
+					node.ohCompatibleTimestamp = false;
 				}
 			});
 
@@ -1583,6 +1595,10 @@
         <label></label>
         <input type="checkbox" id="node-input-enableSecondOutput" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-enableSecondOutput"> Enable second output</label>
         <input type="hidden" id="node-input-outputs"/>
+	</div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-ohCompatibleTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-ohCompatibleTimestamp"> Enable OpenHAB compatible timestamp</label>
 	</div>
     <div class="form-row">
 		<hr/>

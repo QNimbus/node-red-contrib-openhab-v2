@@ -1284,6 +1284,7 @@ module.exports = function (RED) {
         node.context().set('armed', node.triggerArmedState);
 
         node.comparator = node.comparators[config.comparator];
+        node.tzOffset = (new Date()).getTimezoneOffset() * 60000;
 
         // Initialize armed status on node
         node.eventSource.on('open', () => {
@@ -1354,7 +1355,8 @@ module.exports = function (RED) {
                 payload = node.getTypeInputValue(payloadType, payload);
 
                 if (topic) {
-                    var message = { _msgid: RED.util.generateId(), payload: payload, topic: topic };
+                    var timestamp = config.ohCompatibleTimestamp === true ? (new Date(Date.now() - node.tzOffset)).toISOString().slice(0, -1) : Date.now();
+                    var message = { _msgid: RED.util.generateId(), payload: payload, topic: topic, timestamp: timestamp };
 
                     if (config.outputs > 1) {
                         node.send([armed ? message : null, message]);
