@@ -580,6 +580,7 @@ module.exports = function (RED) {
 
         node.updateNodeStatus(STATE.CONNECTING);
         node.context().set('currentState', undefined);
+        node.tzOffset = (new Date()).getTimezoneOffset() * 60000;
 
         /* 
          * Node event handlers
@@ -591,6 +592,8 @@ module.exports = function (RED) {
                 var topicRegex = new RegExp('^smarthome\/(?:items|things)\/([^\/]+).*$');
 
                 event = JSON.parse(event.data);
+                event.timestamp = config.ohCompatibleTimestamp === true ? (new Date(Date.now() - node.tzOffset)).toISOString().slice(0, -1) : Date.now();
+
                 if (event.payload && (event.payload.constructor === String))
                     event.payload = JSON.parse(event.payload);
 
@@ -670,6 +673,7 @@ module.exports = function (RED) {
 
         node.updateNodeStatus(STATE.CONNECTING);
         node.context().set('currentState', undefined);
+        node.tzOffset = (new Date()).getTimezoneOffset() * 60000;
 
         /* 
          * Node event handlers
@@ -695,7 +699,10 @@ module.exports = function (RED) {
                         if (sendMessage) {
                             // Send message to node output 1
                             var msgid = RED.util.generateId();
-                            node.send([{ _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type }, null]);
+                            var timestamp = config.ohCompatibleTimestamp === true ? (new Date(Date.now() - node.tzOffset)).toISOString().slice(0, -1) : Date.now();
+                            var message = { _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type, timestamp: timestamp };
+
+                            node.send([message, null]);
                         }
                     } else {
                         firstMessage = false;
@@ -1355,8 +1362,9 @@ module.exports = function (RED) {
                 payload = node.getTypeInputValue(payloadType, payload);
 
                 if (topic) {
+                    var msgid = RED.util.generateId();
                     var timestamp = config.ohCompatibleTimestamp === true ? (new Date(Date.now() - node.tzOffset)).toISOString().slice(0, -1) : Date.now();
-                    var message = { _msgid: RED.util.generateId(), payload: payload, topic: topic, timestamp: timestamp };
+                    var message = { _msgid: msgid, payload: payload, topic: topic, timestamp: timestamp };
 
                     if (config.outputs > 1) {
                         node.send([armed ? message : null, message]);

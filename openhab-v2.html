@@ -87,6 +87,9 @@
 				value: [],
 				required: true,
 			},
+			ohCompatibleTimestamp: {
+				value: false,
+			},
 		},
 		inputs: 0,
 		outputs: 1,
@@ -98,7 +101,18 @@
 			return (this.name || 'events');
 		},
 		oneditprepare: function () {
-			getItemList(this.items, '#node-input-items', false, false);
+			var node = this;
+
+			getItemList(node.items, '#node-input-items', false, false);
+
+			// Enable/Disable OpenHAB compatible timestamp
+			$('#node-input-ohCompatibleTimestamp').change(() => {
+				if ($('#node-input-ohCompatibleTimestamp').is(':checked')) {
+					node.ohCompatibleTimestamp = true;
+				} else {
+					node.ohCompatibleTimestamp = false;
+				}
+			});
 		},
 		oneditsave: function () {
 			workaroundForEmptyItemsList(this, '#node-input-items');
@@ -125,6 +139,9 @@
 				value: '',
 				required: false,
 			},
+			ohCompatibleTimestamp: {
+				value: false,
+			},
 			eventTypes: {
 				value: [],
 				required: true,
@@ -148,11 +165,24 @@
 			return (this.name || this.item || 'in');
 		},
 		oneditprepare: function () {
-			getItemList(this.item, '#node-input-item');
-			getEventTypeList(this);
+			var node = this;
+
+			getItemList(node.item, '#node-input-item');
+			getEventTypeList(node);
+
+			// Enable/Disable OpenHAB compatible timestamp
+			$('#node-input-ohCompatibleTimestamp').change(() => {
+				if ($('#node-input-ohCompatibleTimestamp').is(':checked')) {
+					node.ohCompatibleTimestamp = true;
+				} else {
+					node.ohCompatibleTimestamp = false;
+				}
+			});
 		},
 		oneditsave: function () {
-			workaroundForEmptyItemsList(this, '#node-input-eventTypes');
+			var node = this;
+
+			workaroundForEmptyItemsList(node, '#node-input-eventTypes');
 		}
 	});
 </script>
@@ -202,6 +232,8 @@
 			return (this.name || this.item || 'out');
 		},
 		oneditprepare: function () {
+			var node = this;
+
 			var OpenHABTypes = {
 				value: 'oh_cmd',
 				label: 'OpenHAB',
@@ -221,10 +253,10 @@
 				value: 'payload',
 				typeField: $('#node-input-payloadType'),
 			});
-			$('#node-input-topicType').val(this.topicType);
-			$('#node-input-payloadType').val(this.payloadType);
+			$('#node-input-topicType').val(node.topicType);
+			$('#node-input-payloadType').val(node.payloadType);
 
-			getItemList(this.item, '#node-input-item', false, false);
+			getItemList(node.item, '#node-input-item', false, false);
 		},
 	});
 </script>
@@ -258,7 +290,9 @@
 			return (this.name || 'get');
 		},
 		oneditprepare: function () {
-			getItemList(this.item, '#node-input-item', false, false);
+			var node = this;
+
+			getItemList(node.item, '#node-input-item', false, false);
 		}
 	});
 </script>
@@ -322,6 +356,8 @@
 			return (this.name || this.proxyItem || 'proxy');
 		},
 		oneditprepare: function () {
+			var node = this;
+
 			var OpenHABTypes = {
 				value: 'oh_cmd',
 				label: 'OpenHAB',
@@ -341,11 +377,11 @@
 				value: 'payload',
 				typeField: $('#node-input-payloadType'),
 			});
-			$('#node-input-topicType').val(this.topicType);
-			$('#node-input-payloadType').val(this.payloadType);
+			$('#node-input-topicType').val(node.topicType);
+			$('#node-input-payloadType').val(node.payloadType);
 
-			getItemList(this.item, '#node-input-item');
-			getItemList(this.proxyItem, '#node-input-proxyItem');
+			getItemList(node.item, '#node-input-item');
+			getItemList(node.proxyItem, '#node-input-proxyItem');
 
 			// Hide Item postfix field by default; only if both directions are enabled
 			$('#itemPostfix_div').hide();
@@ -815,11 +851,13 @@
 			});
 		},
 		oneditsave: function () {
-			workaroundForEmptyItemsList(this, '#node-input-triggerItems');
+			var node = this;
+
+			workaroundForEmptyItemsList(node, '#node-input-triggerItems');
 
 			var rules = $('#node-input-condition-container').editableList('items');
 			var ruleset;
-			var node = this;
+
 			node.conditions = [];
 			rules.each(function (i) {
 				var ruleData = $(this).data('data');
@@ -1218,7 +1256,11 @@
     <div class="form-row">
         <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
         <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
-    </div>
+	</div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-ohCompatibleTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-ohCompatibleTimestamp"> Enable OpenHAB compatible timestamp</label>
+	</div>
 </script>
 
 <script type="text/x-red" data-template-name="openhab-v2-in">
@@ -1280,7 +1322,14 @@
     <div class="form-row">
         <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
         <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
-    </div>
+	</div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-ohCompatibleTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-ohCompatibleTimestamp"> Enable OpenHAB compatible timestamp</label>
+	</div>
+    <div class="form-row">
+		<hr/>
+	</div>
     <div class="form-row">
         <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> Event types</label>
         <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple" style="width: 70%">
