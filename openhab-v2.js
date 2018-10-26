@@ -687,7 +687,7 @@ module.exports = function (RED) {
                 var sendMessage = true;
 
                 if (event.state != 'null') {
-                    if (node.eventTypes.indexOf(event.type) < 0) {
+                    if ((node.eventTypes.indexOf(event.type) < 0) && (!firstMessage || !node.outputAtStartup)) {
                         sendMessage = false;
                     }
 
