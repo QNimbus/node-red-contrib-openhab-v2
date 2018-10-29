@@ -691,22 +691,20 @@ module.exports = function (RED) {
                 var sendMessage = true;
 
                 if (event.state != 'null') {
-                    if ((node.eventTypes.indexOf(event.type) < 0) && (!firstMessage || !node.outputAtStartup)) {
+                    if (node.eventTypes.indexOf(event.type) < 0) {
                         sendMessage = false;
                     }
 
-                    if (!firstMessage || node.outputAtStartup) {
-                        if (sendMessage) {
-                            // Send message to node output 1
-                            var msgid = RED.util.generateId();
-                            var timestamp = config.ohCompatibleTimestamp === true ? (new Date(Date.now() - node.tzOffset)).toISOString().slice(0, -1) : Date.now();
-                            var message = { _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type, timestamp: timestamp };
+                    if (sendMessage || (firstMessage && node.outputAtStartup && event.type === 'ItemStateEvent')) {
+                        // Send message to node output 1
+                        var msgid = RED.util.generateId();
+                        var timestamp = config.ohCompatibleTimestamp === true ? (new Date(Date.now() - node.tzOffset)).toISOString().slice(0, -1) : Date.now();
+                        var message = { _msgid: msgid, payload: event.state, data: event.payload, item: node.item, event: event.type, timestamp: timestamp };
 
-                            node.send([message, null]);
-                        }
-                    } else {
-                        firstMessage = false;
+                        node.send([message, null]);
                     }
+
+                    firstMessage = false;
 
                     node.context().set('currentState', event.state);
                     node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${event.state}`);
@@ -789,7 +787,7 @@ module.exports = function (RED) {
 
         node.on('input', function (message) {
             // If the node has an item, topic and/or payload configured it will override what was sent in via incomming message
-            var item = message.item ? message.item : config.item;
+            var item = config.item ? config.item : message.item;
             var topic = config.topic;
             var topicType = config.topicType;
             var payload = config.payload;
