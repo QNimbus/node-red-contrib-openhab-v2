@@ -1301,7 +1301,7 @@ module.exports = function (RED) {
          */
 
         node.armDisarm = function (message) {
-            var armed = !['OFF', 0, '0', 'CLOSE', 'NULL'].includes(message.state);
+            var armed = !['OFF', 0, '0', 'CLOSED', 'NULL'].includes(message.state);
             var changed = armed !== node.context().get('armed');
 
             // If armed state has not changed, return immediately
