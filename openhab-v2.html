@@ -511,6 +511,10 @@
 			armDisarm: {
 				value: '',
 			},
+			storeStateInFlow: {
+				value: false,
+				required: true,
+			},
 		},
 		inputs: 0,
 		outputs: 1,
@@ -572,6 +576,16 @@
 					node.ohCompatibleTimestamp = true;
 				} else {
 					node.ohCompatibleTimestamp = false;
+				}
+			});
+
+			// Arming and disarming of trigger
+			$('#node-input-triggerItems').multiselect().change(() => {
+				if ($('#node-input-triggerItems').multiselect().val() === null) {
+					$('#notrigger').hide();
+				} else {
+					$('#notrigger').show();
+					$('#node-input-triggerCondition').typedInput();
 				}
 			});
 
@@ -1065,6 +1079,7 @@
 
 							// Rebuild bootstrap multiselect form
 							selectedItemElement.multiselect('rebuild');
+							selectedItemElement.multiselect().trigger('change');
 
 							// Trim selected item string length with elipsis
 							var selectItemSpanElement = $(`span.multiselect-selected-text:contains("${itemName}")`);
@@ -1108,7 +1123,7 @@
 			disableIfEmpty: true,
 			nSelectedText: 'selected',
 			nonSelectedText: 'None selected',
-			buttonWidth: '70%',
+			buttonWidth: '70%'
 		});
 
 		// Initial call to populate item list
@@ -1639,6 +1654,10 @@
     <div class="form-row">
         <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
         <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
+	</div>
+    <div class='form-row'>
+        <label></label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'> <label style="width:auto !important;" for="node-input-storeStateInFlow"> Store trigger state(s) in flow context</label>
     </div>
     <div class="form-row">
         <label></label>
@@ -1674,133 +1693,135 @@
 		<input type="checkbox" id="node-input-enableInput" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-enableInput"> Enable input</label>
 		<input type="hidden" id="node-input-inputs"/>
 	</div>
-    <div class="form-row">
-		<hr/>
-	</div>
-	<div class="form-row">
-		<label></label>
-		<strong>Trigger condition...</strong>
-	</div>
-    <div class="form-row">
-        <label for="node-input-triggerCondition">Trigger.state</label>
-        <select id="node-input-comparator" style="text-align: center; width:55px;">
-        </select>
-        <input type="text" id="node-input-triggerCondition" style="width:calc(70% - 60px);"/>
-        <input type="hidden" id="node-input-triggerConditionType"/>
-	</div>
-    <div class="form-row">
-		<hr/>
-	</div>
-	<div class="form-row">
-		<label></label>
-		<strong>Additional conditions...</strong>
-	</div>
-    <div class="form-row">
-		<label for="node-input-triggerAdditionalConditions"></label>
-		<input type="checkbox" id="node-input-triggerAdditionalConditions" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-triggerAdditionalConditions"> Test additional conditions every trigger</label>
-	</div>	
-    <div class="form-row node-input-condition-container-row">
-        <ol id="node-input-condition-container"></ol>
-    </div>
-    <div class="form-row">
-		<hr/>
-	</div>
-	<div class="form-row" id="message-row0">
-		<label></label>
-		<strong>Send when triggered...</strong>
-	</div>
-    <div class="form-row" id="message-row2">
-        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
-        <input type="text" id="node-input-topic" style="width:70%">
-        <input type="hidden" id="node-input-topicType">
-    </div>
-    <div class="form-row" id="message-row3">
-        <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
-        <input type="text" id="node-input-payload" style="width:70%">
-        <input type="hidden" id="node-input-payloadType">
-    </div>
-    <div class="form-row">
-        <hr/>
-    </div>
-    <div class="form-row">
-        <label></label>
-        <strong>Then...</strong>
-    </div>
-    <div class="form-row">
-        <label for="node-input-afterTrigger"></label>
-        <select id="node-input-afterTrigger" name="node-input-afterTrigger" style="width: 70%;">
-            <option value="nothing">Do nothing</option>
-            <option value="nodelay">Do not wait</option>
-            <option value="timer">Start timer</option>
-            <option value="untrigger">Wait until trigger condition is false</option>
-        </select>
-	</div>
-    <div class="form-row" id="timer-row0">
-		<label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
-		<input type="text" id="node-input-timer" style="text-align:end; width:50px !important">
-		<select id="node-input-timerUnits" style="width:200px !important">
-			<option value="milliseconds">milliseconds</option>
-			<option value="seconds">seconds</option>
-			<option value="minutes">minutes</option>
-		</select>
-	</div>
-    <div class="form-row" id="timer-row1">
-		<label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> Time for</label>
-		<div style="width: 70%; display: inline;">
-			<input type="text" id="node-input-advancedTimer" style="width: calc(70% - 100px);"><span style="width: 100px"> milliseconds</span>
-			<input type="hidden" id="node-input-advancedTimerType">
+	<div id="notrigger">
+		<div class="form-row">
+			<hr/>
 		</div>
-	</div>
-    <div class="form-row" id="timer-row2">
-        <label></label>
-        <input type="checkbox" id="node-input-advancedTimerToggle" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-advancedTimerToggle"> Advanced timer setting</label>
-	</div>
-    <div class="form-row" id="timer-row3">
-        <label></label>
-        <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-cancelTimerWhenDisarmed"> When trigger is reset/disarmed cancel active timer</label>
-	</div>	
-	<div class="form-row" id="timer-row4">
-		<label></label>
-			<strong>When timer expires...</strong>        
-	</div>
-	<div class="form-row" id="timer-row5">
-		<label for="node-input-timerExpiresAction"></label>
-		<select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction" style="width: 70%;">
-			<option value="always_reset">Continue</option>
-			<option value="if_false_reset">Continue when trigger condition is false</option>
-		</select>
-	</div>
-    <div class="form-row" id="endmessage-row0">
-        <hr/>
-    </div>
-    <div class="form-row" id="endmessage-row1">
-        <label></label>
-        <strong>Then send...</strong>
-    </div>
-    <div class="form-row" id="endmessage-row2">
-        <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
-        <input type="text" id="node-input-topicEnd" style="width:70%">
-        <input type="hidden" id="node-input-topicEndType">
-    </div>
-    <div class="form-row" id="endmessage-row3">
-        <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
-        <input type="text" id="node-input-payloadEnd" style="width:70%">
-        <input type="hidden" id="node-input-payloadEndType">
-	</div>
-    <div class="form-row">
-		<hr/>
-	</div>
-	<div class="form-row">
-		<label></label>
-		<strong>Finally...</strong>
-	</div>
-    <div class="form-row">
-		<label for="node-input-armDisarm"><i class="fa fa-bullseye"></i> Trigger</label>
-		<select id="node-input-armDisarm" name="node-input-armDisarm" style="width: 70%;">
-			<option value="">Leave trigger arm/disarm state as is</option>
-			<option value="arm">Arm trigger</option>
-			<option value="disarm">Disarm trigger</option>
-		</select>
+		<div class="form-row">
+			<label></label>
+			<strong>Trigger conditions...</strong>
+		</div>	
+    	<div class="form-row">
+    	    <label for="node-input-triggerCondition">Trigger.state</label>
+    	    <select id="node-input-comparator" style="text-align: center; width:55px;">
+    	    </select>
+    	    <input type="text" id="node-input-triggerCondition" style="width:calc(70% - 60px);"/>
+    	    <input type="hidden" id="node-input-triggerConditionType"/>
+		</div>
+    	<div class="form-row">
+			<hr/>
+		</div>
+		<div class="form-row">
+			<label></label>
+			<strong>Additional conditions...</strong>
+		</div>
+    	<div class="form-row">
+			<label for="node-input-triggerAdditionalConditions"></label>
+			<input type="checkbox" id="node-input-triggerAdditionalConditions" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-triggerAdditionalConditions"> Test additional conditions every trigger</label>
+		</div>	
+    	<div class="form-row node-input-condition-container-row">
+    	    <ol id="node-input-condition-container"></ol>
+    	</div>
+    	<div class="form-row">
+			<hr/>
+		</div>
+		<div class="form-row" id="message-row0">
+			<label></label>
+			<strong>Send when triggered...</strong>
+		</div>
+    	<div class="form-row" id="message-row2">
+    	    <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+    	    <input type="text" id="node-input-topic" style="width:70%">
+    	    <input type="hidden" id="node-input-topicType">
+    	</div>
+    	<div class="form-row" id="message-row3">
+    	    <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+    	    <input type="text" id="node-input-payload" style="width:70%">
+    	    <input type="hidden" id="node-input-payloadType">
+    	</div>
+    	<div class="form-row">
+    	    <hr/>
+    	</div>
+    	<div class="form-row">
+    	    <label></label>
+    	    <strong>Then...</strong>
+    	</div>
+    	<div class="form-row">
+    	    <label for="node-input-afterTrigger"></label>
+    	    <select id="node-input-afterTrigger" name="node-input-afterTrigger" style="width: 70%;">
+    	        <option value="nothing">Do nothing</option>
+    	        <option value="nodelay">Do not wait</option>
+    	        <option value="timer">Start timer</option>
+    	        <option value="untrigger">Wait until trigger condition is false</option>
+    	    </select>
+		</div>
+    	<div class="form-row" id="timer-row0">
+			<label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
+			<input type="text" id="node-input-timer" style="text-align:end; width:50px !important">
+			<select id="node-input-timerUnits" style="width:200px !important">
+				<option value="milliseconds">milliseconds</option>
+				<option value="seconds">seconds</option>
+				<option value="minutes">minutes</option>
+			</select>
+		</div>
+    	<div class="form-row" id="timer-row1">
+			<label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> Time for</label>
+			<div style="width: 70%; display: inline;">
+				<input type="text" id="node-input-advancedTimer" style="width: calc(70% - 100px);"><span style="width: 100px"> milliseconds</span>
+				<input type="hidden" id="node-input-advancedTimerType">
+			</div>
+		</div>
+    	<div class="form-row" id="timer-row2">
+    	    <label></label>
+    	    <input type="checkbox" id="node-input-advancedTimerToggle" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-advancedTimerToggle"> Advanced timer setting</label>
+		</div>
+    	<div class="form-row" id="timer-row3">
+    	    <label></label>
+    	    <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-cancelTimerWhenDisarmed"> When trigger is reset/disarmed cancel active timer</label>
+		</div>	
+		<div class="form-row" id="timer-row4">
+			<label></label>
+				<strong>When timer expires...</strong>        
+		</div>
+		<div class="form-row" id="timer-row5">
+			<label for="node-input-timerExpiresAction"></label>
+			<select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction" style="width: 70%;">
+				<option value="always_reset">Continue</option>
+				<option value="if_false_reset">Continue when trigger condition is false</option>
+			</select>
+		</div>
+    	<div class="form-row" id="endmessage-row0">
+    	    <hr/>
+    	</div>
+    	<div class="form-row" id="endmessage-row1">
+    	    <label></label>
+    	    <strong>Then send...</strong>
+    	</div>
+    	<div class="form-row" id="endmessage-row2">
+    	    <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
+    	    <input type="text" id="node-input-topicEnd" style="width:70%">
+    	    <input type="hidden" id="node-input-topicEndType">
+    	</div>
+    	<div class="form-row" id="endmessage-row3">
+    	    <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
+    	    <input type="text" id="node-input-payloadEnd" style="width:70%">
+    	    <input type="hidden" id="node-input-payloadEndType">
+		</div>
+    	<div class="form-row">
+			<hr/>
+		</div>
+		<div class="form-row">
+			<label></label>
+			<strong>Finally...</strong>
+		</div>
+    	<div class="form-row">
+			<label for="node-input-armDisarm"><i class="fa fa-bullseye"></i> Trigger</label>
+			<select id="node-input-armDisarm" name="node-input-armDisarm" style="width: 70%;">
+				<option value="">Leave trigger arm/disarm state as is</option>
+				<option value="arm">Arm trigger</option>
+				<option value="disarm">Disarm trigger</option>
+			</select>
+		</div>
 	</div>  
 </script>
 

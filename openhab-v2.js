@@ -1380,6 +1380,11 @@ module.exports = function (RED) {
             node.triggerCondition = node.comparator(message.state, node.conditionValue);
             node.context().set(message.item, node.triggerCondition);
 
+            // Optionally store trigger item and current state in flow variable
+            if (config.storeStateInFlow === true) {
+                node.context().flow.set(`${message.item}_state`, message.state)
+            }
+
             // If trigger is not armed and we're not using a second output, return immediately
             if (!armed && config.outputs < 2) {
                 return;
