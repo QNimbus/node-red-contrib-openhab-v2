@@ -1216,6 +1216,14 @@ module.exports = function (RED) {
             });
         }
 
+        node.triggerItemsConditions = function (triggerItem, state) {
+            var triggerItemCondition = config.triggerItemsConditions.find(x => x.triggerItem === triggerItem);
+            var comparator = node.comparators[triggerItemCondition.type];
+            var value = node.getTypeInputValue(triggerItemCondition.valueType, triggerItemCondition.value);
+
+            return comparator(value, state);
+        }
+
         node.getTypeInputValue = function (type, value) {
             switch (type) {
                 case 'flow': {
@@ -1288,7 +1296,6 @@ module.exports = function (RED) {
         node.context().set('currentState', false);
         node.context().set('armed', node.triggerArmedState);
 
-        node.comparator = node.comparators[config.comparator];
         node.tzOffset = (new Date()).getTimezoneOffset() * 60000;
 
         // Initialize armed status on node
@@ -1354,6 +1361,7 @@ module.exports = function (RED) {
 
         node.processStateChangedEvent = function (message) {
             var armed = node.context().get('armed');
+            var triggerCondition = node.triggerItemsConditions(message.item, message.state);
 
             var sendMessage = function (topic, topicType, payload, payloadType) {
                 topic = node.getTypeInputValue(topicType, topic);
@@ -1376,8 +1384,7 @@ module.exports = function (RED) {
             node.armDisarmTrigger = config.armDisarm === 'arm' || config.armDisarm === 'disarm' ? config.armDisarm : false;
 
             // Test for trigger condition and additional conditions
-            node.conditionValue = node.getTypeInputValue(config.triggerConditionType, config.triggerCondition);
-            node.triggerCondition = node.comparator(message.state, node.conditionValue);
+            node.triggerCondition = triggerCondition;
             node.context().set(message.item, node.triggerCondition);
 
             // Optionally store trigger item and current state in flow variable
@@ -1400,7 +1407,7 @@ module.exports = function (RED) {
                     }
 
                     // Set/Reset triggered state (recheck additionalConditions when config option was selected)
-                    if (config.triggerAdditionalConditions ? additionalConditions : true) {
+                    if (config.triggerAdditionalConditions === 'every' ? additionalConditions : true) {
                         node.context().set('triggered', true);
                         node.context().set('currentState', true);
                         node.updateNodeStatus(armed ? STATE.TRIGGERED : STATE.TRIGGERED_DISARMED);
