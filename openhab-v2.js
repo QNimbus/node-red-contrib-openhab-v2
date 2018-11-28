@@ -542,6 +542,41 @@ module.exports = function (RED) {
     RED.nodes.registerType('openhab-v2-controller', OpenHAB_controller_node);
 
     /**
+     * openhab-v2-scene-controller
+     * 
+     * Holds the configuration (hostname, port, creds, etc) of the OpenHAB server
+     *
+     */
+    /**
+     *
+     *
+     * @param {*} config
+     */
+    function OpenHAB_scene_controller_node(config) {
+        RED.nodes.createNode(this, config);
+
+        var node = this;
+        var openHABController = RED.nodes.getNode(config.controller);
+
+        if (!openHABController) {
+            return;
+        }
+
+        /**
+         * OpenHAB_scene_controller_node close event handler
+         * 
+         * Cleanup for when the OpenHAB_scene_controller_node gets closed
+         *
+         */
+        node.on('close', function () {
+            node.log(`Scene controller shutting down...`);
+            node.emit(STATE.EVENT_NAME, STATE.DISCONNECTED);
+        });
+    }
+    RED.nodes.registerType('openhab-v2-scene-controller', OpenHAB_scene_controller_node);
+
+
+    /**
      * openhab-v2-events
      * 
      * Monitors OpenHAB events
@@ -1532,4 +1567,29 @@ module.exports = function (RED) {
         });
     }
     RED.nodes.registerType('openhab-v2-trigger', OpenHAB_trigger);
+
+    /**
+     * openhab-v2-scene
+     * 
+     * To do....
+     *
+     */
+    function OpenHAB_scene(config) {
+        RED.nodes.createNode(this, config);
+
+        var node = this;
+        var openHABController = RED.nodes.getNode(config.controller);
+
+        if (!openHABController) {
+            return;
+        }
+
+        node.name = config.name;
+
+        node.on('close', function () {
+            node.log(`closing`);
+        });
+    }
+    RED.nodes.registerType('openhab-v2-scene', OpenHAB_scene);
+
 }
