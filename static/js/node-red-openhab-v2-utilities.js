@@ -135,9 +135,9 @@ function fixForTypedInputElements() {
  * To do...
  *
  */
-function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEmpty = false, itemTypeFilter = []) {
+function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEmpty = false, itemTypeFilter = [], itemTagFilter = []) {
 
-    function updateItemList(controller, selectedItemElement, itemName, refresh = false, itemTypeFilter = []) {
+    function updateItemList(controller, selectedItemElement, itemName, refresh = false, itemTypeFilter = [], itemTagFilter = []) {
 
         // Remove all previous and/or static (if any) elements from 'select' input element
         selectedItemElement.children().remove();
@@ -165,6 +165,12 @@ function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEm
 
                             if (itemTypeFilter.length > 0) {
                                 if (!itemTypeFilter.includes(item.type)) {
+                                    addItem = false;
+                                }
+                            }
+
+                            if (itemTagFilter.length > 0) {
+                                if (itemTagFilter.filter(element => item.tags.includes(element)).length === 0) {
                                     addItem = false;
                                 }
                             }
@@ -230,16 +236,16 @@ function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEm
     });
 
     // Initial call to populate item list
-    updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, false, itemTypeFilter);
+    updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, false, itemTypeFilter, itemTagFilter);
 
     // onChange event handler in case a new controller gets selected
     openHABControllerElement.change(function (event) {
-        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter);
+        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter, itemTagFilter);
     });
 
     refreshListElement.click(function (event) {
         // Force a refresh of the item list
-        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter);
+        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter, itemTagFilter);
     });
 }
 
