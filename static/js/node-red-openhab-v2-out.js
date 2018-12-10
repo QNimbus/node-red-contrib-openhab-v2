@@ -65,6 +65,6 @@ RED.nodes.registerType('openhab-v2-out', {
         $('#node-input-topicType').val(node.topicType);
         $('#node-input-payloadType').val(node.payloadType);
 
-        getItemList(node.item, '#node-input-item', false, false);
+        getItemList(node.item, $('#node-input-controller'), '#node-input-item', true, false);
     },
 });

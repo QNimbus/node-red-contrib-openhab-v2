@@ -27,6 +27,6 @@ RED.nodes.registerType('openhab-v2-get', {
     oneditprepare: function () {
         var node = this;
 
-        getItemList(node.item, '#node-input-item', false, false);
+        getItemList(node.item, $('#node-input-controller'), '#node-input-item', true, false);
     }
 });

@@ -79,8 +79,8 @@ RED.nodes.registerType('openhab-v2-proxy', {
         $('#node-input-topicType').val(node.topicType);
         $('#node-input-payloadType').val(node.payloadType);
 
-        getItemList(node.item, '#node-input-item');
-        getItemList(node.proxyItem, '#node-input-proxyItem');
+        getItemList(node.item, $('#node-input-controller'), '#node-input-item', true);
+        getItemList(node.proxyItem, $('#node-input-controller'), '#node-input-proxyItem', true);
 
         // Hide Item postfix field by default; only if both directions are enabled
         $('#itemPostfix_div').hide();

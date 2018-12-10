@@ -135,7 +135,7 @@ function fixForTypedInputElements() {
  * To do...
  *
  */
-function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEmpty = false, itemTypeFilter = [], itemTagFilter = []) {
+function getItemList(nodeItem, controller, selectedItemElementName, refresh = false, allowEmpty = false, itemTypeFilter = [], itemTagFilter = []) {
 
     function updateItemList(controller, selectedItemElement, itemName, refresh = false, itemTypeFilter = [], itemTagFilter = []) {
 
@@ -156,7 +156,7 @@ function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEm
 
                         if (allowEmpty) {
                             var optionElement = document.createElement('option');
-                            selectedItemElement.append(optionElement).children().last().attr('value', '');
+                            selectedItemElement.append(optionElement).children().last().attr('value', '').html('None...');
                         }
 
                         items.forEach(function (item) {
@@ -214,10 +214,10 @@ function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEm
     }
 
     var selectedItemElement = $(selectedItemElementName);
-    var selectedItem = selectedItemElement.val();
-    var openHABControllerElement = $('#node-input-controller');
+    // var selectedItem = selectedItemElement.val();
+    var openHABControllerElement = controller || $('#node-input-controller');
     var openHABControllerValue = openHABControllerElement.val();
-    var openHABController = RED.nodes.node(openHABControllerValue);
+    // var openHABController = RED.nodes.node(openHABControllerValue);
     var refreshListElement = $('#force-refresh');
 
     // Initialize bootstrap multiselect form
@@ -236,16 +236,16 @@ function getItemList(nodeItem, selectedItemElementName, refresh = false, allowEm
     });
 
     // Initial call to populate item list
-    updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, false, itemTypeFilter, itemTagFilter);
+    updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, refresh, itemTypeFilter, itemTagFilter);
 
     // onChange event handler in case a new controller gets selected
     openHABControllerElement.change(function (event) {
-        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter, itemTagFilter);
+        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, refresh, itemTypeFilter, itemTagFilter);
     });
 
     refreshListElement.click(function (event) {
         // Force a refresh of the item list
-        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, true, itemTypeFilter, itemTagFilter);
+        updateItemList(RED.nodes.node(openHABControllerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem, refresh, itemTypeFilter, itemTagFilter);
     });
 }
 

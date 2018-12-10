@@ -37,7 +37,6 @@
     $.getScript('openhab2/static/js/node-red-openhab-v2-scene.js');
 
     $.getScript('openhab2/static/js/node-red-openhab-v2-controller.js');
-    $.getScript('openhab2/static/js/node-red-openhab-v2-scene-controller.js');
 </script>
 
 <!--
@@ -93,17 +92,6 @@
         <label for='node-config-input-allowRawEvents'><i class='fa fa-bars'></i> Raw events</label>
         <input type='checkbox' id='node-config-input-allowRawEvents' style='width:auto; margin: 0;' disabled="disabled" checked="checked">
     </div>
-</script>
-
-<script type='text/x-red' data-template-name='openhab-v2-scene-controller'>
-    <div class='form-row'>
-        <label for='node-config-input-name'><i class='fa fa-tag'></i> Name</label>
-        <input type='text' id='node-config-input-name' placeholder='Name'>
-    </div>
-    <div class='form-row'>
-        <label for='node-config-input-controller'><i class='fa fa-globe'></i> Controller</label>
-        <input type='text' id='node-config-input-controller'>
-	</div>
 </script>
 
 <script type='text/x-red' data-template-name='openhab-v2-events'>
@@ -485,9 +473,14 @@
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row">
-        <label for="node-input-sceneController"><i class="fa fa-globe"></i> Scene controller</label>
-        <input type="text" id="node-input-sceneController">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
     </div>
+    <div class="form-row">
+		<label for="node-input-sceneItem"><i class="fa fa-bullseye"></i> Scene item</label>
+		<select id="node-input-sceneItem" name="node-input-sceneItem">
+		</select>
+	</div>
 </script>
 
 <!--
@@ -498,46 +491,6 @@
 -->
 
 <script type='text/x-red' data-help-name='openhab-v2-controller'>
-    <p>Configuration node for communication with an OpenHAB controller.</p>
-    <h3>Configuration</h3>
-    <dl class="message-properties">
-        <dt>Name
-            <span class="property-type">string</span>
-        </dt>
-        <dd>Provide a custom name for this node.</dd>
-        <dt>Protocol
-            <span class="property-type">string</span>
-        </dt>
-        <dd>'http' or 'https'</dd>
-        <dt>Host
-            <span class="property-type">string</span>
-        </dt>
-        <dd>Specify the controllers hostname.</dd>       
-        <dt>Port
-            <span class="property-type">number</span>
-        </dt>
-        <dd>Specify the controllers ip port.</dd>
-        <dt class="optional">Path
-            <span class="property-type">string</span>
-        </dt>
-        <dd>Specify the additional base path.</dd>
-        <dt class="optional">Username
-                <span class="property-type">string</span>
-        </dt>
-        <dd>Specify the username to authenticate with.</dd>
-        <dt class="optional">Password
-                <span class="property-type">string</span>
-        </dt>
-        <dd>Specify the password to authenticate with.</dd>
-        <dt>Raw events
-                <span class="property-type">boolean</span>
-        </dt>
-        <dd>Enables/disabled the emitting of raw events.</dd>
-        <dd><sub>currently disabled, see <a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1">issue #1</a></sub></dd>
-    </dl> 
-</script>
-
-<script type='text/x-red' data-help-name='openhab-v2-scene-controller'>
     <p>Configuration node for communication with an OpenHAB controller.</p>
     <h3>Configuration</h3>
     <dl class="message-properties">

@@ -6,14 +6,18 @@ RED.nodes.registerType('openhab-v2-scene', {
         name: {
             value: '',
         },
-        sceneController: {
+        controller: {
             value: '',
-            type: 'openhab-v2-scene-controller',
+            type: 'openhab-v2-controller',
             required: true,
         },
+        sceneItem: {
+            value: undefined,
+            required: false,
+        }
     },
-    inputs: 0,
-    outputs: 0,
+    inputs: 1,
+    outputs: 1,
     inputLabels: [],
     outputLabels: [],
     icon: 'node-red-contrib-openhab-v2.png',
@@ -23,6 +27,8 @@ RED.nodes.registerType('openhab-v2-scene', {
     },
     oneditprepare: function () {
         var node = this;
+
+        getItemList(node.sceneItem, $('#node-input-controller'), '#node-input-sceneItem', true, true, ['String'], ['openhab-v2-scene']);
     },
     oneditsave: function () {
         var node = this;

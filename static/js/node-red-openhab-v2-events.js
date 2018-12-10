@@ -31,7 +31,7 @@ RED.nodes.registerType('openhab-v2-events', {
     oneditprepare: function () {
         var node = this;
 
-        getItemList(node.items, '#node-input-items', false, false);
+        getItemList(node.items, $('#node-input-controller'), '#node-input-items', true, false);
 
         // Enable/Disable OpenHAB compatible timestamp
         $('#node-input-ohCompatibleTimestamp').change(() => {

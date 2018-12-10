@@ -130,8 +130,8 @@ RED.nodes.registerType('openhab-v2-trigger', {
         node.outputs = outputCount.val();
 
         // Populate item lists
-        getItemList(node.triggerItems, '#node-input-triggerItems', false, false, [], []);
-        getItemList(node.triggerArmedItem, '#node-input-triggerArmedItem', false, false, ['Switch', 'Contact'], []);
+        getItemList(node.triggerItems, $('#node-input-controller'), '#node-input-triggerItems', true, false, [], []);
+        getItemList(node.triggerArmedItem, $('#node-input-controller'), '#node-input-triggerArmedItem', true, false, ['Switch', 'Contact'], []);
 
         //***************//
         // Create events //
