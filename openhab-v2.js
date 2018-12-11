@@ -1711,15 +1711,12 @@ module.exports = function (RED) {
             sceneConfig.items.forEach((item) => {
                 if (!item.name) return;
 
-                if (item.configItem === item.name) {
-                    // If item is scene include item, just set the item to the correct state
-                    openHABController.send(item.name, 'ItemCommand', item.payload);
-                } else {
-                    // Else, get item state and the set the configItem to the correct state
-                    openHABController.send(item.name, undefined, undefined, (result) => {
+                // Only set items that have a different configItem (e.g. not the SceneInclude items)
+                if (item.configItem !== item.name) {
+                    openHABController.send(item.name, undefined, undefined, (result) => { setTimeout(function(result) {
                         result = JSON.parse(result);
                         openHABController.send(item.configItem, 'ItemCommand', result.state);
-                    });
+                     }, 0, result); });
                 }
             });
 
@@ -1799,8 +1796,10 @@ module.exports = function (RED) {
                     break;
                 }
                 case 'GETSTATES': {
-                    node.getSceneConfigFromItem(message.sceneItem, (currentSceneConfig) => {
-                        node.getStates(currentSceneConfig);
+                    openHABController.getItemList((itemList) => {
+                        var filteredItemList = node.getSceneConfigItems(itemList);
+
+                        node.getStates(filteredItemList);
                     });
                     break;
                 }
