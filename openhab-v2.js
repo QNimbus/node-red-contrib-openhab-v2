@@ -265,7 +265,7 @@ module.exports = function (RED) {
                     }
                 } else {
                     if (successCallback && typeof successCallback === 'function') {
-                        successCallback(body);
+                        successCallback(JSON.parse(body));
                     }
                 }
             });
@@ -354,6 +354,79 @@ module.exports = function (RED) {
             } else {
                 node.log(`Using cached itemlist....`);
                 callback(node.itemList);
+            }
+        }
+
+        /**
+         * getSceneItemList
+         * 
+         * Accepts a callback function that will either receive NULL in case of error or a sorted JSON scene item list from OpenHAB
+         *
+         */
+        node.getSceneItemList = function (callback, forceRefresh = false) {
+            var filterSceneItems = function (itemList) {
+
+                // Create regex expressions to filter out item tags specific to Scene items
+                var tagFilterItem = new RegExp('openhab-v2-scene\:item(?:$|\:(.*)$)');
+                var tagFilterIncludeItem = new RegExp('openhab-v2-scene\:include\:(.*)$');
+                var tagFilterTopic = new RegExp('openhab-v2-scene\:topic\:(.*)$');
+
+                // Perform actual filtering
+                var sceneItems = itemList.filter((item) => {
+                    try {
+                        var tags = item.tags.filter((tag) => tag.match(tagFilterItem));
+                        return (tags.length === 1);
+                    } catch (e) {
+                        // If array element is not a valid OpenHAB item just filter the item out.
+                        return false;
+                    }
+
+                });
+
+                // Add properties to items using item tags
+                for (var i = 0; i < sceneItems.length; i++) {
+                    for (var j = 0; j < sceneItems[i].tags.length; j++) {
+                        var matchTagFilterItem = sceneItems[i].tags[j].match(tagFilterItem);
+                        var matchTagFilterIncludeItem = sceneItems[i].tags[j].match(tagFilterIncludeItem);
+                        var matchTagFilterTopic = sceneItems[i].tags[j].match(tagFilterTopic);
+
+                        !sceneItems[i].sceneItem && matchTagFilterItem && 1 in matchTagFilterItem && matchTagFilterItem[1] != '' && (sceneItems[i].sceneItem = matchTagFilterItem[1]);
+                        !sceneItems[i].sceneIncludeItem && matchTagFilterIncludeItem && 1 in matchTagFilterIncludeItem && matchTagFilterIncludeItem[1] != '' && (sceneItems[i].sceneIncludeItem = matchTagFilterIncludeItem[1]);
+                        !sceneItems[i].sceneItemTopic && matchTagFilterTopic && 1 in matchTagFilterTopic && matchTagFilterTopic[1] != '' && (sceneItems[i].sceneItemTopic = matchTagFilterTopic[1]);
+                    };
+                };
+
+                // Convert to JSON object
+                var sceneItemsObject = {};
+                sceneItems.forEach((value, index, array) => {
+                    if (!sceneItemsObject[value.name]) {
+                        sceneItemsObject[value.name] = value;
+                    }
+                });
+
+                return sceneItemsObject;
+            }
+
+            // Sort of singleton construct
+            if (forceRefresh || node.itemList === undefined) {
+                var options = {
+                    method: 'GET',
+                    json: true,
+                }
+
+                node.request(ITEMS_PATH, options, function (error, response, body) {
+                    if (error) {
+                        node.itemList = undefined;
+                    } else {
+                        node.itemList = body;
+                        globalContext.set('openhab-v2-itemlist', body);
+                    }
+                    node.log(`Refreshing itemlist.....`);
+                    callback(filterSceneItems(node.itemList));
+                });
+            } else {
+                node.log(`Using cached itemlist....`);
+                callback(filterSceneItems(node.itemList));
             }
         }
 
@@ -492,30 +565,33 @@ module.exports = function (RED) {
             var eventSource = node._eventSource;
 
             // Sort of singleton construct - if the eventSource has been initialized before, don't create a new one
-            if (eventSource !== undefined && eventSource instanceof EventSource) {
-                node.log(`Controller using previously started connection: ${eventSource.url}`);
-
-                return eventSource;
-            } else {
+            if (!eventSource || !(eventSource instanceof EventSource)) {
                 var eventSourceInitDict = { rejectUnauthorized: false, https: { checkServerIdentity: false, rejectUnauthorized: false } };
                 var url = node.getURL() + EVENTS_PATH + '?topics=smarthome/items';
 
                 node.log(`Controller attempting to connect to: ${url}`);
                 eventSource = new EventSource(url, eventSourceInitDict);
 
+                // Temporary workaround for issue #3 (https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/3)
+                eventSource.setMaxListeners(50);
+
                 eventSource.on('open', node.onOpen);
                 eventSource.on('error', node.onError);
                 eventSource.on('message', node.onMessage);
+            }
 
-                // Allow for custom event handlers getting passed to eventSource object
+            // Allow for custom event handlers getting passed to eventSource object
 
-                if (callbacks.hasOwnProperty('onOpen') && typeof callbacks.onOpen === 'function') {
-                    eventSource.on('open', callbacks.onOpen);
-                }
+            if (callbacks.hasOwnProperty('onOpen') && typeof callbacks.onOpen === 'function') {
+                eventSource.on('open', callbacks.onOpen);
+            }
 
-                if (callbacks.hasOwnProperty('onMessage') && typeof callbacks.onMessage === 'function') {
-                    eventSource.on('message', callbacks.onMessage);
-                }
+            if (callbacks.hasOwnProperty('onMessage') && typeof callbacks.onMessage === 'function') {
+                eventSource.on('message', callbacks.onMessage);
+            }
+
+            if (callbacks.hasOwnProperty('onError') && typeof callbacks.onError === 'function') {
+                eventSource.on('error', callbacks.onError);
             }
 
             node._eventSource = eventSource;
@@ -929,7 +1005,7 @@ module.exports = function (RED) {
                 try {
                     var outMessage = RED.util.cloneMessage(message);
                     outMessage.payload_in = message.payload;
-                    outMessage.payload = JSON.parse(body);
+                    outMessage.payload = body;
                     node.send(outMessage);
                     node.updateNodeStatus(STATE.CURRENT_STATE, `State: ${outMessage.payload.state}`);
                 } catch (e) {
@@ -1572,171 +1648,204 @@ module.exports = function (RED) {
         };
 
         /**
-         *
+         * Calls a callback function with the retrieved sceneConfig as parameter
          *
          * @param {*} sceneItem
          * @param {*} callback
          */
-        node.getSceneConfigFromItem = function (sceneItem, callback = undefined) {
+        node.getSceneConfig = function (sceneItem, callback) {
             function success(body) {
                 var message, state;
 
-                message = JSON.parse(body);
+                message = body;
+
                 try {
                     state = JSON.parse(message.state);
                 } catch (e) {
                     state = {};
                 }
 
-                // If scene has no name, revert to sceneItem item name
-                state.name = message.label || sceneItem;
+                // If scene has no name, revert to item label or sceneItem name
+                state.name = body.name || message.label || sceneItem.label;
 
                 // Call callback function if possible
                 if (callback && typeof callback === 'function') {
                     callback(state);
                 }
-
-                // Cache sceneConfig on node
-                node.sceneConfig = state;
             }
 
             function fail(errorMessage) {
                 node.warn(JSON.stringify(errorMessage, null, 2));
             }
 
-            openHABController.send(sceneItem, null, null, success, fail);
+            openHABController.send(sceneItem.name, null, null, success, fail);
         }
 
         // To configure a scene in a sitemap to the following:
         //
         // - For every item that you can/want to configure in a scene, create a new item of the same type and tag it with 'openhab-v2-scene:item:[Item Name]'
-        //   e.g. If you have a switch called GF_Living_Lamp, you use the tag 'node-red-openhab-v2-scene:item:GF_Living_Lamp' on the scene config item
+        //   e.g. If you have a switch called GF_Living_Dimmer_Spotlights_TableLights, you use the tag 'node-red-openhab-v2-scene:item:GF_Living_Dimmer_Spotlights_TableLights'
+        //   on the scene config item.
         //
+        //  Switch      SceneConf_GF_Living_Dimmer_Spotlights_TableLights   [openhab-v2-scene:item:GF_Living_Dimmer_Spotlights_TableLights]
         //
-
-        node.getSceneConfigItems = function (itemList, tagFilterItemStr = 'openhab-v2-scene\:item(?:$|\:(.*)$)', tagFilterIncludeItemStr = 'openhab-v2-scene\:include\:(.*)$', tagFilterTopicStr = 'openhab-v2-scene\:topic\:(.*)$') {
-            if (!Array.isArray(itemList) || !itemList.length) return;
-
-            var tagFilterItem = new RegExp(tagFilterItemStr);
-            var tagFilterIncludeItem = new RegExp(tagFilterIncludeItemStr);
-            var tagFilterTopic = new RegExp(tagFilterTopicStr);
-
-            var sceneItems = itemList.filter((item) => {
-                try {
-                    var tags = item.tags.filter((tag) => tag.match(tagFilterItem));
-                    return (tags.length === 1);
-                } catch (e) {
-                    // If array element is not a valid OpenHAB item just filter the item out.
-                    return false;
-                }
-
-            });
-
-            for (var i = 0; i < sceneItems.length; i++) {
-                for (var j = 0; j < sceneItems[i].tags.length; j++) {
-                    var matchTagFilterItem = sceneItems[i].tags[j].match(tagFilterItem);
-                    var matchTagFilterIncludeItem = sceneItems[i].tags[j].match(tagFilterIncludeItem);
-                    var matchTagFilterTopic = sceneItems[i].tags[j].match(tagFilterTopic);
-
-                    !sceneItems[i].sceneItem && matchTagFilterItem && 1 in matchTagFilterItem && matchTagFilterItem[1] != '' && (sceneItems[i].sceneItem = matchTagFilterItem[1]);
-                    !sceneItems[i].sceneIncludeItem && matchTagFilterIncludeItem && 1 in matchTagFilterIncludeItem && matchTagFilterIncludeItem[1] != '' && (sceneItems[i].sceneIncludeItem = matchTagFilterIncludeItem[1]);
-                    !sceneItems[i].sceneItemTopic && matchTagFilterTopic && 1 in matchTagFilterTopic && matchTagFilterTopic[1] != '' && (sceneItems[i].sceneItemTopic = matchTagFilterTopic[1]);
-                };
-            };
-
-            // Convert to JSON object
-            var sceneItemsObject = {};
-            sceneItems.forEach((value, index, array) => {
-                if (!sceneItemsObject[value.name]) {
-                    sceneItemsObject[value.name] = value;
-                }
-            });
-
-            return sceneItemsObject;
-        }
+        // - A scene item is a JSON object with an 'items' array which contain all the items that are part of the scene. The 'execute' boolean property determines
+        //   if an item will be updated/executed when the scene is activated. This will be false for items that are not part of the scene but determine which group of
+        //   items will be included in the scene. (So called Scene Include Items, e.g. 'SceneConf_Include_GF')
+        // 
+        // {
+        //     "items": [
+        //          {
+        //             "name": "GF_Living_Dimmer_Spotlights_TableLights",
+        //             "configItem": "SceneConf_GF_Living_Dimmer_Spotlights_TableLights",
+        //             "payload": "25",
+        //             "topic": "ItemCommand",
+        //             "execute": true,
+        //          },
+        //      ],
+        //   }
+        //
 
         /**
-         *
+         * Executes a scene passed in function argument. Expects a JSON object with an 'items' array containing the scene items.
          *
          * @param {*} sceneConfig
          * @returns
          */
         node.execute = function (sceneConfig) {
-            if (!sceneConfig || !sceneConfig.hasOwnProperty('items') || !Array.isArray(sceneConfig.items)) return;
+            if (!sceneConfig || !sceneConfig.hasOwnProperty('items') || !Array.isArray(sceneConfig.items)) return false;
 
-            for (var item of sceneConfig.items) {
+            for (const [index, item] of sceneConfig.items.entries()) {
                 if (!item.execute || !item.name || !item.payload) continue;
-
-                // node.log(`Send ${item.topic || 'ItemCommand'} '${item.payload}' to item '${item.name}'`);
+                node.log(`Sending ${item.topic || 'ItemCommand'} '${item.payload}' to item ${item.name}}`)
                 openHABController.send(item.name, item.topic || 'ItemCommand', item.payload);
             }
-            // Update node status
-            node.updateNodeStatus(STATE.OK, `Executed scene '${sceneConfig.name}'`);
-
-            // Reset node status message after 2 seconds
-            setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+            return true;
         }
 
         /**
+         * Loads a scene config
          *
+         * @param {*} sceneConfig
+         * @returns
+         */
+        node.clear = function (sceneItemList, fullReset = false) {
+            if (fullReset) {
+                ['SceneConf_Action', 'SceneConf_EditScene', 'SceneConf_CloneScene', 'SceneConf_ExecuteScene', 'SceneConf_StatusMessage'].forEach((itemName) => {
+                    openHABController.send(itemName, 'ItemUpdate', '');
+                });
+            }
+
+            Object.keys(sceneItemList).forEach((sceneItemKey) => {
+                var sceneItem = sceneItemList[sceneItemKey];
+                var type = sceneItem.hasOwnProperty('groupType') ? sceneItem.groupType : sceneItem.type;
+                var payload = 'NULL';
+
+                //console.log(JSON.stringify(sceneItemList[sceneItemKey], null, 2));
+                switch (type.toUpperCase()) {
+                    case 'SWITCH': {
+                        payload = 'OFF';
+                        break;
+                    }
+                    case 'DIMMER': {
+                        payload = '0';
+                    }
+                    default: {
+                        break;
+                    }
+                }
+                openHABController.send(sceneItem.name, 'ItemUpdate', payload);
+            });
+        };
+
+        /**
+         * Loads a scene config
          *
          * @param {*} sceneConfig
          * @returns
          */
         node.load = function (sceneConfig) {
-            if (!sceneConfig || !sceneConfig.hasOwnProperty('items') || !Array.isArray(sceneConfig.items)) return;
+            if (!sceneConfig || !sceneConfig.hasOwnProperty('items') || !Array.isArray(sceneConfig.items)) return false;
 
-            for (var item of sceneConfig.items) {
-                if (!item.configItem || !item.payload) continue;
+            sceneConfig.items.forEach((item) => {
+                // Ignore items without payload (or NULL/UNDEF) and items where configItem is not defined
+                if (!item.configItem || !item.payload || ['NULL', 'UNDEF'].includes(item.payload)) return;
 
-                // node.log(`Send 'ItemUpdate' '${item.payload}' to item '${item.configItem}'`);
                 openHABController.send(item.configItem, 'ItemUpdate', item.payload);
-            }
-            // Update node status
-            node.updateNodeStatus(STATE.OK, `Loaded scene '${sceneConfig.name}'`);
-
-            // Reset node status message after 2 seconds
-            setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+            });
+            return true;
         }
 
         /**
+         * Saves a scene config
          *
+         * @param {*} sceneConfig
+         * @param {*} sceneItem
+         * @returns
+         */
+        node.save = function (sceneConfig, sceneItem) {
+            if (!sceneConfig || !sceneConfig.hasOwnProperty('items') || !Array.isArray(sceneConfig.items)) return false;
+
+            openHABController.send(sceneItem.name, 'ItemUpdate', JSON.stringify(sceneConfig), null, null);
+            return true;
+        }
+
+        /**
+         * Learns a scene config
          *
          * @param {*} sceneConfig
          * @returns
          */
-        node.getStates = function (sceneConfig) {
-            if (!sceneConfig || !sceneConfig.hasOwnProperty('items') || !Array.isArray(sceneConfig.items)) return;
+        node.learn = function (sceneConfig) {
+            openHABController.getItemList((itemList) => {
+                sceneConfig.items.forEach((sceneItem) => {
+                    if (!sceneItem.configItem) return;
 
-            sceneConfig.items.forEach((item) => {
-                if (!item.name) return;
+                    var item = itemList.find(obj => {
+                        return obj.name === sceneItem.name;
+                    });
 
-                // Only set items that have a different configItem (e.g. not the SceneInclude items)
-                if (item.configItem !== item.name) {
-                    openHABController.send(item.name, undefined, undefined, (result) => { setTimeout(function(result) {
-                        result = JSON.parse(result);
-                        openHABController.send(item.configItem, 'ItemCommand', result.state);
-                     }, 0, result); });
-                }
+                    if (item) {
+                        openHABController.send(sceneItem.configItem, 'ItemUpdate', item.state);
+                    }
+                });
             });
+        }
 
-            // Update node status
-            node.updateNodeStatus(STATE.OK, `Getting item states for scene '${sceneConfig.name}'`);
+        /**
+         * Fetches all scene config items and generates a JSON object with an items array to store the scene. Calls a callback function with the newly
+         * constructed JSON object as it's parameter.
+         *
+         * @param {*} callback
+         * @param {*} [filter=undefined]
+         */
+        node.generateSceneConfig = function (sceneItem, callback, getAll = false, filter = undefined) {
+            openHABController.getSceneItemList((itemList) => {
+                var sceneConfig = {};
 
-            // Reset node status message after 2 seconds
-            setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                sceneConfig.items = new Array();
+
+                sceneConfig.name = sceneItem.label;
+
+                Object.keys(itemList).forEach((itemName) => {
+                    if (filter === undefined || filter(itemList[itemName])) {
+                        var item = itemList[itemName];
+
+                        // Ignore group items and items that have an includeItem that is switched OFF
+                        if (item.type !== 'Group' && (getAll || !item.sceneIncludeItem || itemList[item.sceneIncludeItem].state === 'ON')) {
+                            sceneConfig.items.push({ 'name': item.sceneItem || item.name, 'configItem': item.name, 'topic': item.sceneItemTopic, 'payload': item.state, 'execute': item.sceneItem ? true : false });
+                        }
+                    }
+                });
+                callback(sceneConfig);
+            }, true);
         }
 
         /* 
          * Node initialisation
          */
 
-        node.name = config.name;
-        node.sceneItem = config.sceneItem;
-        node.sceneConfig = {};
-
-        // If node was configured with a sceneItem, get current sceneConfig
-        node.sceneItem && node.getSceneConfigFromItem(node.sceneItem);
+        openHABController.getSceneItemList(node.clear);
 
         /* 
          * Node event handlers
@@ -1752,7 +1861,7 @@ module.exports = function (RED) {
                 setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
                 return;
             }
-            if (!node.sceneItem && !message.hasOwnProperty('sceneItem') && !message.hasOwnProperty('customScene')) {
+            if (!message.hasOwnProperty('sceneItem')) {
                 // Update node status
                 node.updateNodeStatus(STATE.WARN, `No scene specified...`);
 
@@ -1761,92 +1870,125 @@ module.exports = function (RED) {
                 return;
             }
 
-            switch (message.action.toUpperCase()) {
-                case 'EXECUTE':
-                case 'EXEC':
-                case 'RUN':
-                case 'START': {
-                    // If a custom JSON string was passed with a scene config, use it instead of fetching scene config from OpenHAB items
-                    if (message.customScene) {
-                        typeof message.customScene === 'object' && node.execute(message.customScene);
+            var performAction = function (sceneItem) {
+                switch (message.action.toUpperCase()) {
+                    // Execute stored scene
+                    case 'EXECUTE':
+                    case 'EXEC': {
+                        // Callback that gets called with sceneConfig object fetched by 'node.getSceneConfig'
+                        var executeCallback = function (sceneConfig) {
+                            var success = typeof sceneConfig.name === 'string' && sceneConfig.name.length > 0 && node.execute(sceneConfig);
+
+                            // Update node status
+                            success && node.updateNodeStatus(STATE.OK, `Executed scene '${sceneConfig.name}'`);
+
+                            // Reset node status message after 2 seconds
+                            success && setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                        }
+
+                        node.getSceneConfig(sceneItem, executeCallback);
+
                         break;
                     }
+                    // Load a stored scene
+                    case 'LOAD': {
+                        // Callback that gets called with sceneConfig object fetched by 'node.getSceneConfig'
+                        var loadCallback = function (sceneConfig) {
+                            var success = typeof sceneConfig.name === 'string' && sceneConfig.name.length > 0 && node.load(sceneConfig);
 
-                    // If a sceneItem was passed in the input message or the sceneConfig isn't cached, fetch scene config from OpenHAB items
-                    if (message.sceneItem || (Object.keys(node.sceneConfig).length === 0 && node.sceneConfig.constructor === Object)) {
-                        node.getSceneConfigFromItem(message.sceneItem || node.sceneItem, node.execute);
-                    } else {
-                        node.execute(node.sceneConfig);
-                    }
-                    break;
-                }
-                case 'LOAD': {
-                    // If a custom JSON string was passed with a scene config, use it instead of fetching scene config from OpenHAB items
-                    if (message.customScene) {
-                        typeof message.customScene === 'object' && node.load(message.customScene);
+                            // Update node status
+                            success && node.updateNodeStatus(STATE.OK, `Loaded scene '${sceneConfig.name}'`);
+
+                            // Reset node status message after 2 seconds
+                            success && setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                        }
+                        node.getSceneConfig(sceneItem, loadCallback);
+
                         break;
                     }
+                    case 'RESET': {
+                        var clearCallback = function (sceneItemList) {
+                            node.clear(sceneItemList);
 
-                    // If a sceneItem was passed in the input message or the sceneConfig isn't cached, fetch scene config from OpenHAB items
-                    if (message.sceneItem || (Object.keys(node.sceneConfig).length === 0 && node.sceneConfig.constructor === Object)) {
-                        node.getSceneConfigFromItem(message.sceneItem || node.sceneItem, node.load);
-                    } else {
-                        node.load(node.sceneConfig);
+                            // Update node status
+                            node.updateNodeStatus(STATE.OK, `Resetting scene items`);
+
+                            // Reset node status message after 2 seconds
+                            setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                        }
+                        openHABController.getSceneItemList(clearCallback);
+
+                        break;
                     }
-                    break;
-                }
-                case 'GETSTATES': {
-                    openHABController.getItemList((itemList) => {
-                        var filteredItemList = node.getSceneConfigItems(itemList);
+                    case 'STORE':
+                    case 'SAVE': {
+                        var saveCallback = function (sceneConfig) {
+                            var success = typeof sceneConfig.name === 'string' && sceneConfig.name.length > 0 && node.save(sceneConfig, sceneItem);
 
-                        node.getStates(filteredItemList);
-                    });
-                    break;
-                }
-                case 'STORE':
-                case 'SAVE': {
-                    // Get current scene config from item
-                    node.getSceneConfigFromItem(message.sceneItem, (currentSceneConfig) => {
-                        openHABController.getItemList((itemList) => {
-                            var sceneConfig = {};
-                            var filteredItemList = node.getSceneConfigItems(itemList);
+                            // Update node status
+                            success && node.updateNodeStatus(STATE.OK, `Saved scene '${sceneConfig.name}'`);
 
-                            sceneConfig.name = currentSceneConfig.label ? currentSceneConfig.label : currentSceneConfig.name;
-                            sceneConfig.items = new Array();
+                            // Reset node status message after 2 seconds
+                            success && setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                        }
+                        node.generateSceneConfig(sceneItem, saveCallback);
 
-                            Object.keys(filteredItemList).forEach((itemName) => {
-                                var item = filteredItemList[itemName];
+                        break;
+                    }
+                    case 'LEARN': {
+                        // Callback that gets called with sceneConfig object fetched by 'node.getSceneConfig'
+                        var learnCallback = function (sceneConfig) {
+                            node.learn(sceneConfig);
 
-                                if (!item.sceneIncludeItem || filteredItemList[item.sceneIncludeItem].state === 'ON') {
-                                    sceneConfig.items.push({ 'name': item.sceneItem || item.name, 'configItem': item.name, 'topic': item.sceneItemTopic, 'payload': item.state, 'execute': item.sceneItem ? true : false });
-                                }
-                            });
+                            // Update node status
+                            node.updateNodeStatus(STATE.OK, `Get current item states into scene config`);
 
-                            openHABController.send(message.sceneItem, 'ItemUpdate', JSON.stringify(sceneConfig), null, null);
-                        }, true);
-                    });
-                    break;
-                }
-                default: {
-                    break;
+                            // Reset node status message after 2 seconds
+                            setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                        }
+                        node.generateSceneConfig(sceneItem, learnCallback, true);
+
+                        break;
+                    }
+                    case 'TEST': {
+                        // Callback that gets called with sceneConfig object fetched by 'node.getSceneConfig'
+                        var testCallback = function (sceneConfig) {
+                            // node.test(sceneConfig);
+
+                            // Update node status
+                            node.updateNodeStatus(STATE.OK, `Testing scene '${sceneConfig.name}'`);
+
+                            // Reset node status message after 2 seconds
+                            setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                        }
+
+                        node.getSceneConfig(sceneItem, testCallback);
+
+                        break;
+                    }
+                    default: {
+                        // Update node status
+                        node.updateNodeStatus(STATE.WARN, `Unknown action specified...`);
+
+                        // Reset node status message after 2 seconds
+                        setTimeout(node.updateNodeStatus, 2000, STATE.IDLE);
+                        break;
+                    }
                 }
             }
+
+            var failed = function () {
+
+            }
+
+            openHABController.send(message.sceneItem, undefined, undefined, performAction, failed);
         });
 
-        /**
-         *
-         *
-         * @param {*} message
-         */
-        node.saveNewSceneConfig = function (message) {
-            node.sceneConfig = JSON.parse(message.state);
-        }
-
         openHABController.addListener(STATE.EVENT_NAME, node.updateNodeStatus);
-        node.sceneItem && openHABController.addListener(node.sceneItem + '/ItemStateChangedEvent', node.saveNewSceneConfig);
+        // node.sceneItem && openHABController.addListener(node.sceneItem + '/ItemStateChangedEvent', node.saveNewSceneConfig);
 
         node.on('close', function () {
-            node.sceneItem && openHABController.removeListener(node.sceneItem + 'ItemStateChangedEvent', node.saveNewSceneConfig);
+            // node.sceneItem && openHABController.removeListener(node.sceneItem + 'ItemStateChangedEvent', node.saveNewSceneConfig);
             openHABController.removeListener(STATE.EVENT_NAME, node.updateNodeStatus);
             node.log(`closing`);
         });
