@@ -20,7 +20,8 @@
 
 var request = require('request');
 var util = require('util');
-var EventSource = require('@joeybaker/eventsource');
+// var EventSource = require('@joeybaker/eventsource');
+var EventSource = require('eventsource');
 
 /**
  * Constants
@@ -576,7 +577,7 @@ module.exports = function (RED) {
                 eventSource.setMaxListeners(50);
 
                 eventSource.on('open', node.onOpen);
-                eventSource.on('error', node.onError);
+                // eventSource.on('error', node.onError);
                 eventSource.on('message', node.onMessage);
             }
 

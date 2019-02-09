@@ -3,8 +3,8 @@
   "version": "1.3.0",
   "description": "OpenHAB nodes for node-red",
   "dependencies": {
-    "@joeybaker/eventsource": "latest",
     "bootstrap-multiselect": "^0.9.13-1",
+    "eventsource": "^1.0.7",
     "request": "latest"
   },
   "author": "Bas van Wetten <bas.van.wetten@gmail.com>",
