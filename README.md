@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/QNimbus/node-red-contrib-openhab-v2.svg?branch=master)](https://travis-ci.com/QNimbus/node-red-contrib-openhab-v2) [![Known Vulnerabilities](https://snyk.io/test/github/QNimbus/node-red-contrib-openhab-v2/badge.svg)](https://snyk.io/test/github/QNimbus/node-red-contrib-openhab-v2)
+
 # node-red-contrib-openhab-v2
 
 ![alt text](https://raw.githubusercontent.com/QNimbus/node-red-contrib-openhab-v2/master/node-red-openhab-v2.png)

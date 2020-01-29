@@ -7,6 +7,9 @@
     "eventsource": "^1.0.7",
     "request": "latest"
   },
+  "resolutions": {
+    "eventsource/url-parse": "^1.4.5"
+  },
   "author": "Bas van Wetten <bas.van.wetten@gmail.com>",
   "keywords": [
     "node-red",
