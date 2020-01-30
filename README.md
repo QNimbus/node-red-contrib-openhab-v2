@@ -1,6 +1,21 @@
-# node-red-contrib-openhab-v2
+[![Build Status](https://travis-ci.com/QNimbus/node-red-contrib-openhab-v2.svg?branch=master)](https://travis-ci.com/QNimbus/node-red-contrib-openhab-v2) [![Known Vulnerabilities](https://snyk.io/test/github/QNimbus/node-red-contrib-openhab-v2/badge.svg)](https://snyk.io/test/github/QNimbus/node-red-contrib-openhab-v2)
+
+# node-red-contrib-openhab-v2 <!-- omit in toc -->
+
+## Table of contents <!-- omit in toc -->
 
 ![alt text](https://raw.githubusercontent.com/QNimbus/node-red-contrib-openhab-v2/master/node-red-openhab-v2.png)
+
+- [Description](#description)
+- [Installation](#installation)
+- [Development](#development)
+- [Nodes](#nodes)
+      - [openhab-v2-controller](#openhab-v2-controller)
+      - [openhab-v2-events](#openhab-v2-events)
+      - [openhab-v2-in](#openhab-v2-in)
+      - [openhab-v2-out](#openhab-v2-out)
+      - [openhab-v2-get](#openhab-v2-get)
+      - [openhab-v2-proxy](#openhab-v2-proxy)
 
 ## Description
 
@@ -13,9 +28,23 @@ $ cd ~/.node-red
 $ npm install node-red-contrib-openhab-v2
 ```
 
+## Development
+
+To develop or contribute to this repository please perform the folowing steps. _*_
+
+> $ docker run -d -p 1880:1880 --name nodered -v \<PWD>:/data nodered/node-red  
+> $ mkdir -p ./nodes  
+> $ cd ./nodes  
+> $ git clone https://github.com/QNimbus/node-red-contrib-openhab-v2.git # !! If you want to submit a PR - use your forked repository here !!  
+> $ docker exec -it --user root --workdir /data/nodes/node-red-contrib-openhab-v2 nodered yarn install **  
+> $ docker restart nodered
+
+_\* This guide assumes running NodeRED as a Docker container_  
+_\*\* On windows you may need to escape the '/' character by prepending another (e.g. '//'). When using Git Bash also add `winpty` before the Docker command_
+
 ## Nodes
 
-##### - openhab-v2-controller
+##### openhab-v2-controller
 
 Configuration node for communication with an OpenHAB controller.
 
@@ -29,7 +58,7 @@ Configuration node for communication with an OpenHAB controller.
 - Password : (Optionally) Specify the password to authenticate
 - Raw events : Enables/disabled the emitting of raw events (currently disabled, see [issue #1](https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1))
 
-##### - openhab-v2-events
+##### openhab-v2-events
 
 Listens to events on the OpenHAB eventbus.
 
@@ -45,7 +74,7 @@ Output:
 - <kbd>msg.payload</kbd> : State of the event item
 - <kbd>msg.type</kbd> : Message type (e.g. *ItemStateEvent*, *ItemStateChangeEvent*, *ItemCommandEvent*, etc)
 
-##### - openhab-v2-in
+##### openhab-v2-in
 
 Listens to state changes of a selected OpenHAB Item. Will only watch for selected event types for the 1st output channel. The 2nd channel (Raw events) are all passed into the flow without filtering for specific event types.
 
@@ -69,7 +98,7 @@ Output 2 (RawEvent):
 - <kbd>msg.topic</kbd> : "RawEvent"
 - <kbd>msg.payload</kbd> :  Raw (unprocessed) event of the selected item
 
-##### - openhab-v2-out
+##### openhab-v2-out
 
 Output a message to the openab-v2-controller. Can use an incomming message which can be overridden by the configured parameters on the node itself.
 
@@ -87,7 +116,7 @@ Input:
 - <kbd>msg.topic</kbd> : (Optionally) "*ItemCommand*" or "*ItemUpdate*"
 - <kbd>msg.payload</kbd> : (Optionally) State to send to the item
 
-##### - openhab-v2-get
+##### openhab-v2-get
 
 Fetch item state information based on incomming message payload. Can be overriden by the configured item on the node itself.
 
@@ -105,7 +134,7 @@ Output:
 - <kbd>msg.payload</kbd> : State information of the item
 - <kbd>msg.payload_in</kbd> : Copy of the incomming message
 
-##### - openhab-v2-proxy
+##### openhab-v2-proxy
 
 A common technique in OpenHAB is to use a proxy item to switch/operate a single or multiple real items with some added logic. This node facilitates that desgin
 pattern by allowing the user to specify a single proxy item and one or more linked items. The user can configure the node to update both the proxy item and the linked items
