@@ -1,0 +1,8 @@
+.red-ui-editableList-border,
+.red-ui-editableList-border .red-ui-editableList-header {
+    border: 0;
+}
+
+.red-ui-editableList-addButton {
+    margin-left: 105px;
+}

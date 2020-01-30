@@ -1,0 +1,821 @@
+<!--
+    OpenHAB nodes for IBM's Node-Red
+    https://github.com/QNimbus/node-red-contrib-openhab2
+    (c) 2018, Bas van Wetten <bas.van.wetten@gmail.com>
+    
+    Licensed under the Apache License, Version 2.0 (the 'License');
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an 'AS IS' BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    
+-->
+
+<!--
+    ********************
+    * Node definitions *
+    ********************
+    
+-->
+
+<script type='text/javascript'>
+    $.getScript('openhab2/static/js/bootstrap-multiselect.js');
+
+    $.getScript('openhab2/static/js/node-red-openhab-v2-events.js');
+    $.getScript('openhab2/static/js/node-red-openhab-v2-in.js');
+    $.getScript('openhab2/static/js/node-red-openhab-v2-out.js');
+    $.getScript('openhab2/static/js/node-red-openhab-v2-get.js');
+    $.getScript('openhab2/static/js/node-red-openhab-v2-proxy.js');
+    $.getScript('openhab2/static/js/node-red-openhab-v2-trigger.js');
+
+    $.getScript('openhab2/static/js/node-red-openhab-v2-scene.js');
+
+    $.getScript('openhab2/static/js/node-red-openhab-v2-controller.js');
+</script>
+
+<!--
+
+    *******************
+    * Utility scripts *
+    *******************
+    
+-->
+
+<script type='text/javascript' src='openhab2/static/js/node-red-openhab-v2-utilities.js'></script>
+
+<!--
+    ***********************
+    * Node edit templates *
+    ***********************
+    
+-->
+
+<script type='text/x-red' data-template-name='openhab-v2-controller'>
+    <div class='form-row'>
+        <label for='node-config-input-name'><i class='fa fa-tag'></i> Name</label>
+        <input type='text' id='node-config-input-name' placeholder='Name'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-protocol'><i class='fa fa-unlock-alt'></i> Protocol</label>
+        <select id='node-config-input-protocol' name='node-config-input-protocol' style='width: 250px;'>
+    <option value='http'>http</option>
+    <option value='https'>https</option>
+        </select>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-host'><i class='fa fa-globe'></i> Host</label>
+        <input type='text' id='node-config-input-host'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-port'><i class='icon-bookmark'></i> Port</label>
+        <input type='text' id='node-config-input-port'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-path'><i class='fa fa-chevron-right'></i> Path</label>
+        <input type='text' id='node-config-input-path'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-username'><i class='fa fa-user'></i> Username</label>
+        <input type='text' id='node-config-input-username'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-password'><i class='fa fa-user-secret'></i> Password</label>
+        <input type='password' id='node-config-input-password'>
+    </div>
+    <div class='form-row'>
+        <label for='node-config-input-allowRawEvents'><i class='fa fa-bars'></i> Raw events</label>
+        <input type='checkbox' id='node-config-input-allowRawEvents' style='width:auto; margin: 0;' disabled="disabled" checked="checked">
+    </div>
+</script>
+
+<script type='text/x-red' data-template-name='openhab-v2-events'>
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/multiselect.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/bootstrap-multiselect.css' />
+	
+    <div class='form-row'>
+        <label for='node-input-name'><i class='fa fa-tag'></i> Name</label>
+        <input type='text' id='node-input-name' placeholder='Name'>
+    </div>
+    <div class='form-row'>
+        <label for='node-input-controller'><i class='fa fa-globe'></i> Controller</label>
+        <input type='text' id='node-input-controller'>
+	</div>
+    <div class="form-row">
+        <label for="node-input-items"><i class="fa fa-crosshairs"></i> Item(s)</label>
+        <select id="node-input-items" name="node-input-items" multiple="multiple"></select>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
+	</div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-ohCompatibleTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-ohCompatibleTimestamp"> Enable OpenHAB compatible timestamp</label>
+	</div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-in">
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/multiselect.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/bootstrap-multiselect.css' />
+ 
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item</label>
+        <select id="node-input-item" name="node-input-item"></select>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
+	</div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-ohCompatibleTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-ohCompatibleTimestamp"> Enable OpenHAB compatible timestamp</label>
+	</div>
+    <div class="form-row">
+		<hr/>
+	</div>
+    <div class="form-row">
+        <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> Event types</label>
+        <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple" style="width: 70%">
+            <option value="ItemCommandEvent">ItemCommand</option>
+            <option value="ItemStateEvent">ItemState</option>
+			<option value="ItemStateChangedEvent">ItemStateChanged</option>
+			<option value="GroupItemStateChangedEvent">GroupItemStateChanged</option>
+        </select>
+    </div>
+    <div class='form-row'>
+        <label for='node-input-outputAtStartup'><i class='fa fa-share-square'></i> Start output</label>
+        <input type='checkbox' id='node-input-outputAtStartup' style='width:auto; margin: 0;' checked="checked">
+    </div>
+    <div class='form-row'>
+        <label for='node-input-storeStateInFlow'><i class='fa fa-edit'></i> Store state</label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-out">
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/multiselect.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/bootstrap-multiselect.css' />
+     
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item</label>
+        <select id="node-input-item" name="node-input-item"></select>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" style="width:70%">
+        <input type="hidden" id="node-input-topicType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+        <input type="text" id="node-input-payload" style="width:70%">
+        <input type="hidden" id="node-input-payloadType">
+    </div>
+    <div class='form-row'>
+        <label for='node-input-storeStateInFlow'><i class='fa fa-edit'></i> Store state</label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-get">
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/multiselect.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/bootstrap-multiselect.css' />
+    
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item</label>
+        <select id="node-input-item" name="node-input-item"></select>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-proxy">
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/multiselect.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/bootstrap-multiselect.css' />
+   
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-item"><i class="fa fa-crosshairs"></i> Item</label>
+        <select id="node-input-item" name="node-input-item"></select>
+	</div>
+	<div id="itemPostfix_div" class="form-row">
+        <label for="node-input-itemPostfix"><i class="fa fa-crosshairs"></i> Item postfix</label>
+        <input type="text" id="node-input-itemPostfix" name="node-input-itemPostfix" style="width:70%" placeholder="_Updates">
+        </select>
+	</div>
+    <div class="form-row">
+        <label for="node-input-proxyItem"><i class="fa fa-crosshairs"></i> Proxy item</label>
+        <select id="node-input-proxyItem" name="node-input-proxyItem"></select>
+	</div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
+    </div>
+    <div class="form-row">
+        <label for="node-input-proxyDirection"><i class="fa fa-arrows-h"></i> Direction </label>
+        <select id="node-input-proxyDirection" name="node-input-proxyDirection">
+            <option value="3">proxy item &larr;&rarr; item</option>
+            <option value="2">proxy item &rarr; item</option>
+            <option value="1">item &rarr; proxy item</option>
+        </select>
+    </div>	
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" style="width:70%">
+        <input type="hidden" id="node-input-topicType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+        <input type="text" id="node-input-payload" style="width:70%">
+        <input type="hidden" id="node-input-payloadType">
+    </div>    
+    <div class='form-row'>
+        <label for='node-input-storeStateInFlow'><i class='fa fa-edit'></i> Store state</label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-trigger">
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/editablelist.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/multiselect.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/bootstrap-multiselect.css' />
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name"/>
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller"/>
+    </div>
+    <div class="form-row">
+        <label for="node-input-triggerItems"><i class="fa fa-crosshairs"></i> Item(s) </label>
+        <select id="node-input-triggerItems" name="node-input-triggerItems" multiple="multiple"></select>
+    </div>
+    <div class="form-row">
+        <label for="force-refresh"><i class="fa fa-refresh"></i> Refresh</label>
+        <button type="button" style="width: 70%" class="btn btn-light" id="force-refresh" name="force-refresh">Refresh item list</button>
+	</div>
+    <div class='form-row'>
+        <label></label>
+        <input type='checkbox' id='node-input-storeStateInFlow' style='width:auto; margin: 0;'> <label style="width:auto !important;" for="node-input-storeStateInFlow"> Store trigger state(s) in flow context</label>
+    </div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-enableSecondOutput" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-enableSecondOutput"> Enable second output</label>
+        <input type="hidden" id="node-input-outputs"/>
+	</div>
+    <div class="form-row">
+        <label></label>
+        <input type="checkbox" id="node-input-ohCompatibleTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-ohCompatibleTimestamp"> Enable OpenHAB compatible timestamp</label>
+	</div>
+    <div class="form-row">
+		<hr/>
+	</div>
+	<div class="form-row">
+		<label></label>
+		<strong>Trigger arming & disarming...</strong>
+	</div>
+	<div class="form-row">
+		<label for="node-input-triggerArmedState"></label>
+		<select id="node-input-triggerArmedState" name="node-input-triggerArmedState" style="width: 70%;">
+			<option value="item">Use arm/disarm item</option>
+			<option value="armed">Trigger is armed by default</option>
+			<option value="disarmed">Trigger is disarmed by default</option>
+		</select>
+	</div>
+    <div class="form-row" id="triggerArmedItemRow">
+		<label for="node-input-triggerArmedItem"><i class="fa fa-bullseye"></i> Arm/Disarm</label>
+		<select id="node-input-triggerArmedItem" name="node-input-triggerArmedItem">
+		</select>
+	</div>
+    <div class="form-row">
+		<label></label>
+		<input type="checkbox" id="node-input-enableInput" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-enableInput"> Enable input</label>
+		<input type="hidden" id="node-input-inputs"/>
+	</div>
+	<div id="notrigger">
+		<div class="form-row">
+			<hr/>
+		</div>
+		<div class="form-row">
+			<label></label>
+			<strong>Trigger conditions...</strong>
+		</div>
+		<div class="form-row">
+			<ol id="node-input-triggerItemsConditions-container"></ol>
+        </div>
+		<div class="form-row">
+            <label></label>
+                <strong>Additional conditions...</strong>
+            </div>
+        <div class="form-row" id="triggerAdditionalConditionsRow">
+            <label for="node-input-triggerAdditionalConditions"><i class="fa fa-question-circle"></i> Test on</label>
+            <select id="node-input-triggerAdditionalConditions" name="node-input-triggerAdditionalConditions">
+                <option value="every">every trigger</option>
+                <option value="first">first trigger only</option>
+            </select>
+        </div>
+    	<div class="form-row node-input-condition-container-row">
+    	    <ol id="node-input-condition-container"></ol>
+		</div>
+    	<div class="form-row">
+			<hr/>
+		</div>
+		<div class="form-row" id="message-row0">
+			<label></label>
+			<strong>Send when triggered...</strong>
+		</div>
+    	<div class="form-row" id="message-row2">
+    	    <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+    	    <input type="text" id="node-input-topic" style="width:70%">
+    	    <input type="hidden" id="node-input-topicType">
+    	</div>
+    	<div class="form-row" id="message-row3">
+    	    <label for="node-input-payload"><i class="fa fa-envelope"></i> Payload</label>
+    	    <input type="text" id="node-input-payload" style="width:70%">
+    	    <input type="hidden" id="node-input-payloadType">
+    	</div>
+    	<div class="form-row">
+    	    <hr/>
+    	</div>
+    	<div class="form-row">
+    	    <label></label>
+    	    <strong>Then...</strong>
+    	</div>
+    	<div class="form-row">
+    	    <label for="node-input-afterTrigger"></label>
+    	    <select id="node-input-afterTrigger" name="node-input-afterTrigger" style="width: 70%;">
+    	        <option value="nothing">Do nothing</option>
+    	        <option value="nodelay">Do not wait</option>
+    	        <option value="timer">Start timer</option>
+    	        <option value="untrigger">Wait until trigger condition is false</option>
+    	    </select>
+		</div>
+    	<div class="form-row" id="timer-row0">
+			<label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
+			<input type="text" id="node-input-timer" style="text-align:end; width:50px !important">
+			<select id="node-input-timerUnits" style="width:200px !important">
+				<option value="milliseconds">milliseconds</option>
+				<option value="seconds">seconds</option>
+				<option value="minutes">minutes</option>
+			</select>
+		</div>
+    	<div class="form-row" id="timer-row1">
+			<label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> Time for</label>
+			<div style="width: 70%; display: inline;">
+				<input type="text" id="node-input-advancedTimer" style="width: calc(70% - 100px);"><span style="width: 100px"> milliseconds</span>
+				<input type="hidden" id="node-input-advancedTimerType">
+			</div>
+		</div>
+    	<div class="form-row" id="timer-row2">
+    	    <label></label>
+    	    <input type="checkbox" id="node-input-advancedTimerToggle" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-advancedTimerToggle"> Advanced timer setting</label>
+		</div>
+    	<div class="form-row" id="timer-row3">
+    	    <label></label>
+    	    <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-cancelTimerWhenDisarmed"> When trigger is reset/disarmed cancel active timer</label>
+		</div>	
+		<div class="form-row" id="timer-row4">
+			<label></label>
+				<strong>When timer expires...</strong>        
+		</div>
+		<div class="form-row" id="timer-row5">
+			<label for="node-input-timerExpiresAction"></label>
+			<select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction" style="width: 70%;">
+				<option value="always_reset">Continue</option>
+				<option value="if_false_reset">Continue when trigger condition is false</option>
+			</select>
+		</div>
+    	<div class="form-row" id="endmessage-row0">
+    	    <hr/>
+    	</div>
+    	<div class="form-row" id="endmessage-row1">
+    	    <label></label>
+    	    <strong>Then send...</strong>
+    	</div>
+    	<div class="form-row" id="endmessage-row2">
+    	    <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
+    	    <input type="text" id="node-input-topicEnd" style="width:70%">
+    	    <input type="hidden" id="node-input-topicEndType">
+    	</div>
+    	<div class="form-row" id="endmessage-row3">
+    	    <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
+    	    <input type="text" id="node-input-payloadEnd" style="width:70%">
+    	    <input type="hidden" id="node-input-payloadEndType">
+		</div>
+    	<div class="form-row">
+			<hr/>
+		</div>
+		<div class="form-row">
+			<label></label>
+			<strong>Finally...</strong>
+		</div>
+    	<div class="form-row">
+			<label for="node-input-armDisarm"><i class="fa fa-bullseye"></i> Trigger</label>
+			<select id="node-input-armDisarm" name="node-input-armDisarm" style="width: 70%;">
+				<option value="">Leave trigger arm/disarm state as is</option>
+				<option value="arm">Arm trigger</option>
+				<option value="disarm">Disarm trigger</option>
+			</select>
+		</div>
+	</div>  
+</script>
+
+<script type="text/x-red" data-template-name="openhab-v2-scene">
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/multiselect.css' />
+	<link rel='stylesheet' type='text/css' href='openhab2/static/css/bootstrap-multiselect.css' />
+ 
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-controller"><i class="fa fa-globe"></i> Controller</label>
+        <input type="text" id="node-input-controller">
+    </div>
+    <div class="form-row">
+		<label for="node-input-sceneItem"><i class="fa fa-bullseye"></i> Scene item</label>
+		<select id="node-input-sceneItem" name="node-input-sceneItem">
+		</select>
+	</div>
+</script>
+
+<!--
+    *******************
+    * Node help texts *
+    *******************
+    
+-->
+
+<script type='text/x-red' data-help-name='openhab-v2-controller'>
+    <p>Configuration node for communication with an OpenHAB controller.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Protocol
+            <span class="property-type">string</span>
+        </dt>
+        <dd>'http' or 'https'</dd>
+        <dt>Host
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the controllers hostname.</dd>       
+        <dt>Port
+            <span class="property-type">number</span>
+        </dt>
+        <dd>Specify the controllers ip port.</dd>
+        <dt class="optional">Path
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the additional base path.</dd>
+        <dt class="optional">Username
+                <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the username to authenticate with.</dd>
+        <dt class="optional">Password
+                <span class="property-type">string</span>
+        </dt>
+        <dd>Specify the password to authenticate with.</dd>
+        <dt>Raw events
+                <span class="property-type">boolean</span>
+        </dt>
+        <dd>Enables/disabled the emitting of raw events.</dd>
+        <dd><sub>currently disabled, see <a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1">issue #1</a></sub></dd>
+    </dl> 
+</script>
+
+<script type='text/x-red' data-help-name='openhab-v2-events'>
+    <p>Listens to events on the OpenHAB eventbus.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name(s)
+                <span class="property-type">string []</span>
+            </dt>
+            <dd>Item(s) to watch for events.</dd>        
+    </dl>    
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>topic
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Topic of the event (e.g. <i>smarthome/items/MyItemName/state</i>).</dd>
+        <dt>payload
+            <span class="property-type">string</span>
+        </dt>
+        <dd>State of the event item.</dd>
+        <dt>type
+                <span class="property-type">string</span>
+            </dt>
+            <dd>Message type. (e.g. <i>ItemStateEvent</i>, <i>ItemStateChangeEvent</i>, <i>ItemCommandEvent</i>, etc)</dd>              
+    </dl>
+    <h3>Details</h3>
+    <p>Will output any events it gets from the openhab-v2-controller (Eventbus) for all items or (a) specific item(s).</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-in">
+    <p>Listens to state changes of a selected OpenHAB Item. Will only watch for selected event types for the 1st output channel. The 2nd channel (Raw events) are all passed into the flow without filtering for specific event types.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item to send message to.</dd>
+        <dt class="optional">Event types
+            <span class="property-type">string []</span>
+        </dt>
+        <dd>Output state at startup.</dd>
+        <dt>Start output
+            <span class="property-type">boolean</span>
+        </dt>
+        <dd>Whether or not to emit state at start of flow.</dd>
+        <dd>Store node state in flow context.</dd>
+        <dt>Store state
+            <span class="property-type">boolean</span>
+        </dt>
+        <dd>Whether or not to store the node state in the flow context in a variable with the same name as the OpenHAB item.</dd> 
+    </dl>    
+    <h3>Outputs</h3>
+    <h5>StateEvent</h5>
+    <dl class="message-properties">
+        <dt>item
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item name.</dd>
+        <dt>topic
+            <span class="property-type">string</span>
+        </dt>
+        <dd>"<i>StateEvent</i>"</dd>
+        <dt>payload
+                <span class="property-type">string</span>
+            </dt>
+            <dd>New state of the selected item.</dd>            
+    </dl>
+    <h5>RawEvent</h5>
+    <dl class="message-properties">
+            <dt>item
+                    <span class="property-type">string</span>
+                </dt>
+                <dd>Item name.</dd>
+                <dt>topic
+                    <span class="property-type">string</span>
+                </dt>
+                <dd>"<i>RawEvent</i>"</dd>
+                <dt>payload
+                        <span class="property-type">string</span>
+                    </dt>
+                    <dd>Raw (unprocessed) event of the item.</dd>        
+        </dl>
+    <h3>Details</h3>
+    <p>This node will retrieve OpenHAB item state information as soon as it receives a message on it's input.
+    The item state information will be retrieved for the item specified by <code>msg.item</code> on the input message.
+    If the node config has an item name configured this will override the <code>msg.item</code> on the input message.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-out">
+    <p>Output a message to the openab-v2-controller. Can be overridden by the configured item, topic and/or payload on the node itself.</p>
+    <p>e.g. item -> 'MyLightSwitch', topic -> 'ItemCommand', payload -> 'ON'.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>controller
+            <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">item<span class="property-type">string</span></dt>
+        <dd>Item to send message to. Can be overridden using input message.</dd>
+        <dt class="optional">topic <span class="property-type">string</span></dt>
+        <dd>Message topic. Can be overridden using input message.</dd>   
+        <dt class="optional">payload<span class="property-type">various</span></dt>
+        <dd>Message payload. Can be overridden using input message.</dd>            
+    </dl>    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">item<span class="property-type">string</span></dt>
+		<dd>Item name.</dd>
+        <dt class="optional">topic<span class="property-type">string</span></dt>
+		<dd>Message topic.</dd>
+        <dt class="optional">payload<span class="property-type">string</span></dt>
+        <dd>Message payload.</dd> 
+    </dl>
+    <h3>Details</h3>
+    <p>This node will send a message to the selected OpenHAB controller. If the item name, topic and/or payload are not configured it will get these properties from the input message.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-get">
+    <p>Fetch item state information based on incomming message payload. Can be overriden by the configured item on the node itself.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller <span class="property-type">(object)</span>
+        </dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt class="optional">Item name
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item to send message to.</dd>
+    </dl>    
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt class="optional">item
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Item name.</dd>
+    </dl>
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">as per input</span>
+        </dt>
+        <dd>State information of the item.</dd>
+        <dt>payload_in
+            <span class="property-type">as per input</span>
+        </dt>
+        <dd>Copy of the incomming message.</dd>        
+    </dl>
+    <h3>Details</h3>
+    <p>This node will retrieve OpenHAB item state information as soon as it receives a message on it's input.
+    The item state information will be retrieved for the item specified by <code>msg.item</code> on the input message.
+    If the node config has an item name configured this will override the <code>msg.item</code> on the input message.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-proxy">
+    <p>Description.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">Name</dt>
+        <dd>Provide a custom name for this node.</dd>
+        <dt>Controller <span class="property-type">(object)</span></dt>
+        <dd>Select the OpenHAB controller.</dd>
+        <dt>Direction<span class="property-type">string</span></dt>
+        <dd>Select the direction to send updates (item to proxy, proxy to item or both ways)</dd>
+        <dt>Item name<span class="property-type">string</span></dt>
+        <dd>Specify item to link to proxy item</dd>
+        <dt>Item postfix<span class="property-type">string</span></dt>
+        <dd>If the proxy item needs to be updated in both directions (i.e. item <--> proxy <--> item) then you need to create a copy of the item with the same binding that will receive the item updates.
+        This parameter defines the postfix used for the item copies. (e.g. <i>MyLightSwitch</i> and <i>MyLightSwitch_Updates</i>) Make sure the item name with postfix actually exist.</dd>        
+        <dt>Proxy item<span class="property-type">string</span></dt>
+        <dd>Specify the proxy item</dd>
+        <dt class="optional">Topic <span class="property-type">string</span></dt>
+        <dd>An optional property that can be configured in the node.</dd>
+        <dt>Payload<span class="property-type">various</span></dt>
+        <dd>The configured payload of the message.</dd>
+    </dl>    
+    <h3>Details</h3>
+    <p>Detailed description.</p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-trigger">
+    <p>Description</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt class="optional">
+            Name
+            <span class="property-type">
+                string
+            </span>
+        </dt>
+        <dd>
+            Provide a custom name for this node.
+        </dd>
+        <dt>
+            Controller
+            <span class="property-type">
+                (object)
+            </span>
+        </dt>
+        <dd>
+            Select the OpenHAB controller.
+        </dd>
+        <dt>
+            Item(s)
+            <span class="property-type">
+                    String | String[]
+                </span>
+        </dt>
+        <dd>
+            Select one or more trigger items
+        </dd>
+        <dt class="optional">
+            Enable second output
+            <span class="property-type">
+                Boolean
+            </span>
+        </dt>
+        <dd>
+            When enabled a secondary output is used to output message when trigger was triggered regardless of ARMED/DISARMED state of trigger.
+		</dd>
+        <dt class="optional">
+			Arm/Disarm trigger
+			<span class="property-type">
+				String
+			</span>
+		</dt>
+		<dd>
+			Select an item (Switch/Contact type) that can be used to toggle trigger ARMED state.
+		</dd>
+        <dt class="optional">
+			Enable input
+			<span class="property-type">
+				Boolean
+			</span>
+		</dt>
+		<dd>
+			When enabled a input will be enabled to toggle trigger ARMED state. (e.g. to disarm trigger send message with payload 'OFF', 'CLOSED', 0 or '0')
+		</dd>
+        <dt>
+			Trigger condition
+			<span class="property-type">
+				String | Number | OpenHABType
+			</span>
+		</dt>
+		<dd>
+			The condition for the trigger. When one of the trigger items satisfies the given state/condition the trigger will fire.
+		</dd>
+    </dl>    
+    <h3>Outputs</h3>
+    <p>
+        When only a single output is used, message will only be sent when the trigger node is in the ARMED state. It's also possible to use an optional secondary output. Message will be sent through
+        this output regardless of the trigger armed/disarmed state.
+    </p>
+    <h3>Details</h3>
+    <p>
+        This node will allow you to set up a trigger based on a trigger condition (e.g. motion sensor state updates to 'ON').
+        After the trigger fires a predefined message will be sent. After this you can immediately send another predefined message or start a timer that sends a message when it expires.
+        The timer can be restarted when the trigger condition is still valid or it can expire regardless.
+    </p>
+    <p>
+        A trigger can be ARMED or DISARMED by default or by watching a related OpenHAB item that will act as a proxy for the triggers armed/disarmed status. When a trigger is DISARMED it will
+        not listen for events on the trigger item.
+    </p>
+</script>
+
+<script type="text/x-red" data-help-name="openhab-v2-scene">
+</script>

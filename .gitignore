@@ -1,0 +1,10 @@
+*.backup
+test_flow*
+node_modules/
+\.config\.json
+
+settings\.js
+
+flow_debug\.json
+
+\.vscode/
