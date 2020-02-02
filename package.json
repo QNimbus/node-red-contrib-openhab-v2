@@ -1,39 +1,42 @@
 {
   "name": "node-red-contrib-openhab-v2",
-  "version": "1.4.1",
-  "description": "OpenHAB nodes for node-red",
-  "dependencies": {
-    "bootstrap-multiselect": "^0.9.13-1",
-    "eventsource": "^1.0.7",
-    "request": "latest"
-  },
-  "author": "Bas van Wetten <bas.van.wetten@gmail.com>",
+  "version": "2.0.0",
+  "description": "OpenHAB nodes for NodeRED",
+  "readme": "README.md",
   "keywords": [
     "node-red",
     "openhab2"
   ],
+  "contributors": [
+    {
+      "name": "B. van Wetten",
+      "email": "bas.van.wetten@gmail.com",
+      "url": "https://github.com/QNimbus"
+    }
+  ],
+  "author": {
+    "name": "B. van Wetten",
+    "email": "bas.van.wetten@gmail.com",
+    "url": "https://github.com/QNimbus"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QNimbus/node-red-contrib-openhab-v2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/QNimbus/node-red-contrib-openhab-v2/issues"
+  },
+  "license": "MIT",
   "node-red": {
     "nodes": {
       "openhab-v2": "openhab-v2.js"
     }
   },
-  "scripts": {
-    "debug": "nodemon"
+  "dependencies": {
+    "bootstrap-multiselect": "~0.9.15",
+    "eventsource": "~1.0.7",
+    "request": "~2.88.0"
   },
-  "nodemonConfig": {
-    "signal": "SIGHUP",
-    "env": {
-      "NODE_ENV": "development"
-    },
-    "watch": ".",
-    "ext": "html,js",
-    "exec": "node-red --port 3030 -v -u . ./flow_debug.json"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/QNimbus/node-red-contrib-openhab-v2.git"
-  },
-  "license": "Apache-2.0",
   "devDependencies": {
     "node-red": "^1.0.3",
     "nodemon": "^2.0.2"
