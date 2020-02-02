@@ -309,7 +309,7 @@ boolbase@~1.0.0:
   resolved "https://registry.yarnpkg.com/boolbase/-/boolbase-1.0.0.tgz#68dff5fbe60c51eb37725ea9e3ed310dcc1e776e"
   integrity sha1-aN/1++YMUes3cl6p4+0xDcwed24=
 
-bootstrap-multiselect@^0.9.13-1:
+bootstrap-multiselect@^0.9.15:
   version "0.9.15"
   resolved "https://registry.yarnpkg.com/bootstrap-multiselect/-/bootstrap-multiselect-0.9.15.tgz#671db3bbe8d65d4caadc77ad12e10d65bf9eff71"
   integrity sha512-UwF32a0QR82xkEEGpuNrn57Bu0b/7DfCuoiOaziSHfQKFj5arR6c7+MYLs5RiIf3zl4XZ+YnY7ZBi6/EN3vEZA==
@@ -2424,7 +2424,7 @@ remove-trailing-separator@^1.0.1:
   resolved "https://registry.yarnpkg.com/remove-trailing-separator/-/remove-trailing-separator-1.1.0.tgz#c24bce2a283adad5bc3f58e0d48249b92379d8ef"
   integrity sha1-wkvOKig62tW8P1jg1IJJuSN52O8=
 
-request@2.88.0, request@latest:
+request@2.88.0, request@^2.88.0:
   version "2.88.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.88.0.tgz#9c2fca4f7d35b592efe57c7f0a55e81052124fef"
   integrity sha512-NAqBSrijGLZdM0WZNsInLJpkJokL72XYjUpnB0iwsRgxh7dB6COrHnTBNwN0E+lHDAJzu7kLAkDeY08z2/A0hg==
