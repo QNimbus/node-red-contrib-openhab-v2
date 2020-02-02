@@ -1,10 +1,5 @@
-*.backup
-test_flow*
-node_modules/
-\.config\.json
+# Dependency directory
+node_modules
 
-settings\.js
-
-flow_debug\.json
-
-\.vscode/
+# Yarn
+yarn-error.log
