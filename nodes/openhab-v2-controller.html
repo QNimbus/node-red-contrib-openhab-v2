@@ -1,0 +1,146 @@
+<!--
+    OpenHAB nodes for IBM's Node-Red
+    https://github.com/QNimbus/node-red-contrib-openhab2
+    (c) 2020, Bas van Wetten <bas.van.wetten@gmail.com>
+        
+    MIT License
+
+    Copyright (c) 2020 B. van Wetten
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+-->
+
+<!--***************
+* Node definition *
+****************-->
+
+<script type="text/javascript">
+  $.getScript('openhab2/public/js/node-red-openhab-v2-controller.js');
+</script>
+
+<!--******************
+* Node edit template *
+*******************-->
+
+<script type="text/html" data-template-name="openhab-v2-controller">
+  <div class="form-row">
+      <label for="node-config-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.controller.labels.name">Name</span></label>
+      <input type="text" id="node-config-input-name" placeholder="Name" />
+    </div>
+    <div class="form-row">
+      <label for="node-config-input-protocol"><i class="fa fa-unlock-alt"></i> <span data-i18n="openhab-v2.controller.labels.protocol">Protocol</span></label>
+      <select id="node-config-input-protocol" name="node-config-input-protocol" style="width: 250px;">
+        <option value="http">http</option>
+        <option value="https">https</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="node-config-input-checkCertificate"><i class="fa fa-shield"></i> <span data-i18n="openhab-v2.controller.labels.checkCertificate">Certificate</span></label>
+      <input type="checkbox" id="node-config-input-checkCertificate" style="width:auto; margin: 0;" checked="checked" /> <span data-i18n="openhab-v2.controller.labels.checkCertificateDescription">Verify</span>
+    </div>
+    <div class="form-row">
+      <label for="node-config-input-host"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.controller.labels.host">Host</span></label>
+      <input type="text" id="node-config-input-host" />
+    </div>
+    <div class="form-row">
+      <label for="node-config-input-port"><i class="icon-bookmark"></i> <span data-i18n="openhab-v2.controller.labels.port">Port</span></label>
+      <input type="text" id="node-config-input-port" />
+    </div>
+    <div class="form-row">
+      <label for="node-config-input-path"><i class="fa fa-chevron-right"></i> <span data-i18n="openhab-v2.controller.labels.path">Path</span></label>
+      <input type="text" id="node-config-input-path" />
+    </div>
+    <div class="form-row">
+      <label for="node-config-input-username"><i class="fa fa-user"></i> <span data-i18n="openhab-v2.controller.labels.username">Username</span></label>
+      <input type="text" id="node-config-input-username" />
+    </div>
+    <div class="form-row">
+      <label for="node-config-input-password"><i class="fa fa-user-secret"></i> <span data-i18n="openhab-v2.controller.labels.password">Password</span></label>
+      <input type="password" id="node-config-input-password" />
+    </div>
+</script>
+
+<!--***************
+* Node help texts *
+****************-->
+
+<script type="text/html" data-help-name="openhab-v2-controller" data-lang="en">
+  <p>Connects to an OpenHAB instance via it's REST API and publishes messages.</p>
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+    <dt>
+      Name
+      <span class="property-type">string</span>
+    </dt>
+    <dd>Provide a custom name for this node.</dd>
+    <dt>
+      Protocol
+      <span class="property-type">string</span>
+    </dt>
+    <dd>'http' or 'https'</dd>
+    <dt>
+      Host
+      <span class="property-type">string</span>
+    </dt>
+    <dd>Specify the controllers hostname.</dd>
+    <dt>
+      Port
+      <span class="property-type">number</span>
+    </dt>
+    <dd>Specify the controllers ip port.</dd>
+    <dt class="optional">
+      Path
+      <span class="property-type">string</span>
+    </dt>
+    <dd>Specify the additional base path.</dd>
+    <dt class="optional">
+      Username
+      <span class="property-type">string</span>
+    </dt>
+    <dd>Specify the username to authenticate with.</dd>
+    <dt class="optional">
+      Password
+      <span class="property-type">string</span>
+    </dt>
+    <dd>Specify the password to authenticate with.</dd>
+    <dt>
+      Raw events
+      <span class="property-type">boolean</span>
+    </dt>
+    <dd>Enables/disabled the emitting of raw events.</dd>
+    <dd>
+      <sub>currently disabled, see <a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/1">issue #1</a></sub>
+    </dd>
+  </dl>
+  <h3>Details</h3>
+  <p>
+    <code>msg.payload</code> is used as the payload of the published message. If it contains an Object it will be converted to a JSON string before being
+    sent. If it contains a binary Buffer the message will be published as-is.
+  </p>
+  <p>The topic used can be configured in the node or, if left blank, can be set by <code>msg.topic</code>.</p>
+  <p>
+    Likewise the QoS and retain values can be configured in the node or, if left blank, set by <code>msg.qos</code> and <code>msg.retain</code> respectively.
+  </p>
+
+  <h3>References</h3>
+  <ul>
+    <li><a>Twitter API docs</a> - full description of <code>msg.tweet</code> property</li>
+    <li><a>GitHub</a> - the nodes github repository</li>
+  </ul>
+</script>

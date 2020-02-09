@@ -28,46 +28,17 @@ SOFTWARE.
 
 */
 
-/* global RED */
+/* eslint-disable no-unused-vars */
+/* eslint-env browser,jquery */
 
-RED.nodes.registerType('openhab-v2-controller', {
-  category: 'config',
-  defaults: {
-    name: {
-      value: '',
-      required: true
-    },
-    protocol: {
-      value: 'http',
-      required: true
-    },
-    allowInsecure: {
-      value: false,
-      required: true
-    },
-    host: {
-      value: 'localhost',
-      required: true
-    },
-    port: {
-      value: 8080,
-      validate: RED.validators.number(),
-      required: true
-    },
-    username: {
-      value: '',
-      required: false
-    },
-    password: {
-      value: '',
-      required: false
-    }
-  },
-  paletteLabel: 'openhab-v2-controller',
-  label: function() {
-    return this.name;
-  },
-  labelStyle: function() {
-    return this.name ? 'node_label_italic' : '';
+const getItems = controller => {
+  if (controller) {
+    return $.getJSON('openhab2/items', {
+      controller
+    })
+      .done((json, textStatus, jqXHR) => json)
+      .fail((jqXHR, textStatus, errorThrown) => {
+        console.warn(errorThrown);
+      });
   }
-});
+};

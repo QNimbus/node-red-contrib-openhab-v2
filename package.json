@@ -29,13 +29,14 @@
   "license": "MIT",
   "node-red": {
     "nodes": {
-      "openhab-v2": "openhab-v2.js"
+      "openhab-v2-controller": "nodes/openhab-v2-controller.js",
+      "openhab-v2-in": "nodes/openhab-v2-in.js"
     }
   },
   "dependencies": {
-    "bootstrap-multiselect": "~0.9.15",
     "eventsource": "~1.0.7",
-    "request": "~2.88.0"
+    "request": "~2.88.0",
+    "slim-select": "^1.25.0"
   },
   "devDependencies": {
     "node-red": "^1.0.3",

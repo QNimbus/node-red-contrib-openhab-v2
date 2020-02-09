@@ -1,0 +1,194 @@
+<!--
+    OpenHAB nodes for IBM's Node-Red
+    https://github.com/QNimbus/node-red-contrib-openhab2
+    (c) 2020, Bas van Wetten <bas.van.wetten@gmail.com>
+        
+    MIT License
+
+    Copyright (c) 2020 B. van Wetten
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+-->
+
+<!--*************
+* Custom styles *
+**************-->
+
+<style type="text/css">
+  /* Override default input placeholder and ss-disabled style from slimselect.css to ensure all placeholders look the same */
+  .ss-disabled,
+  input::placeholder {
+    color: #a9a9a9 !important;
+  }
+</style>
+
+<!--***************
+* Node definition *
+****************-->
+
+<script type="text/javascript">
+  $.getScript('openhab2/public/js/node-red-openhab-v2-in.js');
+</script>
+
+<!--**************
+* Script imports *
+***************-->
+
+<script type="text/javascript" src="openhab2/public/js/vendor/slimselect.min.js"></script>
+<script type="text/javascript" src="openhab2/public/js/node-red-openhab-v2-utilities.js"></script>
+
+<!--******************
+* Node edit template *
+*******************-->
+
+<script type="text/html" data-template-name="openhab-v2-in">
+  <link rel="stylesheet" type="text/css" href="openhab2/public/css/vendor/slimselect.min.css" />
+
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.in.labels.name">Name</span></label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.in.labels.controller">OpenHAB</span></label>
+    <select id="node-input-controller"></select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.in.labels.item">Item</span></label>
+    <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+      <div style="position: absolute; left: 0px; right: 0px;">
+        <select id="node-input-item" name="node-input-item">
+          <option data-placeholder="true"></option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <label></label>
+    <input type="checkbox" id="node-input-ohTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;" />
+    <label style="width:auto !important;" for="node-input-ohTimestamp"> <span data-i18n="openhab-v2.in.labels.ohTimestamp">Enable OpenHAB compatible timestamp</span></label>
+  </div>
+  <div class="form-row">
+    <hr />
+  </div>
+  <div class="form-row">
+    <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> <span data-i18n="openhab-v2.in.labels.eventTypes">Event types</span></label>
+    <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple" style="width: 70%">
+      <option value="ItemCommandEvent">ItemCommand</option>
+      <option value="ItemStateEvent">ItemState</option>
+      <option value="ItemStateChangedEvent">ItemStateChanged</option>
+      <option value="GroupItemStateChangedEvent">GroupItemStateChanged</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-initialOutput"><i class="fa fa-share-square"></i> <span data-i18n="openhab-v2.in.labels.initialOutput">Initial output</span></label>
+    <input type="checkbox" id="node-input-initialOutput" style="width:auto; margin: 0;" checked="checked" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-storeState"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.in.labels.storeState">Store state</span></label>
+    <input type="checkbox" id="node-input-storeState" style="width:auto; margin: 0;" />
+  </div>
+</script>
+
+<!--***************
+* Node help texts *
+****************-->
+
+<script type="text/html" data-help-name="openhab-v2-in">
+  <p>
+      Listens to state changes of a selected OpenHAB Item. Will only watch for selected event types for the 1st output channel. The 2nd channel (Raw events) are all
+      passed into the flow without filtering for specific event types.
+    </p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+      <dt class="optional">
+        Name
+        <span class="property-type">string</span>
+      </dt>
+      <dd>Provide a custom name for this node.</dd>
+      <dt>
+        Controller
+        <span class="property-type">(object)</span>
+      </dt>
+      <dd>Select the OpenHAB controller.</dd>
+      <dt class="optional">
+        Item name
+        <span class="property-type">string</span>
+      </dt>
+      <dd>Item to send message to.</dd>
+      <dt class="optional">
+        Event types
+        <span class="property-type">string []</span>
+      </dt>
+      <dd>Output state at startup.</dd>
+      <dt>
+        Start output
+        <span class="property-type">boolean</span>
+      </dt>
+      <dd>Whether or not to emit state at start of flow.</dd>
+      <dd>Store node state in flow context.</dd>
+      <dt>
+        Store state
+        <span class="property-type">boolean</span>
+      </dt>
+      <dd>Whether or not to store the node state in the flow context in a variable with the same name as the OpenHAB item.</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <h5>StateEvent</h5>
+    <dl class="message-properties">
+      <dt>
+        item
+        <span class="property-type">string</span>
+      </dt>
+      <dd>Item name.</dd>
+      <dt>
+        topic
+        <span class="property-type">string</span>
+      </dt>
+      <dd>"<i>StateEvent</i>"</dd>
+      <dt>
+        payload
+        <span class="property-type">string</span>
+      </dt>
+      <dd>New state of the selected item.</dd>
+    </dl>
+    <h5>RawEvent</h5>
+    <dl class="message-properties">
+      <dt>
+        item
+        <span class="property-type">string</span>
+      </dt>
+      <dd>Item name.</dd>
+      <dt>
+        topic
+        <span class="property-type">string</span>
+      </dt>
+      <dd>"<i>RawEvent</i>"</dd>
+      <dt>
+        payload
+        <span class="property-type">string</span>
+      </dt>
+      <dd>Raw (unprocessed) event of the item.</dd>
+    </dl>
+    <h3>Details</h3>
+    <p>
+      This node will retrieve OpenHAB item state information as soon as it receives a message on it's input. The item state information will be retrieved for the
+      item specified by <code>msg.item</code> on the input message. If the node config has an item name configured this will override the <code>msg.item</code> on
+      the input message.
+    </p>
+</script>

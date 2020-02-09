@@ -1,0 +1,33 @@
+{
+  "openhab-v2": {
+    "controller": {
+      "labels": {
+        "name": "Name",
+        "protocol": "Protocol",
+        "host": "Host",
+        "port": "Port",
+        "checkCertificate": "Certificate",
+        "checkCertificateDescription": "Verify",
+        "path": "Path",
+        "username": "Username",
+        "password": "Password"
+      }
+    },
+    "in": {
+      "labels": {
+        "name": "Name",
+        "controller": "OpenHAB",
+        "item": "Item",
+        "ohTimestamp": "Enable OpenHAB compatible timestamp",
+        "eventTypes": "Event types",
+        "initialOutput": "Initial output",
+        "storeState": "Store state",
+        "placeholderLoading": "Loading...",
+        "placeholderSelectItem": "Select item",
+        "placeholderEmptyList": "No items found",
+        "searchNoResults": "No results",
+        "searchPlaceholder": "Search"
+      }
+    }
+  }
+}
