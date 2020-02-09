@@ -31,75 +31,59 @@ SOFTWARE.
 /* eslint-env browser,jquery */
 /* global RED */
 
-RED.nodes.registerType('openhab-v2-in', {
-  category: 'OpenHAB',
+RED.nodes.registerType('openhab-v2-controller', {
+  category: 'config',
   // Styling
-  icon: 'node-red-contrib-openhab-v2-color.png',
-  color: '#fff',
-  align: 'left',
-  paletteLabel: 'in',
+  icon: undefined, // * Not applicable for config node
+  color: undefined, // * Not applicable for config node
+  align: undefined, // * Not applicable for config node
+  paletteLabel: 'openhab-v2-controller',
   label: function() {
-    return this.name || this.item || 'in';
+    return this.name;
   },
-  labelStyle: function() {
-    return this.name || this.item ? 'node_label_italic' : '';
-  },
+  labelStyle: undefined, // * Not applicable for config node
   // Inputs & outputs
-  inputs: 0,
-  outputs: 1,
-  inputLabels: [],
-  outputLabels: ['StateEvent'],
+  inputs: undefined, // * Not applicable for config node
+  outputs: undefined, // * Not applicable for config node
+  inputLabels: undefined, // * Not applicable for config node
+  outputLabels: undefined, // * Not applicable for config node
   // Default
   defaults: {
     name: {
-      value: ''
-    },
-    controller: {
       value: '',
-      type: 'openhab-v2-controller',
       required: true
     },
-    item: {
-      value: '',
-      required: false
-    },
-    ohCompatibleTimestamp: {
-      value: false
-    },
-    eventTypes: {
-      value: [],
+    protocol: {
+      value: 'http',
       required: true
     },
-    outputAtStartup: {
+    checkCertificate: {
       value: true,
       required: true
     },
-    storeStateInFlow: {
-      value: false,
+    host: {
+      value: 'localhost',
       required: true
+    },
+    port: {
+      value: 8080,
+      validate: RED.validators.number(),
+      required: true
+    },
+    username: {
+      value: '',
+      required: false
+    },
+    password: {
+      value: '',
+      required: false
     }
   },
   // Dialog events
   oneditprepare: function() {
     const node = this;
-
-    // getItemList(node.item, $('#node-input-controller'), '#node-input-item', true);
-    // getEventTypeList(node);
-
-    // // Enable/Disable OpenHAB compatible timestamp
-    // $('#node-input-ohCompatibleTimestamp').change(() => {
-    //   if ($('#node-input-ohCompatibleTimestamp').is(':checked')) {
-    //     node.ohCompatibleTimestamp = true;
-    //   } else {
-    //     node.ohCompatibleTimestamp = false;
-    //   }
-    // });
   },
-  oneditsave: function() {
-    const node = this;
-
-    // workaroundForEmptyItemsList(node, '#node-input-eventTypes');
-  },
+  oneditsave: function() {},
   oneditcancel: function() {},
   oneditdelete: function() {},
   oneditresize: function() {}

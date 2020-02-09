@@ -1,0 +1,17 @@
+{
+  "openhab-v2": {
+    "controller": {
+      "labels": {
+        "name": "Name",
+        "protocol": "Protocol",
+        "host": "Host",
+        "port": "Port",
+        "checkCertificate": "Certificate",
+        "checkCertificateDescription": "Verify",
+        "path": "Path",
+        "username": "Username",
+        "password": "Password"
+      }
+    }
+  }
+}
