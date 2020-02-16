@@ -43,14 +43,14 @@
 ****************-->
 
 <script type="text/javascript">
-  $.getScript('openhab2/public/js/node-red-openhab-v2-in.js');
+  $.getScript('openhab2/public/js/node-red-openhab-v2-out.js');
 </script>
 
 <!--******************
 * Node edit template *
 *******************-->
 
-<script type="text/html" data-template-name="openhab-v2-in">
+<script type="text/html" data-template-name="openhab-v2-out">
   <link rel="stylesheet" type="text/css" href="openhab2/public/css/vendor/slimselect.min.css" />
 
   <div class="form-row">
@@ -66,6 +66,7 @@
     <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
       <div style="position: absolute; left: 0px; right: 0px;">
         <select id="node-input-item" name="node-input-item">
+          <option data-placeholder="true"></option>
         </select>
       </div>
     </div>
@@ -101,7 +102,7 @@
 * Node help texts *
 ****************-->
 
-<script type="text/html" data-help-name="openhab-v2-in">
+<script type="text/html" data-help-name="openhab-v2-out">
   <p>
       Listens to state changes of a selected OpenHAB Item. Will only watch for selected event types for the 1st output channel. The 2nd channel (Raw events) are all
       passed into the flow without filtering for specific event types.
