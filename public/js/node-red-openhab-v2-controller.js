@@ -80,9 +80,7 @@ RED.nodes.registerType('openhab-v2-controller', {
     }
   },
   // Dialog events
-  oneditprepare: function() {
-    const node = this;
-  },
+  oneditprepare: function() {},
   oneditsave: function() {},
   oneditcancel: function() {},
   oneditdelete: function() {},

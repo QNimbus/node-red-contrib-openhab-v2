@@ -54,6 +54,9 @@ module.exports = function(RED) {
     node.eventTypes = config.eventTypes;
     node.ohTimestamp = config.ohTimestamp;
     node.initialOutput = config.initialOutput;
+    node.storeState = config.storeState;
+    node.flowContext = node.context().flow;
+    node.globalContext = node.context().global;
 
     // Node constants
     node.timeZoneOffset = Object.freeze(new Date().getTimezoneOffset() * 60000);
@@ -72,8 +75,16 @@ module.exports = function(RED) {
       const { payload, ...message } = event;
       const timestamp = node.ohTimestamp ? new Date(Date.now() - node.timeZoneOffset).toISOString().slice(0, -1) : Date.now();
 
-      node.send([{ ...message, timestamp: timestamp }]);
+      // Send node message
+      node.send([{ payload: { ...message, timestamp: timestamp } }]);
+
+      // Update node state
       updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, event.state);
+
+      // Store state in current flow
+      if (node.storeState) {
+        node.flowContext.set(node.item, event.state);
+      }
     };
 
     node.onControllerEvent = (event, message) => {

@@ -77,7 +77,7 @@ RED.nodes.registerType('openhab-v2-in', {
       required: true
     },
     storeState: {
-      value: false,
+      value: true,
       required: true
     }
   },
@@ -113,11 +113,11 @@ RED.nodes.registerType('openhab-v2-in', {
 
       // Reconfigure the SlimSelect box
       if (items.length > 0) {
-        slimSelectItem.config.placeholderText = node._('openhab-v2.in.labels.placeholderSelectItem', { defaultValue: 'Select item' });
+        slimSelectItem.config.placeholderText = node._('openhab-v2.out.labels.placeholderSelectItem', { defaultValue: 'Select item' });
         slimSelectItem.config.allowDeselect = true;
         slimSelectItem.config.allowDeselectOption = true;
       } else {
-        slimSelectItem.config.placeholderText = node._('openhab-v2.in.labels.placeholderEmptyList', { defaultValue: 'No items found' });
+        slimSelectItem.config.placeholderText = node._('openhab-v2.out.labels.placeholderEmptyList', { defaultValue: 'No items found' });
         slimSelectItem.config.allowDeselect = false;
         slimSelectItem.config.allowDeselectOption = false;
       }
@@ -138,21 +138,6 @@ RED.nodes.registerType('openhab-v2-in', {
      * Configure input elements
      */
 
-    // *** Item ***
-
-    const slimSelectItem = new SlimSelect({
-      select: '#node-input-item',
-      placeholder: node._('openhab-v2.in.labels.placeholderLoading', { defaultValue: 'Loading...' }),
-      searchText: node._('openhab-v2.in.labels.searchNoResults', { defaultValue: 'No results' }),
-      searchPlaceholder: node._('openhab-v2.in.labels.searchPlaceholder', { defaultValue: 'Search' }),
-      deselectLabel: '<span>&#10006;</span>',
-      allowDeselect: false,
-      allowDeselectOption: false,
-      showOptionTooltips: true
-    });
-
-    getItems(controller).then(itemList => populateItemList(slimSelectItem, itemList, node.item));
-
     // *** Controller ***
 
     /* eslint-disable no-unused-vars */
@@ -165,6 +150,19 @@ RED.nodes.registerType('openhab-v2-in', {
     });
     /* eslint-enable no-unused-vars */
 
+    // *** Item ***
+
+    const slimSelectItem = new SlimSelect({
+      select: '#node-input-item',
+      placeholder: node._('openhab-v2.out.labels.placeholderLoading', { defaultValue: 'Loading...' }),
+      searchText: node._('openhab-v2.out.labels.searchNoResults', { defaultValue: 'No results' }),
+      searchPlaceholder: node._('openhab-v2.out.labels.searchPlaceholder', { defaultValue: 'Search' }),
+      deselectLabel: '<span>&#10006;</span>',
+      allowDeselect: false,
+      allowDeselectOption: false,
+      showOptionTooltips: true
+    });
+
     // *** Event types ***
 
     /* eslint-disable no-unused-vars */
@@ -175,6 +173,12 @@ RED.nodes.registerType('openhab-v2-in', {
       hideSelectedOption: true
     });
     /* eslint-enable no-unused-vars */
+
+    /**
+     * Main
+     */
+
+    getItems(controller).then(itemList => populateItemList(slimSelectItem, itemList, node.item));
   },
   oneditsave: function() {
     /**
