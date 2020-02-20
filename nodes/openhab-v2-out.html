@@ -54,47 +54,31 @@
   <link rel="stylesheet" type="text/css" href="openhab2/public/css/vendor/slimselect.min.css" />
 
   <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.in.labels.name">Name</span></label>
+    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.out.labels.name">Name</span></label>
     <input type="text" id="node-input-name" placeholder="Name" />
   </div>
   <div class="form-row">
-    <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.in.labels.controller">OpenHAB</span></label>
+    <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.out.labels.controller">OpenHAB</span></label>
     <select id="node-input-controller"></select>
   </div>
   <div class="form-row">
-    <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.in.labels.item">Item</span></label>
+    <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.out.labels.item">Item</span></label>
     <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
       <div style="position: absolute; left: 0px; right: 0px;">
         <select id="node-input-item" name="node-input-item">
-          <option data-placeholder="true"></option>
         </select>
       </div>
     </div>
   </div>
   <div class="form-row">
-    <label></label>
-    <input type="checkbox" id="node-input-ohTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;" />
-    <label style="width:auto !important;" for="node-input-ohTimestamp"> <span data-i18n="openhab-v2.in.labels.ohTimestamp">Enable OpenHAB compatible timestamp</span></label>
+    <label for="node-input-topic"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.out.labels.topic">Topic</span></label>
+    <input type="text" id="node-input-topic" style="width:70%">
+    <input type="hidden" id="node-input-topicType">
   </div>
   <div class="form-row">
-    <hr />
-  </div>
-  <div class="form-row">
-    <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> <span data-i18n="openhab-v2.in.labels.eventTypes">Event types</span></label>
-    <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple" style="width: 70%">
-      <option value="ItemCommandEvent">ItemCommand</option>
-      <option value="ItemStateEvent">ItemState</option>
-      <option value="ItemStateChangedEvent">ItemStateChanged</option>
-      <option value="GroupItemStateChangedEvent">GroupItemStateChanged</option>
-    </select>
-  </div>
-  <div class="form-row">
-    <label for="node-input-initialOutput"><i class="fa fa-share-square"></i> <span data-i18n="openhab-v2.in.labels.initialOutput">Initial output</span></label>
-    <input type="checkbox" id="node-input-initialOutput" style="width:auto; margin: 0;" checked="checked" />
-  </div>
-  <div class="form-row">
-    <label for="node-input-storeState"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.in.labels.storeState">Store state</span></label>
-    <input type="checkbox" id="node-input-storeState" style="width:auto; margin: 0;" />
+    <label for="node-input-payload"><i class="fa fa-envelope"></i> <span data-i18n="openhab-v2.out.labels.payload">Payload</span></label>
+    <input type="text" id="node-input-payload" style="width:70%">
+    <input type="hidden" id="node-input-payloadType">
   </div>
 </script>
 

@@ -31,13 +31,14 @@ SOFTWARE.
 /* eslint-env browser,jquery */
 /* global RED,SlimSelect */
 /* global getItems */ // From node-red-openhab-v2-utilities.js
+/* global OH_TYPED_INPUT */ // From node-red-openhab-v2-typedinput.js
 
 RED.nodes.registerType('openhab-v2-out', {
   category: 'OpenHAB',
   // Styling
   icon: 'node-red-contrib-openhab-v2-color.png',
   color: '#fff',
-  align: 'left',
+  align: 'right',
   paletteLabel: 'out',
   label: function() {
     return this.name || this.item || 'out';
@@ -48,12 +49,12 @@ RED.nodes.registerType('openhab-v2-out', {
   // Inputs & outputs
   inputs: 1,
   outputs: 0,
-  inputLabels: ['StateEvent'],
+  inputLabels: ['Command'],
   outputLabels: [],
   // Default
   defaults: {
     name: {
-      value: ''
+      value: undefined
     },
     controller: {
       value: '',
@@ -61,19 +62,23 @@ RED.nodes.registerType('openhab-v2-out', {
       required: true
     },
     item: {
-      value: '',
+      value: null,
       required: false
     },
-    ohTimestamp: {
-      value: false,
+    topic: {
+      value: 'topic',
       required: true
     },
-    eventTypes: {
-      value: [],
+    topicType: {
+      value: 'msg',
       required: true
     },
-    initialOutput: {
-      value: true,
+    payload: {
+      value: 'payload',
+      required: true
+    },
+    payloadType: {
+      value: 'msg',
       required: true
     },
     storeState: {
@@ -93,14 +98,12 @@ RED.nodes.registerType('openhab-v2-out', {
      * Methods
      */
 
-    const populateItemList = async selectedItem => {
-      const itemList = await getItems(controller);
+    const populateItemList = (slimSelector, itemList, selectedItem) => {
       const items = [];
 
       // Construct itemList array for use with SlimSelect
       for (let i = 0; i < itemList.length; i++) {
-        const selected = itemList[i].name === selectedItem;
-        items.push({ text: itemList[i].name, value: itemList[i].name, selected });
+        items.push({ text: itemList[i].name, value: itemList[i].name });
       }
 
       // Sort SlimSelect options alphabetically and case-insensitive
@@ -113,25 +116,27 @@ RED.nodes.registerType('openhab-v2-out', {
         else return 0;
       });
 
-      // Preserve existing HTML DOM children of select element
-      // This is mostly required because of the 'empty' option we
-      // need in order for the 'deselect' function to work properly
-      const children = $(slimSelectItem.select.element).children();
+      // Reconfigure the SlimSelect box
+      if (items.length > 0) {
+        slimSelector.config.placeholderText = node._('openhab-v2.out.labels.placeholderSelectItem', { defaultValue: 'Select item' });
+        slimSelector.config.allowDeselect = true;
+        slimSelector.config.allowDeselectOption = true;
+      } else {
+        slimSelector.config.placeholderText = node._('openhab-v2.out.labels.placeholderEmptyList', { defaultValue: 'No items found' });
+        slimSelector.config.allowDeselect = false;
+        slimSelector.config.allowDeselectOption = false;
+      }
+
+      // Add a placeholder element required for a list with de-selectable items
+      $(slimSelector.select.element).prepend(
+        $('<option>')
+          .val(undefined)
+          .attr('data-placeholder', true)
+      );
 
       // Load the data into the SlimSelect list
-      slimSelectItem.setData(items);
-
-      // Reconfigure the SlimSelect box
-      const placeHolderText =
-        items.length > 0
-          ? node._('openhab-v2.out.labels.placeholderSelectItem', { defaultValue: 'Select item' })
-          : node._('openhab-v2.out.labels.placeholderEmptyList', { defaultValue: 'No items found' });
-      slimSelectItem.config.placeholderText = placeHolderText;
-      slimSelectItem.config.allowDeselect = true;
-      slimSelectItem.config.allowDeselectOption = true;
-
-      // Finally restore child(ren) from select element
-      $(slimSelectItem.select.element).prepend(children);
+      slimSelector.setData(items);
+      slimSelector.set(selectedItem);
     };
 
     /**
@@ -144,7 +149,9 @@ RED.nodes.registerType('openhab-v2-out', {
     const slimSelectController = new SlimSelect({
       select: '#node-input-controller',
       showSearch: false,
-      hideSelectedOption: true
+      hideSelectedOption: true,
+      // TODO: Ensure that 'Loading' placeholder gets displayed during loading
+      onChange: event => getItems(event.value).then(itemList => populateItemList(slimSelectItem, itemList, node.item))
     });
     /* eslint-enable no-unused-vars */
 
@@ -161,20 +168,40 @@ RED.nodes.registerType('openhab-v2-out', {
       showOptionTooltips: true
     });
 
-    populateItemList(node.item);
+    // *** Topic ***
 
-    // *** Event types ***
-
-    /* eslint-disable no-unused-vars */
-    const slimSelectEventTypes = new SlimSelect({
-      select: '#node-input-eventTypes',
-      deselectLabel: '<span>&#10006;</span>',
-      showSearch: false,
-      hideSelectedOption: true
+    $('#node-input-topic').typedInput({
+      types: ['msg', 'str', OH_TYPED_INPUT.COMMAND_TYPE],
+      default: 'msg',
+      value: 'topic',
+      typeField: $('#node-input-topicType')
     });
-    /* eslint-enable no-unused-vars */
+
+    // *** Payload ***
+
+    $('#node-input-payload').typedInput({
+      types: ['msg', 'flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
+      default: 'msg',
+      value: 'payload',
+      typeField: $('#node-input-payloadType')
+    });
+
+    /**
+     * Main
+     */
+
+    getItems(controller).then(itemList => populateItemList(slimSelectItem, itemList, node.item));
   },
-  oneditsave: function() {},
+  oneditsave: function() {
+    /**
+     * Initialization
+     */
+    const node = this;
+
+    // Using SlimSelect and submitting no selected option results in 'null' value instead of undefined
+    // This is a workaround to prevent NodeRED from not storing an undefined value
+    node.item = $('node-input-item').val() !== null ? $('node-input-item').val() : undefined;
+  },
   oneditcancel: function() {},
   oneditdelete: function() {},
   oneditresize: function() {}

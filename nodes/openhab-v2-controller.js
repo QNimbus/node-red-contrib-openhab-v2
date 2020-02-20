@@ -196,7 +196,7 @@ module.exports = function(RED) {
       this.connect = function() {
         if (!node._client || !(node._client instanceof EventSource)) {
           node._client = new EventSource(url, {
-            headers: Object.assign({}, node.clientHeaders),
+            headers: { ...node.clientHeaders },
             https: { rejectUnauthorized: node.checkCertificate }
           });
 
@@ -236,17 +236,15 @@ module.exports = function(RED) {
       this.get = (path, customOptions = {}) =>
         new Promise((resolve, reject) => {
           const url = node.url + path;
-          const options = Object.assign(
-            {
-              url,
-              followRedirect: false,
-              rejectUnauthorized: node.checkCertificate,
-              headers: {
-                'User-Agent': 'request'
-              }
+          const options = {
+            url,
+            followRedirect: false,
+            rejectUnauthorized: node.checkCertificate,
+            headers: {
+              'User-Agent': 'request'
             },
-            customOptions
-          );
+            ...customOptions
+          };
           node.debug(`GET Request ${url}`);
           Request.get(options, (error, response, body) => {
             if (!error) {
@@ -273,7 +271,7 @@ module.exports = function(RED) {
     // Create Basic Auth headers if credentials are present in node config
     if (config.username && config.password) {
       const auth = Buffer.from(`${config.username}:${config.password}`).toString('base64');
-      node.clientHeaders = Object.assign(node.clientHeaders, { Authorization: `Basic ${auth}` });
+      node.clientHeaders = { Authorization: `Basic ${auth}`, ...node.clientHeaders };
     }
 
     // Linters do not like an anonymous constructor function
