@@ -25,3 +25,42 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 -->
+
+<script type="text/html" data-help-name="openhab-v2-out">
+  <p>Send ItemCommand/ItemUpdate to openHAB item.</p>
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+    <dt class="optional">Name<span class="property-type">string</span></dt>
+    <dd>optional custom name for node.</dd>
+    <dt>
+      Controller
+      <span class="property-type">object</span>
+    </dt>
+    <dd>openHAB controller.</dd>
+    <dt>
+      Item
+      <span class="property-type">string</span>
+    </dt>
+    <dd>openHAB item to send command to.</dd>
+    <dt>
+      Topic
+      <span class="property-type">string</span>
+    </dt>
+    <dd>ItemCommand or ItemUpdate.</dd>
+    <dt>
+      Payload
+      <span class="property-type">string</span>
+    </dt>
+    <dd>Payload to send to openHAB item.</dd>
+  </dl>
+  <h3>Details</h3>
+  <p>
+    The <code>openhab-v2-out</code> sends an <i>ItemCommand</i> or <i>ItemUpdate</i> to the selected item via the openHAB REST API. The message topic and payload can be provided via the incomming message or preselected in the node configuration.
+  </p>
+  <h3>References</h3>
+  <ul>
+    <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/blob/master/README.md">README.md</a></li>
+    <li><a href="https://www.openhab.org/docs/developer/utils/events.html#api-introduction">OpenHAB docs :: Events</a></li>
+    <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2">GitHub :: node-red-contrib-openhab-v2</a></li>
+  </ul>
+</script>

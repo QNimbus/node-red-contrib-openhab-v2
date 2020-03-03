@@ -42,19 +42,19 @@ module.exports = {
     if (newState === STATES.EVENTSOURCE_STATE) {
       switch (newStateType) {
         case STATES.EVENTSOURCE_STATE_TYPE.CONNECTED: {
-          node.status({ fill: 'green', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'Connected' });
+          node.status({ fill: 'green', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'connected' });
           break;
         }
         case STATES.EVENTSOURCE_STATE_TYPE.CONNECTING: {
-          node.status({ fill: 'green', shape: 'ring', text: newStateTypeText !== undefined ? newStateTypeText : 'Connecting' });
+          node.status({ fill: 'green', shape: 'ring', text: newStateTypeText !== undefined ? newStateTypeText : 'connecting' });
           break;
         }
         case STATES.EVENTSOURCE_STATE_TYPE.DISCONNECTED: {
-          node.status({ fill: 'grey', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'Disconnected' });
+          node.status({ fill: 'grey', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'disconnected' });
           break;
         }
         case STATES.EVENTSOURCE_STATE_TYPE.ERROR: {
-          node.status({ fill: 'red', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'Error' });
+          node.status({ fill: 'red', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'error' });
           break;
         }
         default: {
@@ -65,7 +65,7 @@ module.exports = {
     } else if (newState === STATES.NODE_STATE) {
       switch (newStateType) {
         case STATES.NODE_STATE_TYPE.ERROR: {
-          node.status({ fill: 'red', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'Error' });
+          node.status({ fill: 'red', shape: 'dot', text: newStateTypeText !== undefined ? newStateTypeText : 'error' });
           break;
         }
         default: {

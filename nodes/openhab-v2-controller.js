@@ -34,7 +34,9 @@ module.exports = function(RED) {
    */
 
   const path = require('path');
-  const Request = require('request');
+  const http = require('http');
+  const https = require('https');
+  const axios = require('axios').default;
   const EventSource = require('eventsource');
 
   /**
@@ -60,7 +62,7 @@ module.exports = function(RED) {
     const controller = RED.nodes.getNode(config.controller);
 
     if (controller && controller instanceof OpenHABNodeController) {
-      controller.getItems().then(items => {
+      controller.getItems().then((items = {}) => {
         res.json(items);
       });
     } else {
@@ -87,7 +89,7 @@ module.exports = function(RED) {
       /**
        * Constants
        */
-      const url = node.url + '/rest/events';
+      const url = node.url + '/events';
 
       /**
        * Members methods
@@ -154,17 +156,17 @@ module.exports = function(RED) {
         let errorMessage;
 
         if (message.toUpperCase().includes('ENOTFOUND') || status === 404) {
-          errorMessage = `EventSource ${url} - Not found`;
+          errorMessage = `SSE ${url} - Not found`;
         } else if (status === 401 || status === 403) {
-          errorMessage = `EventSource ${url} - Not authorized`;
+          errorMessage = `SSE ${url} - Not authorized`;
           retryConnection = false;
         } else if (message.toUpperCase().includes('ECONNREFUSED')) {
-          errorMessage = `EventSource ${url} - Connection refused`;
+          errorMessage = `SSE ${url} - Connection refused`;
         } else if (message.toUpperCase().includes('CERTIFICATE')) {
-          errorMessage = `EventSource ${url} - Certificate error`;
+          errorMessage = `SSE ${url} - Certificate error`;
           retryConnection = false;
         } else {
-          errorMessage = `EventSource ${url} - Connection lost`;
+          errorMessage = `SSE ${url} - Connection lost`;
         }
 
         // If connection was interrupted or lost then 'event.message' is undefined
@@ -179,7 +181,7 @@ module.exports = function(RED) {
           // Retry to connect in 15 seconds
           if (retryConnection) {
             node.retryTimer = setTimeout(() => {
-              node.client.connect();
+              node.sseClient.connect();
             }, 15000);
           }
 
@@ -197,7 +199,7 @@ module.exports = function(RED) {
         if (!node._client || !(node._client instanceof EventSource)) {
           node._client = new EventSource(url, {
             headers: { ...node.clientHeaders },
-            https: { rejectUnauthorized: node.checkCertificate }
+            https: { rejectUnauthorized: node.verifyCertificate }
           });
 
           node._client.on('open', this.onOpen);
@@ -228,83 +230,80 @@ module.exports = function(RED) {
       };
     };
 
-    // Create RequestClient
-    const RequestClient = function() {
-      /**
-       * Main methods
-       */
-      this.get = (path, customOptions = {}) =>
-        new Promise((resolve, reject) => {
-          const url = node.url + path;
-          const options = {
-            url,
-            followRedirect: false,
-            rejectUnauthorized: node.checkCertificate,
-            headers: {
-              'User-Agent': 'request'
-            },
-            ...customOptions
-          };
-          node.debug(`GET Request ${url}`);
-          Request.get(options, (error, response, body) => {
-            if (!error) {
-              resolve(body);
-            } else {
-              console.log(response);
-              console.log(body);
-              reject(error);
-            }
-          });
-        });
-    };
-
     // Load node configuration
     node.name = config.name;
     node.host = config.host;
 
     node.port = config.port;
     node.protocol = config.protocol;
-    node.checkCertificate = !!config.checkCertificate;
-    node.url = `${node.protocol}://${node.host}:${node.port}`;
+    node.verifyCertificate = !config.ignoreInvalidCertificate;
+    node.url = `${node.protocol}://${node.host}:${node.port}/rest`;
     node.clientHeaders = {};
 
     // Create Basic Auth headers if credentials are present in node config
-    if (config.username && config.password) {
-      const auth = Buffer.from(`${config.username}:${config.password}`).toString('base64');
+    if (node.credentials.username && node.credentials.password) {
+      const auth = Buffer.from(`${node.credentials.username}:${node.credentials.password}`).toString('base64');
       node.clientHeaders = { Authorization: `Basic ${auth}`, ...node.clientHeaders };
     }
 
     // Linters do not like an anonymous constructor function
     // Therefore we first create the (named) EventSourceClient constructor and
-    // then we create an instance of the EventSourceClient and assign it to node.client
-    node.client = new EventSourceClient(node);
+    // then we create an instance of the EventSourceClient and assign it to node.sseClient
+    node.sseClient = new EventSourceClient(node);
 
-    node.request = new RequestClient(node);
+    // Initialize Axios client for GET/POST/PUT requests
+    node.axios = axios.create({
+      method: 'get',
+      baseURL: node.url,
+      auth: {
+        username: config.username,
+        password: config.password
+      },
+      httpAgent: new http.Agent({}),
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: !!config.checkCertificate
+      })
+    });
 
     /**
      * Node methods
      */
 
-    node.getItems = () => {
-      const endpoint = '/rest/items/';
-
-      return node.request.get(endpoint, { json: true }).catch(error => {
-        const { message } = error;
-        let errorMessage;
-
-        if (message.toUpperCase().includes('ENOTFOUND')) {
-          errorMessage = `Not found - GET Request ${endpoint}`;
-        } else if (message.toUpperCase().includes('ECONNREFUSED')) {
-          errorMessage = `Connection refused - GET Request ${endpoint}`;
-        } else if (message.toUpperCase().includes('CERTIFICATE')) {
-          errorMessage = `Certificate error - GET Request ${endpoint}`;
-        } else {
-          errorMessage = `Connection lost - GET Request ${endpoint}`;
+    node.sendItem = (itemName, topic, payload) => {
+      switch (topic) {
+        case 'ItemUpdate': {
+          node.debug(`HTTP PUT request items/${itemName}/state : ${String(payload)}`);
+          return node.axios.put(`items/${itemName}/state`, String(payload), { headers: { 'Content-Type': 'text/plain' } });
         }
+        case 'ItemCommand': {
+          node.debug(`HTTP POST request items/${itemName} : ${String(payload)}`);
+          return node.axios.post(`items/${itemName}`, String(payload), { headers: { 'Content-Type': 'text/plain' } });
+        }
+        default: {
+          // TODO: Handle incorrect topic
+          break;
+        }
+      }
+    };
 
-        // Log error message
-        node.warn(errorMessage);
-      });
+    node.getItem = itemName => {
+      node.debug(`HTTP GET request items/${itemName}`);
+      return node.axios
+        .get(`items/${itemName}`)
+        .then(response => Promise.resolve(response.data))
+        .catch(error => {
+          node.warn(error);
+        });
+    };
+
+    node.getItems = () => {
+      node.debug('HTTP GET request items');
+      return node.axios
+        .get('items')
+        .then(response => Promise.resolve(response.data))
+        .catch(error => {
+          node.warn(error);
+        });
     };
 
     /**
@@ -312,19 +311,24 @@ module.exports = function(RED) {
      */
 
     node.on('close', () => {
-      node.client.disconnect();
+      node.sseClient.disconnect();
     });
 
     /**
      * Node main
      */
 
-    node.client.connect();
+    node.sseClient.connect();
   }
 
   /**
    * Register node
    */
 
-  RED.nodes.registerType('openhab-v2-controller', OpenHABNodeController);
+  RED.nodes.registerType('openhab-v2-controller', OpenHABNodeController, {
+    credentials: {
+      username: { type: 'text' },
+      password: { type: 'password' }
+    }
+  });
 };
