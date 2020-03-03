@@ -25,3 +25,63 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 -->
+
+<script type="text/html" data-help-name="openhab-v2-controller">
+  <p>Configuration node for openhab-v2 nodes.</p>
+  <p>Connects to an openHAB instance via the openHAB REST API.</p>
+  <p>Used by the following nodes:
+    <ul>
+      <li><code>openhab-v2-in</code></li>
+      <li><code>openhab-v2-out</code></li>
+    </ul>
+  </p>
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+    <dt>
+      Name
+      <span class="property-type">string</span>
+    </dt>
+    <dd>optional custom name for node.</dd>
+    <dt>
+      Protocol
+      <span class="property-type">string</span>
+    </dt>
+    <dd>http or https.</dd>
+    <dt>
+      Certificate
+      <span class="property-type">boolean</span>
+    </dt>
+    <dd>ignore untrusted certificate.</dd>
+    <dt>
+      Host
+      <span class="property-type">string</span>
+    </dt>
+    <dd>specify the openHAB hostname.</dd>
+    <dt>
+      Port
+      <span class="property-type">number</span>
+    </dt>
+    <dd>specify the openHAB TCP port.</dd>
+    <dt class="optional">
+      Path
+      <span class="property-type">string</span>
+    </dt>
+    <dd>optional base path.</dd>
+    <dt class="optional">
+      Username
+      <span class="property-type">string</span>
+    </dt>
+    <dd>optional HTTP Basic Auth username.</dd>
+    <dt class="optional">
+      Password
+      <span class="property-type">string</span>
+    </dt>
+    <dd>optional HTTP Basic Auth password.</dd>
+  </dl>
+  <h3>References</h3>
+  <ul>
+    <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/blob/master/README.md">README.md</a></li>
+    <li><a href="https://www.openhab.org/docs/developer/utils/events.html#api-introduction">OpenHAB docs :: Events</a></li>
+    <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2">GitHub :: node-red-contrib-openhab-v2</a></li>
+  </ul>
+</script>

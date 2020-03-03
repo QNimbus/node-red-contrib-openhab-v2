@@ -53,7 +53,8 @@ RED.nodes.registerType('openhab-v2-in', {
   // Default
   defaults: {
     name: {
-      value: undefined
+      value: undefined,
+      required: false
     },
     controller: {
       value: '',
@@ -61,8 +62,8 @@ RED.nodes.registerType('openhab-v2-in', {
       required: true
     },
     item: {
-      value: null,
-      required: false
+      value: undefined,
+      required: true
     },
     ohTimestamp: {
       value: false,

@@ -50,15 +50,15 @@ RED.nodes.registerType('openhab-v2-controller', {
   // Default
   defaults: {
     name: {
-      value: '',
-      required: true
+      value: undefined,
+      required: false
     },
     protocol: {
       value: 'http',
       required: true
     },
-    checkCertificate: {
-      value: true,
+    ignoreInvalidCertificate: {
+      value: false,
       required: true
     },
     host: {
@@ -70,13 +70,9 @@ RED.nodes.registerType('openhab-v2-controller', {
       validate: RED.validators.number(),
       required: true
     },
-    username: {
-      value: '',
-      required: false
-    },
-    password: {
-      value: '',
-      required: false
+    credentials: {
+      username: { type: 'text' },
+      password: { type: 'password' }
     }
   },
   // Dialog events

@@ -25,3 +25,63 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 -->
+
+<script type="text/html" data-help-name="openhab-v2-in">
+  <p>Send message when openHAB event occurs for an item.</p>
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+    <dt class="optional">Name<span class="property-type">string</span></dt>
+    <dd>optional custom name for node.</dd>
+    <dt>
+      Controller
+      <span class="property-type">object</span>
+    </dt>
+    <dd>openHAB controller.</dd>
+    <dt>
+      Item
+      <span class="property-type">string</span>
+    </dt>
+    <dd>openHAB item to watch.</dd>
+    <dt class="optional">
+      Event types
+      <span class="property-type">string []</span>
+    </dt>
+    <dd>openHAB events to watch.</dd>
+    <dt>
+      Timestamp
+      <span class="property-type">boolean</span>
+    </dt>
+    <dd>output openHAB compatible timestamp instead of Unix timestamp.</dd>
+    <dt>
+      Initial output
+      <span class="property-type">boolean</span>
+    </dt>
+    <dd>send message for intial item state.</dd>
+    <dt>
+      Store state
+      <span class="property-type">boolean</span>
+    </dt>
+    <dd>store node state in flow context.</dd>
+  </dl>
+  <h3>Outputs</h3>
+  <ol class="node-ports">
+    <li>
+      StateEvent
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>{ item, type, state, timestamp }</dd>
+      </dl>
+    </li>
+  </ol>
+  <h3>Details</h3>
+  <p>
+    The <code>openhab-v2-in</code> node listens for certain events for a specific item. The node state reflects the initial state or the updated state after
+    an event was received. It subsequently sends a message with the event type, item name, new item state and a timestamp.
+  </p>
+  <h3>References</h3>
+  <ul>
+    <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/blob/master/README.md">README.md</a></li>
+    <li><a href="https://www.openhab.org/docs/developer/utils/events.html#api-introduction">OpenHAB docs :: Events</a></li>
+    <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2">GitHub :: node-red-contrib-openhab-v2</a></li>
+  </ul>
+</script>

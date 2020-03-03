@@ -71,22 +71,6 @@ module.exports = function(RED) {
      * Node event handlers
      */
 
-    node.onEvent = event => {
-      const { payload, ...message } = event;
-      const timestamp = node.ohTimestamp ? new Date(Date.now() - node.timeZoneOffset).toISOString().slice(0, -1) : Date.now();
-
-      // Send node message
-      node.send([{ payload: { ...message, timestamp: timestamp } }]);
-
-      // Update node state
-      updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, event.state);
-
-      // Store state in current flow
-      if (node.storeState) {
-        node.flowContext.set(node.item, event.state);
-      }
-    };
-
     node.onControllerEvent = (event, message) => {
       // Always update node state
       updateNodeStatus(node, STATES.EVENTSOURCE_STATE, event, message);
@@ -97,17 +81,15 @@ module.exports = function(RED) {
           // If we have an item configured
           if (node.item) {
             // Fetch current state of item
-            const url = `/rest/items/${node.item}`;
-            node.debug(`GET Request ${url}`);
-            controller.request
-              .get(url, { json: true })
-              .then(response => {
+            controller
+              .getItem(node.item)
+              .then(item => {
                 if (node.initialOutput) {
-                  // Trigger ItemStateEvent
-                  node.onEvent({ item: response.name, type: 'ItemStateEvent', state: response.state });
+                  // Output initial state message
+                  node.onEvent({ item: item.name, state: item.state });
                 } else {
                   // Just update node state
-                  updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, response.state);
+                  updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, item.state);
                 }
               })
               .catch(error => {
@@ -127,31 +109,47 @@ module.exports = function(RED) {
       }
     };
 
+    node.onEvent = event => {
+      const { payload, ...message } = event;
+      const timestamp = node.ohTimestamp ? new Date(Date.now() - node.timeZoneOffset).toISOString().slice(0, -1) : Date.now();
+
+      // Send node message
+      node.send([{ payload: { ...message, timestamp: timestamp } }]);
+
+      // Update node state
+      updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, event.state);
+
+      // Store state in current flow
+      if (node.storeState) {
+        node.flowContext.set(node.item, event.state);
+      }
+    };
+
     /**
      * Attach event handlers
      */
 
     // Listen for state changes from controller
-    controller.addListener(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
-    node.debug(`Attaching event listener '${STATES.EVENTSOURCE_STATE}'`);
+    controller.on(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
+    node.debug(`Attaching 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
     // Listen for subscribed events for selected item
     if (node.item) {
       node.eventTypes.forEach(eventType => {
-        controller.addListener(`${node.item}/${eventType}`, node.onEvent);
-        node.debug(`Attaching event listener '${node.item}/${eventType}'`);
+        controller.on(`${node.item}/${eventType}`, node.onEvent);
+        node.debug(`Attaching 'node' event listener '${node.item}/${eventType}'`);
       });
     }
 
     // Cleanup event listeners upon node removal
     node.on('close', () => {
       controller.removeListener(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
-      node.debug(`Attaching event listener '${STATES.EVENTSOURCE_STATE}'`);
+      node.debug(`Removing 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
       if (node.item) {
         node.eventTypes.forEach(eventType => {
           controller.removeListener(`${node.item}/${eventType}`, node.onEvent);
-          node.debug(`Removing event listener '${node.item}/${eventType}'`);
+          node.debug(`Removing 'node' event listener '${node.item}/${eventType}'`);
         });
       }
 
