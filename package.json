@@ -5,7 +5,7 @@
   "dependencies": {
     "bootstrap-multiselect": "^0.9.13-1",
     "eventsource": "^1.0.7",
-    "request": "latest"
+    "request": "2.88.2"
   },
   "author": "Bas van Wetten <bas.van.wetten@gmail.com>",
   "keywords": [
