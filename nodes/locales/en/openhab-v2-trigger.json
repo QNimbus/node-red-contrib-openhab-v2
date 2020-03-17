@@ -1,0 +1,11 @@
+{
+  "openhab-v2": {
+    "trigger": {
+      "labels": {
+        "name": "Name",
+        "controller": "OpenHAB",
+        "item": "Item"
+      }
+    }
+  }
+}
