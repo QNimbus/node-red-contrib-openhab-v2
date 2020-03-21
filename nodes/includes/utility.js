@@ -28,6 +28,8 @@ SOFTWARE.
 
 */
 
+/* global node */
+
 /**
  * Local imports
  */
@@ -76,6 +78,27 @@ module.exports = {
     } else {
       // Clear node status
       node.status({});
+    }
+  },
+  getValueAs: (type, value) => {
+    try {
+      switch (type) {
+        case 'flow': {
+          return node.context().flow.get(value);
+        }
+        case 'global': {
+          return node.context().global.get(value);
+        }
+        case 'num': {
+          return parseFloat(value);
+        }
+        case 'str':
+        default: {
+          return String(value);
+        }
+      }
+    } catch (error) {
+      return null;
     }
   }
 };

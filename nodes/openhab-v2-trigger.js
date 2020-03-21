@@ -34,6 +34,8 @@ module.exports = function(RED) {
    */
 
   const STATES = require('./includes/states');
+  const OPERATORS = require('../public/js/node-red-openhab-v2-operators').OPERATORS;
+  const getValueAs = require('./includes/utility').getValueAs;
   const updateNodeStatus = require('./includes/utility').updateNodeStatus;
 
   /**
@@ -48,15 +50,52 @@ module.exports = function(RED) {
     const controller = RED.nodes.getNode(config.controller);
     RED.nodes.createNode(node, config);
 
-    // Load node configuration
-    node.name = config.name;
-    node.item = config.item;
-
     if (!controller) {
       node.warn('No controller');
       updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, 'No controller');
       return false;
     }
+
+    // Load node configuration
+    node.name = config.name;
+    node.item = config.item;
+    node.ohTimestamp = config.ohTimestamp;
+    node.triggerConditions = config.triggerConditions.conditions;
+    node.triggerConditionsLogic = config.triggerConditions.logic.toUpperCase() === 'AND' ? 'AND' : 'OR';
+    node.eventTypes = ['ItemStateChangedEvent', 'GroupItemStateChangedEvent'];
+    node.armed = true;
+
+    // Pre-cast condition values
+    node.triggerConditions.forEach(condition => {
+      condition.value = getValueAs(condition.type, condition.value);
+      condition.method = OPERATORS[condition.comparator] ? OPERATORS[condition.comparator].method : undefined;
+    });
+
+    // Node constants
+    node.timeZoneOffset = Object.freeze(new Date().getTimezoneOffset() * 60000);
+
+    /**
+     * Node methods
+     */
+
+    node.triggerConditionsPassed = _ => {
+      // logic will reference either the Array.prototype.some or Array.prototype.every method
+      // logic method has 'this' bound to the node.triggerConditions array
+      const logic =
+        node.triggerConditionsLogic === 'AND' ? Array.prototype.every.bind(node.triggerConditions) : Array.prototype.some.bind(node.triggerConditions);
+
+      return logic(({ method, value, type }) => {
+        const state = getValueAs(type, _);
+
+        if (state && value && method instanceof Function) {
+          // Return condition comparison
+          return method(state, value);
+        } else {
+          // Return false by default
+          return false;
+        }
+      });
+    };
 
     /**
      * Node event handlers
@@ -94,6 +133,18 @@ module.exports = function(RED) {
       }
     };
 
+    node.onEvent = event => {
+      if (node.armed) {
+        const { payload, ...message } = event;
+
+        // Test if event state satisfies the configured trigger conditions
+        if (node.triggerConditionsPassed(message.state)) {
+          const timestamp = node.ohTimestamp ? new Date(Date.now() - node.timeZoneOffset).toISOString().slice(0, -1) : Date.now();
+          node.send([{ payload: { ...message, timestamp: timestamp } }]);
+        }
+      }
+    };
+
     /**
      * Attach event handlers
      */
@@ -102,11 +153,25 @@ module.exports = function(RED) {
     controller.on(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
     node.debug(`Attaching 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
+    // Listen for subscribed events for selected item
+    if (node.item) {
+      node.eventTypes.forEach(eventType => {
+        controller.on(`${node.item}/${eventType}`, node.onEvent);
+        node.debug(`Attaching 'node' event listener '${node.item}/${eventType}'`);
+      });
+    }
+
     // Cleanup event listeners upon node removal
     node.on('close', () => {
       controller.removeListener(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
       node.debug(`Removing 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
+      if (node.item) {
+        node.eventTypes.forEach(eventType => {
+          controller.removeListener(`${node.item}/${eventType}`, node.onEvent);
+          node.debug(`Removing 'node' event listener '${node.item}/${eventType}'`);
+        });
+      }
       node.debug('Closing node');
     });
 

@@ -28,44 +28,19 @@ SOFTWARE.
 
 */
 
-// These are used for the 'TypedInput' fields in the config dialig
-// See: https://nodered.org/docs/api/ui/typedInput/
+// These are used for the operators used for the node-red-openhab-v2-trigger node
 
 (function() {
   'use strict';
 
-  this.OH_TYPED_INPUT = (function() {
+  this.OPERATORS = (function() {
     return Object.freeze({
-      COMMAND_TYPE: {
-        value: 'ohCommandType',
-        label: 'openHAB',
-        icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
-        options: ['ItemCommand', 'ItemUpdate']
-      },
-      PAYLOAD: {
-        value: 'ohPayload',
-        label: 'OpenHAB',
-        icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
-        options: [
-          'ON',
-          'OFF',
-          'OPEN',
-          'CLOSED',
-          'INCREASE',
-          'DECREASE',
-          'UP',
-          'DOWN',
-          'STOP',
-          'MOVE',
-          'PLAY',
-          'PAUSE',
-          'REWIND',
-          'FASTFORWARD',
-          'NEXT',
-          'PREVIOUS',
-          'NULL'
-        ]
-      }
+      eq: { label: '===', types: ['str', 'num', 'ohPayload'], method: (a, b) => a === b },
+      neq: { label: '!==', types: ['str', 'num', 'ohPayload'], method: (a, b) => a !== b },
+      lt: { label: '<', types: ['num'], method: (a, b) => a < b },
+      lte: { label: '<=', types: ['num'], method: (a, b) => a <= b },
+      gt: { label: '>', types: ['num'], method: (a, b) => a > b },
+      gte: { label: '>=', types: ['num'], method: (a, b) => a >= b }
     });
   })();
 }.call(this));
