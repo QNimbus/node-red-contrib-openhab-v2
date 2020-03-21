@@ -282,60 +282,70 @@ RED.nodes.registerType('openhab-v2-trigger', {
      * Configure input elements
      */
 
-    /* eslint-disable no-unused-vars */
-
     // *** Controller ***
 
-    const slimSelectController = new SlimSelect({
-      select: '#node-input-controller',
-      showSearch: false,
-      hideSelectedOption: true,
-      // TODO: Ensure that 'Loading' placeholder gets displayed during loading
-      onChange: event => getItems(event.value).then(itemList => populateItemList(slimSelectItem, itemList, node.item))
-    });
-
-    // *** Item ***
-
-    const slimSelectItem = new SlimSelect({
-      select: '#node-input-item',
-      placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
-      searchText: node._('openhab-v2.trigger.labels.searchNoResults', { defaultValue: 'No results' }),
-      searchPlaceholder: node._('openhab-v2.trigger.labels.searchPlaceholder', { defaultValue: 'Search' }),
-      deselectLabel: '<span>&#10006;</span>',
-      allowDeselect: false,
-      allowDeselectOption: false,
-      showOptionTooltips: true
-    });
-
-    // *** Trigger armed/disarmed ***
-
-    const slimSelectTriggerState = new SlimSelect({
-      select: '#node-input-triggerState',
-      showSearch: false,
-      onChange: event => {
-        if (event.value === 'item') {
-          $('#node-openhab-v2-trigger-tab-trigger-armed-item').show();
-        } else {
-          $('#node-openhab-v2-trigger-tab-trigger-armed-item').hide();
+    const slimSelectElements = {};
+    const slimSelectElementsOptions = {
+      // 'node-input-controller': {
+      //   select: '#node-input-controller',
+      //   showSearch: false,
+      //   hideSelectedOption: true
+      //   // TODO: Ensure that 'Loading' placeholder gets displayed during loading
+      //   // onChange: event => getItems(event.value).then(itemList => populateItemList(slimSelectItem, itemList, node.item))
+      // },
+      'node-input-items': {
+        select: '#node-input-item',
+        placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
+        searchText: node._('openhab-v2.trigger.labels.searchNoResults', { defaultValue: 'No results' }),
+        searchPlaceholder: node._('openhab-v2.trigger.labels.searchPlaceholder', { defaultValue: 'Search' }),
+        deselectLabel: '<span>&#10006;</span>',
+        allowDeselect: false,
+        allowDeselectOption: false,
+        showOptionTooltips: true
+      },
+      'node-input-triggerState': {
+        select: '#node-input-triggerState',
+        showSearch: false,
+        onChange: event => {
+          if (event.value === 'item') {
+            $('#node-openhab-v2-trigger-tab-trigger-armed-item').show();
+          } else {
+            $('#node-openhab-v2-trigger-tab-trigger-armed-item').hide();
+          }
         }
+      },
+      'node-input-triggerStateItem': {
+        select: '#node-input-triggerStateItem',
+        placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
+        searchText: node._('openhab-v2.trigger.labels.searchNoResults', { defaultValue: 'No results' }),
+        searchPlaceholder: node._('openhab-v2.trigger.labels.searchPlaceholder', { defaultValue: 'Search' }),
+        deselectLabel: '<span>&#10006;</span>',
+        allowDeselect: false,
+        allowDeselectOption: false,
+        showOptionTooltips: true
       }
-    });
+    };
 
-    /* eslint-enable no-unused-vars */
+    for (const [id, options] of Object.entries(slimSelectElementsOptions)) {
+      slimSelectElements[id] = new SlimSelect(options);
+    }
 
     /**
      * Main
      */
 
     // Populate openHAB items list
-    getItems(controller).then(itemList => populateItemList(slimSelectItem, itemList, node.item));
+    getItems(controller).then(itemList => {
+      populateItemList(slimSelectElements['node-input-items'], itemList, node.item);
+      populateItemList(slimSelectElements['node-input-triggerStateItem'], itemList, node.item);
+    });
 
     // Create navigation tabs
     createTabs();
 
     // Create and populate trigger conditions
-    const triggerConditionsList = createTriggerConditionsList('node-input-trigger-conditions');
-    populateTriggerConditionsList(triggerConditionsList, node.triggerConditions.conditions);
+    // const triggerConditionsList = createTriggerConditionsList('node-input-trigger-conditions');
+    // populateTriggerConditionsList(triggerConditionsList, node.triggerConditions.conditions);
   },
   oneditsave: function() {
     /**
