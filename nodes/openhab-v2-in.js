@@ -48,6 +48,12 @@ module.exports = function(RED) {
     const controller = RED.nodes.getNode(config.controller);
     RED.nodes.createNode(node, config);
 
+    if (!controller) {
+      node.warn('No controller');
+      updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, 'No controller');
+      return false;
+    }
+
     // Load node configuration
     node.name = config.name;
     node.item = config.item;
@@ -60,12 +66,6 @@ module.exports = function(RED) {
 
     // Node constants
     node.timeZoneOffset = Object.freeze(new Date().getTimezoneOffset() * 60000);
-
-    if (!controller) {
-      node.warn('No controller');
-      updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, 'No controller');
-      return false;
-    }
 
     /**
      * Node event handlers

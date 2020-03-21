@@ -155,9 +155,9 @@ RED.nodes.registerType('openhab-v2-in', {
 
     const slimSelectItem = new SlimSelect({
       select: '#node-input-item',
-      placeholder: node._('openhab-v2.out.labels.placeholderLoading', { defaultValue: 'Loading...' }),
-      searchText: node._('openhab-v2.out.labels.searchNoResults', { defaultValue: 'No results' }),
-      searchPlaceholder: node._('openhab-v2.out.labels.searchPlaceholder', { defaultValue: 'Search' }),
+      placeholder: node._('openhab-v2.in.labels.placeholderLoading', { defaultValue: 'Loading...' }),
+      searchText: node._('openhab-v2.in.labels.searchNoResults', { defaultValue: 'No results' }),
+      searchPlaceholder: node._('openhab-v2.in.labels.searchPlaceholder', { defaultValue: 'Search' }),
       deselectLabel: '<span>&#10006;</span>',
       allowDeselect: false,
       allowDeselectOption: false,

@@ -27,7 +27,7 @@
 -->
 
 <script type="text/html" data-help-name="openhab-v2-trigger">
-  <p>Send message when openHAB event occurs for an item.</p>
+  <p>Trigger node description...</p>
   <h3>Configuration</h3>
   <dl class="message-properties">
     <dt class="optional">Name<span class="property-type">string</span></dt>
@@ -42,11 +42,16 @@
       <span class="property-type">string</span>
     </dt>
     <dd>openHAB item to watch.</dd>
+    <dt>
+      Timestamp
+      <span class="property-type">boolean</span>
+    </dt>
+    <dd>output openHAB compatible timestamp instead of Unix timestamp.</dd>
   </dl>
   <h3>Outputs</h3>
   <ol class="node-ports">
     <li>
-      StateEvent
+      Trigger
       <dl class="message-properties">
         <dt>payload <span class="property-type">object</span></dt>
         <dd>{ item, type, state, timestamp }</dd>
