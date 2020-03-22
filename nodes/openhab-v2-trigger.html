@@ -80,16 +80,20 @@
     <div id="node-openhab-v2-trigger-tab-trigger" style="display:none">
       <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
         <div class="form-row">
+          <label></label>
+          <strong>Trigger item</strong>
+        </div>
+        <div class="form-row">
           <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.trigger.labels.item">Item</span></label>
           <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
             <div style="position: absolute; left: 0px; right: 0px;">
-              <select id="node-input-item" name="node-input-item"> </select>
+              <select id="node-input-item" name="node-input-item"></select>
             </div>
           </div>
         </div>
         <div class="form-row">
           <label></label>
-          <strong>Trigger arming & disarming...</strong>
+          <strong>Arming & disarming of trigger</strong>
         </div>
         <div class="form-row">
           <label></label>
@@ -104,20 +108,34 @@
           </div>
         </div>
         <div id="node-openhab-v2-trigger-tab-trigger-armed-item" class="form-row">
-          <label for="node-input-triggerStateItem"><i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.triggerStateItem">Trigger</span></label>
+          <label for="node-input-triggerStateItem">
+            <i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.triggerStateItem">Arm/Disarm</span>
+          </label>
           <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
             <div style="position: absolute; left: 0px; right: 0px;">
-              <select id="node-input-triggerStateItem" name="node-input-triggerStateItem">
-              </select>
+              <select id="node-input-triggerStateItem" name="node-input-triggerStateItem"></select>
             </div>
           </div>
+        </div>
+        <div id="node-openhab-v2-trigger-tab-trigger-inputArmDisarm" class="form-row">
+          <label></label>
+          <input type="checkbox" id="node-input-inputArmDisarm" style="margin-left: 0px; vertical-align: top; width: auto !important;"/> <label style="width:auto !important;" for="node-input-inputArmDisarm"> Arm/Disarm trigger via node input</label>
+          <input type="hidden" id="node-input-inputs"/>
         </div>
       </div>
     </div>
     <!-- Tab:Condition -->
-    <div id="node-openhab-v2-trigger-tab-condition" style="display:none"></div>
+    <div id="node-openhab-v2-trigger-tab-condition" style="display:none">
+      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb"></div>
+    </div>
     <!-- Tab:Action -->
-    <div id="node-openhab-v2-trigger-tab-action" style="display:none"></div>
+    <div id="node-openhab-v2-trigger-tab-action" style="display:none">
+      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb"></div>
+    </div>
+    <!-- Tab:Finally -->
+    <div id="node-openhab-v2-trigger-tab-finally" style="display:none">
+      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb"></div>
+    </div>
   </div>
 </script>
 

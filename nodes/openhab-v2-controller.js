@@ -62,11 +62,11 @@ module.exports = function(RED) {
     const controller = RED.nodes.getNode(config.controller);
 
     if (controller && controller instanceof OpenHABNodeController) {
-      controller.getItems().then((items = {}) => {
+      controller.getItems().then(items => {
         res.json(items);
       });
     } else {
-      res.json({});
+      res.json([]);
     }
   });
 
