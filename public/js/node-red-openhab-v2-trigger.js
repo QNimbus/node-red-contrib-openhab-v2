@@ -71,9 +71,17 @@ RED.nodes.registerType('openhab-v2-trigger', {
       value: false,
       required: true
     },
+    inputArmDisarm: {
+      value: false,
+      required: true
+    },
     triggerState: {
       value: 'armed',
       required: true
+    },
+    triggerStateItem: {
+      value: undefined,
+      required: false
     },
     triggerConditions: {
       value: { logic: 'OR', conditions: [] },
@@ -86,7 +94,6 @@ RED.nodes.registerType('openhab-v2-trigger', {
      * Initialization
      */
     const node = this;
-    const controller = $('#node-input-controller').val();
 
     /**
      * Methods
@@ -149,7 +156,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
       // div - form-row (triggerConditionsListRow)
       const triggerConditionsListRow = $('<div>')
         .addClass('form-row')
-        .prependTo($('#node-openhab-v2-trigger-tab-condition'));
+        .prependTo($('#node-openhab-v2-trigger-tab-condition > div'));
 
       // ol - editableList 'triggerConditionsList'
       return $('<ol>')
@@ -234,44 +241,46 @@ RED.nodes.registerType('openhab-v2-trigger', {
     };
 
     const populateItemList = (slimSelectItem, itemList, selectedItem) => {
-      const items = [];
+      if (slimSelectItem) {
+        const items = [];
 
-      // Construct itemList array for use with SlimSelect
-      for (let i = 0; i < itemList.length; i++) {
-        items.push({ text: itemList[i].name, value: itemList[i].name });
+        // Construct itemList array for use with SlimSelect
+        for (let i = 0; i < itemList.length; i++) {
+          items.push({ text: itemList[i].name, value: itemList[i].name });
+        }
+
+        // Sort SlimSelect options alphabetically and case-insensitive
+        items.sort((a, b) => {
+          a = a.text.toLowerCase();
+          b = b.text.toLowerCase();
+
+          if (a < b) return -1;
+          else if (a > b) return 1;
+          else return 0;
+        });
+
+        // Reconfigure the SlimSelect box
+        if (items.length > 0) {
+          slimSelectItem.config.placeholderText = node._('openhab-v2.out.labels.placeholderSelectItem', { defaultValue: 'Select item' });
+          slimSelectItem.config.allowDeselect = true;
+          slimSelectItem.config.allowDeselectOption = true;
+        } else {
+          slimSelectItem.config.placeholderText = node._('openhab-v2.out.labels.placeholderEmptyList', { defaultValue: 'No items found' });
+          slimSelectItem.config.allowDeselect = false;
+          slimSelectItem.config.allowDeselectOption = false;
+        }
+
+        // Add a placeholder element required for a list with de-selectable items
+        $(slimSelectItem.select.element).prepend(
+          $('<option>')
+            .val(undefined)
+            .attr('data-placeholder', true)
+        );
+
+        // Load the data into the SlimSelect list
+        slimSelectItem.setData(items);
+        slimSelectItem.set(selectedItem);
       }
-
-      // Sort SlimSelect options alphabetically and case-insensitive
-      items.sort((a, b) => {
-        a = a.text.toLowerCase();
-        b = b.text.toLowerCase();
-
-        if (a < b) return -1;
-        else if (a > b) return 1;
-        else return 0;
-      });
-
-      // Reconfigure the SlimSelect box
-      if (items.length > 0) {
-        slimSelectItem.config.placeholderText = node._('openhab-v2.out.labels.placeholderSelectItem', { defaultValue: 'Select item' });
-        slimSelectItem.config.allowDeselect = true;
-        slimSelectItem.config.allowDeselectOption = true;
-      } else {
-        slimSelectItem.config.placeholderText = node._('openhab-v2.out.labels.placeholderEmptyList', { defaultValue: 'No items found' });
-        slimSelectItem.config.allowDeselect = false;
-        slimSelectItem.config.allowDeselectOption = false;
-      }
-
-      // Add a placeholder element required for a list with de-selectable items
-      $(slimSelectItem.select.element).prepend(
-        $('<option>')
-          .val(undefined)
-          .attr('data-placeholder', true)
-      );
-
-      // Load the data into the SlimSelect list
-      slimSelectItem.setData(items);
-      slimSelectItem.set(selectedItem);
     };
 
     const populateTriggerConditionsList = (list, conditions) => {
@@ -279,73 +288,85 @@ RED.nodes.registerType('openhab-v2-trigger', {
     };
 
     /**
-     * Configure input elements
+     * Configure SlimSelect form elements
      */
 
-    // *** Controller ***
-
-    const slimSelectElements = {};
-    const slimSelectElementsOptions = {
-      // 'node-input-controller': {
-      //   select: '#node-input-controller',
-      //   showSearch: false,
-      //   hideSelectedOption: true
-      //   // TODO: Ensure that 'Loading' placeholder gets displayed during loading
-      //   // onChange: event => getItems(event.value).then(itemList => populateItemList(slimSelectItem, itemList, node.item))
-      // },
-      'node-input-items': {
-        select: '#node-input-item',
-        placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
-        searchText: node._('openhab-v2.trigger.labels.searchNoResults', { defaultValue: 'No results' }),
-        searchPlaceholder: node._('openhab-v2.trigger.labels.searchPlaceholder', { defaultValue: 'Search' }),
-        deselectLabel: '<span>&#10006;</span>',
-        allowDeselect: false,
-        allowDeselectOption: false,
-        showOptionTooltips: true
-      },
-      'node-input-triggerState': {
-        select: '#node-input-triggerState',
-        showSearch: false,
-        onChange: event => {
-          if (event.value === 'item') {
-            $('#node-openhab-v2-trigger-tab-trigger-armed-item').show();
-          } else {
-            $('#node-openhab-v2-trigger-tab-trigger-armed-item').hide();
+    const slimSelectElements = {
+      options: {
+        'node-input-item': {
+          placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
+          searchText: node._('openhab-v2.trigger.labels.searchNoResults', { defaultValue: 'No results' }),
+          searchPlaceholder: node._('openhab-v2.trigger.labels.searchPlaceholder', { defaultValue: 'Search' }),
+          deselectLabel: '<span>&#10006;</span>',
+          allowDeselect: false,
+          allowDeselectOption: false,
+          showOptionTooltips: true
+        },
+        'node-input-triggerState': {
+          showSearch: false,
+          onChange: event => {
+            if (event.value === 'item') {
+              $('#node-openhab-v2-trigger-tab-trigger-armed-item').show();
+              $('#node-openhab-v2-trigger-tab-trigger-inputArmDisarm').hide();
+            } else {
+              $('#node-openhab-v2-trigger-tab-trigger-armed-item').hide();
+              $('#node-openhab-v2-trigger-tab-trigger-inputArmDisarm').show();
+            }
           }
+        },
+        'node-input-triggerStateItem': {
+          placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
+          searchText: node._('openhab-v2.trigger.labels.searchNoResults', { defaultValue: 'No results' }),
+          searchPlaceholder: node._('openhab-v2.trigger.labels.searchPlaceholder', { defaultValue: 'Search' }),
+          deselectLabel: '<span>&#10006;</span>',
+          allowDeselect: false,
+          allowDeselectOption: false,
+          showOptionTooltips: true
         }
       },
-      'node-input-triggerStateItem': {
-        select: '#node-input-triggerStateItem',
-        placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
-        searchText: node._('openhab-v2.trigger.labels.searchNoResults', { defaultValue: 'No results' }),
-        searchPlaceholder: node._('openhab-v2.trigger.labels.searchPlaceholder', { defaultValue: 'Search' }),
-        deselectLabel: '<span>&#10006;</span>',
-        allowDeselect: false,
-        allowDeselectOption: false,
-        showOptionTooltips: true
+      elements: {},
+      get: function(id) {
+        return this.elements[id];
+      },
+      init: function() {
+        for (const [id, options] of Object.entries(this.options)) {
+          const select = document.querySelector(`select#${id}`);
+          if (select) {
+            this.elements[id] = new SlimSelect({ select, ...options });
+          }
+        }
       }
     };
-
-    for (const [id, options] of Object.entries(slimSelectElementsOptions)) {
-      slimSelectElements[id] = new SlimSelect(options);
-    }
 
     /**
      * Main
      */
 
-    // Populate openHAB items list
-    getItems(controller).then(itemList => {
-      populateItemList(slimSelectElements['node-input-items'], itemList, node.item);
-      populateItemList(slimSelectElements['node-input-triggerStateItem'], itemList, node.item);
-    });
-
     // Create navigation tabs
     createTabs();
 
+    // Initialize SlimSelect form elements
+    slimSelectElements.init();
+
+    // Set onChange handler for when Controller is changed
+    $('#node-input-controller').change(
+      ({ target: { value: controller } }) =>
+        controller !== '__ADD__' &&
+        getItems(controller).then(itemList => {
+          const allItems = itemList;
+          const switchItems = itemList.filter(item => ['Switch', 'Contact'].includes(item.type) || ['Switch', 'Contact'].includes(item.groupType));
+
+          populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
+          populateItemList(slimSelectElements.get('node-input-triggerStateItem'), switchItems, node.triggerStateItem);
+        })
+    );
+
+    // Explicitly reset SlimSelect form element value to trigger onChange handler
+    slimSelectElements.get('node-input-triggerState').set(node.triggerState);
+
     // Create and populate trigger conditions
-    // const triggerConditionsList = createTriggerConditionsList('node-input-trigger-conditions');
-    // populateTriggerConditionsList(triggerConditionsList, node.triggerConditions.conditions);
+    const triggerConditionsList = createTriggerConditionsList('node-input-trigger-conditions');
+    populateTriggerConditionsList(triggerConditionsList, node.triggerConditions.conditions);
   },
   oneditsave: function() {
     /**
@@ -369,6 +390,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
     // Using SlimSelect and submitting no selected option results in 'null' value instead of undefined
     // This is a workaround to prevent NodeRED from not storing an undefined value
     node.item = $('node-input-item').val() !== null ? $('node-input-item').val() : undefined;
+    node.triggerStateItem = $('node-input-triggerStateItem').val() !== null ? $('node-input-triggerStateItem').val() : undefined;
   },
   oneditcancel: function() {},
   oneditdelete: function() {},

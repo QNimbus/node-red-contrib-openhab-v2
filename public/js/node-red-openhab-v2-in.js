@@ -88,7 +88,6 @@ RED.nodes.registerType('openhab-v2-in', {
      * Initialization
      */
     const node = this;
-    const controller = $('#node-input-controller').val();
 
     /**
      * Methods
@@ -136,50 +135,57 @@ RED.nodes.registerType('openhab-v2-in', {
     };
 
     /**
-     * Configure input elements
+     * Configure SlimSelect form elements
      */
 
-    // *** Controller ***
-
-    /* eslint-disable no-unused-vars */
-    const slimSelectController = new SlimSelect({
-      select: '#node-input-controller',
-      showSearch: false,
-      hideSelectedOption: true,
-      // TODO: Ensure that 'Loading' placeholder gets displayed during loading
-      onChange: event => getItems(event.value).then(itemList => populateItemList(slimSelectItem, itemList, node.item))
-    });
-    /* eslint-enable no-unused-vars */
-
-    // *** Item ***
-
-    const slimSelectItem = new SlimSelect({
-      select: '#node-input-item',
-      placeholder: node._('openhab-v2.in.labels.placeholderLoading', { defaultValue: 'Loading...' }),
-      searchText: node._('openhab-v2.in.labels.searchNoResults', { defaultValue: 'No results' }),
-      searchPlaceholder: node._('openhab-v2.in.labels.searchPlaceholder', { defaultValue: 'Search' }),
-      deselectLabel: '<span>&#10006;</span>',
-      allowDeselect: false,
-      allowDeselectOption: false,
-      showOptionTooltips: true
-    });
-
-    // *** Event types ***
-
-    /* eslint-disable no-unused-vars */
-    const slimSelectEventTypes = new SlimSelect({
-      select: '#node-input-eventTypes',
-      deselectLabel: '<span>&#10006;</span>',
-      showSearch: false,
-      hideSelectedOption: true
-    });
-    /* eslint-enable no-unused-vars */
+    const slimSelectElements = {
+      options: {
+        'node-input-item': {
+          placeholder: node._('openhab-v2.in.labels.placeholderLoading', { defaultValue: 'Loading...' }),
+          searchText: node._('openhab-v2.in.labels.searchNoResults', { defaultValue: 'No results' }),
+          searchPlaceholder: node._('openhab-v2.in.labels.searchPlaceholder', { defaultValue: 'Search' }),
+          deselectLabel: '<span>&#10006;</span>',
+          allowDeselect: false,
+          allowDeselectOption: false,
+          showOptionTooltips: true
+        },
+        'node-input-eventTypes': {
+          deselectLabel: '<span>&#10006;</span>',
+          showSearch: false,
+          hideSelectedOption: true
+        }
+      },
+      elements: {},
+      get: function(id) {
+        return this.elements[id];
+      },
+      init: function() {
+        for (const [id, options] of Object.entries(this.options)) {
+          const select = document.querySelector(`select#${id}`);
+          if (select) {
+            this.elements[id] = new SlimSelect({ select, ...options });
+          }
+        }
+      }
+    };
 
     /**
      * Main
      */
 
-    getItems(controller).then(itemList => populateItemList(slimSelectItem, itemList, node.item));
+    // Initialize SlimSelect form elements
+    slimSelectElements.init();
+
+    // Set onChange handler for when Controller is changed
+    $('#node-input-controller').change(
+      ({ target: { value: controller } }) =>
+        controller !== '__ADD__' &&
+        getItems(controller).then(itemList => {
+          const allItems = itemList;
+
+          populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
+        })
+    );
   },
   oneditsave: function() {
     /**
