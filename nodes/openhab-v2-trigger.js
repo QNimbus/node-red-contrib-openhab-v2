@@ -61,7 +61,7 @@ module.exports = function(RED) {
     node.item = config.item;
     node.ohTimestamp = config.ohTimestamp;
     node.triggerConditions = config.triggerConditions.conditions;
-    node.triggerConditionsLogic = config.triggerConditions.logic.toUpperCase() === 'AND' ? 'AND' : 'OR';
+    node.triggerConditionsLogic = config.triggerConditions.logic === 'AND' ? 'AND' : 'OR';
     node.eventTypes = ['ItemStateChangedEvent', 'GroupItemStateChangedEvent'];
     node.armed = true;
 

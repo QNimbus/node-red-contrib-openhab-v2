@@ -48,7 +48,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
     return this.name || this.item ? 'node_label_italic' : '';
   },
   // Inputs & outputs
-  inputs: 0,
+  inputs: this.inputArmDisarm ? 1 : 0,
   outputs: 1,
   inputLabels: [],
   outputLabels: ['Trigger'],
@@ -86,6 +86,30 @@ RED.nodes.registerType('openhab-v2-trigger', {
     triggerConditions: {
       value: { logic: 'OR', conditions: [] },
       required: true
+    },
+    additionalConditions: {
+      value: { logic: 'AND', conditions: [] },
+      required: true
+    },
+    additionalConditionsFrequency: {
+      value: 'first',
+      required: true
+    },
+    topic: {
+      value: undefined,
+      required: true
+    },
+    topicType: {
+      value: OH_TYPED_INPUT.COMMAND_TYPE.value,
+      required: true
+    },
+    payload: {
+      value: undefined,
+      required: true
+    },
+    payloadType: {
+      value: 'str',
+      required: true
     }
   },
   // Dialog events
@@ -99,31 +123,35 @@ RED.nodes.registerType('openhab-v2-trigger', {
      * Methods
      */
 
-    const createTabs = () => {
+    const createTabs = id => {
       const tabs = RED.tabs.create({
-        id: 'node-openhab-v2-trigger-tabs',
+        id,
         onchange: function(tab) {
-          $('#node-openhab-v2-trigger-tabs-content')
+          $(`#${id}-content`)
             .children()
             .hide();
           $('#' + tab.id).show();
         }
       });
       tabs.addTab({
-        id: 'node-openhab-v2-trigger-tab-trigger',
+        id: `${id}-trigger`,
         label: this._('Trigger')
       });
       tabs.addTab({
-        id: 'node-openhab-v2-trigger-tab-condition',
+        id: `${id}-condition`,
         label: this._('Conditions')
       });
       tabs.addTab({
-        id: 'node-openhab-v2-trigger-tab-action',
+        id: `${id}-action`,
         label: this._('Action')
       });
       tabs.addTab({
-        id: 'node-openhab-v2-trigger-tab-finally',
+        id: `${id}-finally`,
         label: this._('Finally')
+      });
+      tabs.addTab({
+        id: `${id}-optional`,
+        label: this._('Optional')
       });
 
       setTimeout(function() {
@@ -131,7 +159,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
       }, 0);
     };
 
-    const createTriggerConditionsList = id => {
+    const createTriggerConditionsList = (id, element) => {
       // Helper method
       const setComparatorOptions = (select, type, comparator = undefined) => {
         // Get currently selected value if any
@@ -153,26 +181,24 @@ RED.nodes.registerType('openhab-v2-trigger', {
         }
       };
 
-      // div - form-row (triggerConditionsListRow)
-      const triggerConditionsListRow = $('<div>')
-        .addClass('form-row')
-        .prependTo($('#node-openhab-v2-trigger-tab-condition > div'));
-
-      // ol - editableList 'triggerConditionsList'
-      return $('<ol>')
+      const triggerConditionsList = $('<ol>')
         .attr({ id })
-        .appendTo(triggerConditionsListRow)
+        .appendTo(element)
         .editableList({
           removable: true,
           addButton: true,
           height: 'auto',
           // editableList header element
+          // Creates a 4-column row (4th column is used as padding to compensate for 'X' button in the rows below)
           header: $('<div>')
             .attr({ style: 'display: flex; justify-content: flex-start; padding: 5px; background-color: rgba(192, 192, 192, 0.1)' })
             .append(
-              $.parseHTML("<div style='width:75px; margin-right: 10px'>Logic</div><div style='width:65px; margin-right: 10px'>Test</div><div>Value</div>")
+              $.parseHTML(
+                "<div style='flex: 0 0 75px; margin-right: 10px'>Logic</div><div style='flex: 0 0 65px; margin-right: 10px'>Test</div><div style='flex: 1; margin-right: 10px'>Value</div><div style='flex: 0 0 28px'></div>"
+              )
             ),
           // editableList addItem method
+          // Creates a 3-column row with flexbox styling and a right margin
           addItem: function(elem, rowIndex, { comparator = 'eq', type = 'num', value = '' }) {
             // Make row flexbox
             elem.attr({ style: 'display: flex' });
@@ -181,31 +207,13 @@ RED.nodes.registerType('openhab-v2-trigger', {
             if (rowIndex === 0) {
               // First row
               $('<div>')
-                .attr({ style: 'display: flex; flex: 0 0 75px; justify-content: center; align-items: center; margin-right: 10px;' })
-                .append(
-                  $('<select>')
-                    .attr({ id: 'node-input-conditionsLogic', style: 'width: unset' })
-                    .append(
-                      $('<option>')
-                        .attr({ value: 'OR', selected: node.triggerConditions.logic === 'OR' ? 'selected' : undefined })
-                        .text('OR')
-                    )
-                    .append(
-                      $('<option>')
-                        .attr({ value: 'AND', selected: node.triggerConditions.logic === 'AND' ? 'selected' : undefined })
-                        .text('AND')
-                    )
-                    .on('change', ({ target: { value } }) => {
-                      $('div.test-case').html(`<strong>${value}</strong>`);
-                    })
-                )
-                .appendTo(elem);
+                .appendTo(elem)
+                .attr({ style: 'display: flex; flex: 0 0 75px; justify-content: center; align-items: center; margin-right: 10px;' });
             } else {
               // Rest of the rows
               $('<div>')
                 .appendTo(elem)
-                .addClass('test-case')
-                .html(`<strong>${$('#node-input-conditionsLogic').val()}</strong>`)
+                .html(`<span class="conditionsLogic">${$('#node-input-conditionsLogic').val()}</span>`)
                 .attr({ style: 'display: flex; flex: 0 0 75px; justify-content: center; align-items: center; margin-right: 10px;' });
             }
 
@@ -235,9 +243,101 @@ RED.nodes.registerType('openhab-v2-trigger', {
               });
 
             // Make typeInput elements grow to 100% width (3rd column)
-            elem.children('div.red-ui-typedInput-container').attr({ style: 'flex: 1 1 auto' });
+            elem.children('div.red-ui-typedInput-container').attr({ style: 'flex: 1; margin-right: 10px' });
           }
         });
+
+      return triggerConditionsList;
+    };
+
+    const createAdditionalConditionsList = (id, element) => {
+      // Helper method
+      const setComparatorOptions = (select, type, comparator = undefined) => {
+        // Get currently selected value if any
+        comparator = comparator || select.val();
+
+        // Clear out existing options
+        select.empty();
+
+        // Build new option elements and append to select element
+        for (const [name, operator] of Object.entries(OPERATORS)) {
+          if (operator.types.includes(type)) {
+            select.append(
+              $('<option>')
+                .val(name)
+                .text(operator.label)
+                .prop('selected', name === comparator)
+            );
+          }
+        }
+      };
+
+      const triggerConditionsList = $('<ol>')
+        .attr({ id })
+        .appendTo(element)
+        .editableList({
+          removable: true,
+          addButton: true,
+          height: 'auto',
+          // editableList header element
+          // Creates a 4-column row (4th column is used as padding to compensate for 'X' button in the rows below)
+          header: $('<div>')
+            .attr({ style: 'display: flex; padding: 5px; background-color: rgba(192, 192, 192, 0.1)' })
+            .append(
+              $.parseHTML(
+                "<div style='flex: 1; margin-right: 10px'>Variable</div><div style='flex: 0 0 100px; margin-right: 10px'>Test</div><div style='flex: 1; margin-right: 10px'>Value</div><div style='flex: 0 0 28px'></div>"
+              )
+            ),
+          // editableList addItem method
+          // Creates a 3-column row with flexbox styling and a right margin
+          addItem: function(elem, rowIndex, { comparator = 'eq', variableType = 'global', variableValue = '', type = 'str', value = '' }) {
+            // Make row flexbox
+            elem.attr({ style: 'display: flex' });
+
+            // First column
+            $('<input>', { id: `node-input-additionalConditionVariableType-${rowIndex}`, type: 'hidden' }).appendTo(elem);
+            $('<input>', { id: `node-input-additionalConditionVariableValue-${rowIndex}` })
+              .appendTo(elem)
+              .typedInput({
+                default: 'global',
+                value: variableValue,
+                types: ['global', 'flow'],
+                typeField: `#node-input-additionalConditionVariableType-${rowIndex}`
+              })
+              .typedInput('value', variableValue)
+              .typedInput('type', variableType);
+
+            // Second column
+            setComparatorOptions(
+              $('<select>')
+                .appendTo(elem)
+                .attr({ id: `additionalConditioncomparator-${rowIndex}`, style: 'flex: 0 0 100px; text-align: center; margin-right: 10px' }),
+              type,
+              comparator
+            );
+
+            // Third column
+            $('<input>', { id: `node-input-additionalConditionType-${rowIndex}`, type: 'hidden' }).appendTo(elem);
+            $('<input>', { id: `node-input-additionalConditionValue-${rowIndex}` })
+              .appendTo(elem)
+              .typedInput({
+                default: 'num',
+                value,
+                types: ['global', 'flow', 'str', 'num', OH_TYPED_INPUT.PAYLOAD],
+                typeField: `#node-input-additionalConditionType-${rowIndex}`
+              })
+              .typedInput('value', value)
+              .typedInput('type', type)
+              .on('change', function(event, type) {
+                setComparatorOptions($(this).siblings('select'), type);
+              });
+
+            // Make typeInput elements grow to 100% width (1st and 3rd column)
+            elem.children('div.red-ui-typedInput-container').attr({ style: 'flex: 1; margin-right: 10px' });
+          }
+        });
+
+      return triggerConditionsList;
     };
 
     const populateItemList = (slimSelectItem, itemList, selectedItem) => {
@@ -287,6 +387,68 @@ RED.nodes.registerType('openhab-v2-trigger', {
       list.editableList('addItems', conditions);
     };
 
+    const populateAdditionalConditionsList = (list, conditions) => {
+      list.editableList('addItems', conditions);
+    };
+
+    const initializeFormElements = () => {
+      // Initialize SlimSelect form elements
+      slimSelectElements.init();
+
+      /**
+       * 'Trigger' tab
+       */
+
+      /**
+       * 'Conditions' tab
+       */
+
+      // Create and populate trigger conditions
+      const triggerConditionsList = createTriggerConditionsList('node-input-triggerConditions', $('div.form-row > div#trigger-conditions-list'));
+      populateTriggerConditionsList(triggerConditionsList, node.triggerConditions.conditions);
+
+      // Create and populate additional trigger conditions
+      const additionalConditionsList = createAdditionalConditionsList('node-input-additionalConditions', $('div.form-row > div#additional-conditions-list'));
+      populateAdditionalConditionsList(additionalConditionsList, node.additionalConditions.conditions);
+
+      /**
+       * 'Action' tab
+       */
+
+      $('#node-input-topic').typedInput({
+        types: ['str', OH_TYPED_INPUT.COMMAND_TYPE],
+        value: node.topic,
+        type: node.topicType,
+        typeField: $('#node-input-topicType')
+      });
+
+      $('#node-input-payload').typedInput({
+        types: ['flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
+        value: node.payload,
+        type: node.payloadType,
+        typeField: $('#node-input-payloadType')
+      });
+    };
+
+    const applyCustomStyling = () => {
+      // Enhance typedInput element by aligning all options
+      // i.e. here we select all elements without an image or icon label
+      $('div.red-ui-typedInput-options a:not(:has(*))').each((_, elem) => {
+        $(elem).css('padding-left', '28px');
+      });
+
+      // Enhance typedInput element by aligning all options
+      // i.e. here we select all elements with either and image or icon label
+      $('div.red-ui-typedInput-options a').each((_, elem) => {
+        $(elem)
+          .find('>img:first-child')
+          .css('width', '18px');
+        $(elem)
+          .find('>i:first-child')
+          .css('padding-left', '4px');
+      });
+    };
+
     /**
      * Configure SlimSelect form elements
      */
@@ -304,15 +466,38 @@ RED.nodes.registerType('openhab-v2-trigger', {
         },
         'node-input-triggerState': {
           showSearch: false,
-          onChange: event => {
-            if (event.value === 'item') {
-              $('#node-openhab-v2-trigger-tab-trigger-armed-item').show();
-              $('#node-openhab-v2-trigger-tab-trigger-inputArmDisarm').hide();
+          selectedElement: node.triggerState,
+          data: [
+            { text: 'Trigger armed by default', value: 'armed' },
+            { text: 'Trigger disarmed by default', value: 'disarmed' },
+            { text: 'Use arm/disarm item', value: 'item' }
+          ],
+          onChange: ({ value }) => {
+            // Hide/show trigger item SlimSelect form element depending on value
+            if (value === 'item') {
+              $('#node-openhab-v2-trigger-tabs-trigger-armed-item').show();
+              $('#node-openhab-v2-trigger-tabs-trigger-inputArmDisarm').hide();
             } else {
-              $('#node-openhab-v2-trigger-tab-trigger-armed-item').hide();
-              $('#node-openhab-v2-trigger-tab-trigger-inputArmDisarm').show();
+              $('#node-openhab-v2-trigger-tabs-trigger-armed-item').hide();
+              $('#node-openhab-v2-trigger-tabs-trigger-inputArmDisarm').show();
             }
           }
+        },
+        'node-input-conditionsLogic': {
+          showSearch: false,
+          selectedElement: node.triggerConditions.logic,
+          data: [{ text: 'OR' }, { text: 'AND' }],
+          onChange: ({ value }) => {
+            $('span.conditionsLogic').text(value);
+          }
+        },
+        'node-input-additionalConditionsFrequency': {
+          showSearch: false,
+          selectedElement: node.additionalConditionsFrequency,
+          data: [
+            { text: 'First trigger', value: 'first' },
+            { text: 'Every trigger', value: 'every' }
+          ]
         },
         'node-input-triggerStateItem': {
           placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
@@ -332,23 +517,25 @@ RED.nodes.registerType('openhab-v2-trigger', {
         for (const [id, options] of Object.entries(this.options)) {
           const select = document.querySelector(`select#${id}`);
           if (select) {
-            this.elements[id] = new SlimSelect({ select, ...options });
+            const { selectedElement, ...config } = options;
+            const slimSelect = new SlimSelect({ select, ...config });
+
+            // If a selectedElement was passed - select it
+            if (selectedElement) {
+              slimSelect.set(selectedElement);
+            }
+
+            this.elements[id] = slimSelect;
           }
         }
       }
     };
 
     /**
-     * Main
+     * Events
      */
 
-    // Create navigation tabs
-    createTabs();
-
-    // Initialize SlimSelect form elements
-    slimSelectElements.init();
-
-    // Set onChange handler for when Controller is changed
+    // onChange handler: When node controller selection changes
     $('#node-input-controller').change(
       ({ target: { value: controller } }) =>
         controller !== '__ADD__' &&
@@ -361,12 +548,27 @@ RED.nodes.registerType('openhab-v2-trigger', {
         })
     );
 
-    // Explicitly reset SlimSelect form element value to trigger onChange handler
-    slimSelectElements.get('node-input-triggerState').set(node.triggerState);
+    // onChange handler: When node input is enabled/disabled to arm/disarm trigger
+    $('#node-input-inputArmDisarm').change(() => {
+      if ($('#node-input-inputArmDisarm').is(':checked')) {
+        node.inputs = 1;
+      } else {
+        node.inputs = 0;
+      }
+    });
 
-    // Create and populate trigger conditions
-    const triggerConditionsList = createTriggerConditionsList('node-input-trigger-conditions');
-    populateTriggerConditionsList(triggerConditionsList, node.triggerConditions.conditions);
+    /**
+     * Main
+     */
+
+    // Create navigation tabs
+    createTabs('node-openhab-v2-trigger-tabs');
+
+    // Load correct values into form elements where necessary
+    initializeFormElements();
+
+    // Apply custom styling
+    applyCustomStyling();
   },
   oneditsave: function() {
     /**
@@ -375,22 +577,43 @@ RED.nodes.registerType('openhab-v2-trigger', {
     const node = this;
 
     // Save triggerConditions
-    const logic = $('#node-input-conditionsLogic').val() ? $('#node-input-conditionsLogic').val() : this._def.defaults.triggerConditions.value.logic;
-    node.triggerConditions = { logic, conditions: [] };
-    $('#node-input-trigger-conditions')
-      .editableList('items')
-      .each((index, elem) => {
-        const comparator = elem.children(`#node-input-comparator-${index}`).val();
-        const type = elem.children(`#node-input-conditionType-${index}`).val();
-        const value = elem.children(`#node-input-conditionValue-${index}`).val();
+    (function() {
+      const logic = $('#node-input-conditionsLogic').val() ? $('#node-input-conditionsLogic').val() : node._def.defaults.triggerConditions.value.logic;
+      const triggerConditions = { logic, conditions: [] };
+      $('#node-input-triggerConditions')
+        .editableList('items')
+        .each((index, elem) => {
+          const comparator = elem.children(`#node-input-comparator-${index}`).val();
+          const type = elem.children(`#node-input-conditionType-${index}`).val();
+          const value = elem.children(`#node-input-conditionValue-${index}`).val();
 
-        node.triggerConditions.conditions.push({ comparator, type, value });
-      });
+          triggerConditions.conditions.push({ comparator, type, value });
+        });
+      $('#node-input-triggerConditions').val(triggerConditions);
+    })();
+
+    // Save additionalConditions
+    (function() {
+      const logic = node._def.defaults.additionalConditions.value.logic;
+      const additionalConditions = { logic, conditions: [] };
+      $('#node-input-additionalConditions')
+        .editableList('items')
+        .each((index, elem) => {
+          const comparator = elem.children(`#node-input-additionalConditioncomparator-${index}`).val();
+          const variableType = elem.children(`#node-input-additionalConditionVariableType-${index}`).val();
+          const variableValue = elem.children(`#node-input-additionalConditionVariableValue-${index}`).val();
+          const type = elem.children(`#node-input-additionalConditionType-${index}`).val();
+          const value = elem.children(`#node-input-additionalConditionValue-${index}`).val();
+
+          additionalConditions.conditions.push({ comparator, variableType, variableValue, type, value });
+        });
+      $('#node-input-additionalConditions').val(additionalConditions);
+    })();
 
     // Using SlimSelect and submitting no selected option results in 'null' value instead of undefined
     // This is a workaround to prevent NodeRED from not storing an undefined value
-    node.item = $('node-input-item').val() !== null ? $('node-input-item').val() : undefined;
-    node.triggerStateItem = $('node-input-triggerStateItem').val() !== null ? $('node-input-triggerStateItem').val() : undefined;
+    $('#node-input-item').val($('#node-input-item').val() !== null ? $('#node-input-item').val() : undefined);
+    $('#node-input-triggerStateItem').val($('#node-input-triggerStateItem').val() !== null ? $('#node-input-triggerStateItem').val() : undefined);
   },
   oneditcancel: function() {},
   oneditdelete: function() {},
