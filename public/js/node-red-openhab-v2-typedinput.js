@@ -44,7 +44,7 @@ SOFTWARE.
       },
       PAYLOAD: {
         value: 'ohPayload',
-        label: 'OpenHAB',
+        label: 'openHAB',
         icon: 'icons/node-red-contrib-openhab-v2/node-red-contrib-openhab-v2-color.png',
         options: [
           'ON',
