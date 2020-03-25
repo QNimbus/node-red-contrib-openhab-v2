@@ -36,6 +36,12 @@ SOFTWARE.
 
   this.OH_TYPED_INPUT = (function() {
     return Object.freeze({
+      NOTHING_TYPE: {
+        value: 'nothing',
+        label: 'nothing',
+        icon: 'icons/node-red-contrib-openhab-v2/nothing.png',
+        hasValue: false
+      },
       COMMAND_TYPE: {
         value: 'ohCommandType',
         label: 'openHAB',

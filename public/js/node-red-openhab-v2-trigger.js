@@ -83,6 +83,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
       value: undefined,
       required: false
     },
+    // Action tab
     triggerConditions: {
       value: { logic: 'OR', conditions: [] },
       required: true
@@ -95,6 +96,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
       value: 'first',
       required: true
     },
+    // Action tab
     topic: {
       value: undefined,
       required: true
@@ -108,7 +110,55 @@ RED.nodes.registerType('openhab-v2-trigger', {
       required: true
     },
     payloadType: {
-      value: 'str',
+      value: OH_TYPED_INPUT.PAYLOAD.value,
+      required: true
+    },
+    timer: {
+      value: 10,
+      validate: val => RED.validators.number(val) && val >= 0
+    },
+    timerUnits: {
+      value: 'seconds',
+      required: true
+    },
+    advancedTimerToggle: {
+      value: false,
+      required: true
+    },
+    advancedTimer: {
+      value: undefined,
+      required: false
+    },
+    advancedTimerType: {
+      value: 'global',
+      required: true
+    },
+    afterTrigger: {
+      value: 'nothing',
+      required: true
+    },
+    cancelTimerWhenDisarmed: {
+      value: false,
+      required: true
+    },
+    timerExpiresAction: {
+      value: 'if_false_reset',
+      required: true
+    },
+    topicEnd: {
+      value: undefined,
+      required: true
+    },
+    topicEndType: {
+      value: OH_TYPED_INPUT.COMMAND_TYPE.value,
+      required: true
+    },
+    payloadEnd: {
+      value: undefined,
+      required: true
+    },
+    payloadEndType: {
+      value: OH_TYPED_INPUT.PAYLOAD.value,
       required: true
     }
   },
@@ -416,7 +466,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
        */
 
       $('#node-input-topic').typedInput({
-        types: ['str', OH_TYPED_INPUT.COMMAND_TYPE],
+        types: ['str', OH_TYPED_INPUT.NOTHING_TYPE, OH_TYPED_INPUT.COMMAND_TYPE],
         value: node.topic,
         type: node.topicType,
         typeField: $('#node-input-topicType')
@@ -427,6 +477,27 @@ RED.nodes.registerType('openhab-v2-trigger', {
         value: node.payload,
         type: node.payloadType,
         typeField: $('#node-input-payloadType')
+      });
+
+      $('#node-input-advancedTimer').typedInput({
+        types: ['flow', 'global'],
+        value: node.advancedTimer,
+        type: node.advancedTimerType,
+        typeField: $('#node-input-advancedTimerType')
+      });
+
+      $('#node-input-topicEnd').typedInput({
+        types: ['str', OH_TYPED_INPUT.NOTHING_TYPE, OH_TYPED_INPUT.COMMAND_TYPE],
+        value: node.topicEnd,
+        type: node.topicEndType,
+        typeField: $('#node-input-topicEndType')
+      });
+
+      $('#node-input-payloadEnd').typedInput({
+        types: ['flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
+        value: node.payloadEnd,
+        type: node.payloadEndType,
+        typeField: $('#node-input-payloadEndType')
       });
     };
 
@@ -477,9 +548,13 @@ RED.nodes.registerType('openhab-v2-trigger', {
             if (value === 'item') {
               $('#node-openhab-v2-trigger-tabs-trigger-armed-item').show();
               $('#node-openhab-v2-trigger-tabs-trigger-inputArmDisarm').hide();
+              $('#node-input-inputArmDisarm').prop('checked', false);
+              $('#node-input-inputArmDisarm').change();
             } else {
               $('#node-openhab-v2-trigger-tabs-trigger-armed-item').hide();
               $('#node-openhab-v2-trigger-tabs-trigger-inputArmDisarm').show();
+              $('#node-input-inputArmDisarm').prop('checked', node.inputArmDisarm);
+              $('#node-input-inputArmDisarm').change();
             }
           }
         },
@@ -507,6 +582,60 @@ RED.nodes.registerType('openhab-v2-trigger', {
           allowDeselect: false,
           allowDeselectOption: false,
           showOptionTooltips: true
+        },
+        'node-input-afterTrigger': {
+          showSearch: false,
+          selectedElement: node.afterTrigger,
+          data: [
+            { text: 'Do nothing', value: 'nothing' },
+            { text: 'Do not wait', value: 'nodelay' },
+            { text: 'Start timer', value: 'timer' },
+            { text: 'Wait until trigger condition is false', value: 'untrigger' }
+          ],
+          // onChange handler: When 'afterTrigger' on the 'action' tab changes
+          onChange: ({ value: afterTrigger }) => {
+            switch (afterTrigger) {
+              case 'nothing': {
+                $('div[id^=timer-row]').hide();
+                $('div[id^=endmessage-row]').hide();
+                break;
+              }
+              case 'timer': {
+                $('div[id^=timer-row]').show();
+                $('div[id^=endmessage-row]').show();
+                if ($('#node-input-advancedTimerToggle').is(':checked')) {
+                  $('#timer-row0').hide();
+                  $('#timer-row1').show();
+                } else {
+                  $('#timer-row0').show();
+                  $('#timer-row1').hide();
+                }
+                break;
+              }
+              case 'untrigger':
+              case 'nodelay':
+              default: {
+                $('div[id^=timer-row]').hide();
+                $('div[id^=endmessage-row]').show();
+                break;
+              }
+            }
+          }
+        },
+        'node-input-timerUnits': {
+          showSearch: false,
+          selectedElement: node.timerUnits,
+          data: [{ text: 'milliseconds' }, { text: 'seconds' }, { text: 'minutes' }],
+          onChange: ({ value }) => {}
+        },
+        'node-input-timerExpiresAction': {
+          showSearch: false,
+          selectedElement: node.timerExpiresAction,
+          data: [
+            { text: 'Continue', value: 'always_reset' },
+            { text: 'Restart timer if trigger condition is still true', value: 'if_false_reset' }
+          ],
+          onChange: ({ value }) => {}
         }
       },
       elements: {},
@@ -556,6 +685,56 @@ RED.nodes.registerType('openhab-v2-trigger', {
         node.inputs = 0;
       }
     });
+
+    // onChange handler: Enable/Disable advanced timer options
+    $('#node-input-advancedTimerToggle').change(({ target }) => {
+      if ($('#node-input-afterTrigger').val() === 'timer') {
+        if ($(target).is(':checked')) {
+          $('#timer-row0').hide();
+          $('#timer-row1').show();
+        } else {
+          $('#timer-row0').show();
+          $('#timer-row1').hide();
+        }
+      } else {
+        $('#node-input-afterTrigger').trigger('change');
+      }
+    });
+
+    // $('div[id^=timer-row]').show();
+
+    // Hide payload fields if topic 'nothing' is selected
+    $('input[type=text][id^=node-input-topic]')
+      // .filter((index, element) => {
+      //   return element.id.match(/^node-input-topic(End)?$/);
+      // })
+      .change(({ target: { id, value } }) => {
+        if (value !== '') {
+          switch (id) {
+            case 'node-input-topic': {
+              $('#message-row2').show();
+              break;
+            }
+            case 'node-input-topicEnd': {
+              if ($('#node-input-afterTrigger').val() !== 'nothing') {
+                $('#endmessage-row2').show();
+              }
+              break;
+            }
+          }
+        } else {
+          switch (id) {
+            case 'node-input-topic': {
+              $('#message-row2').hide();
+              break;
+            }
+            case 'node-input-topicEnd': {
+              $('#endmessage-row2').hide();
+              break;
+            }
+          }
+        }
+      });
 
     /**
      * Main
