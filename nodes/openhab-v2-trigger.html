@@ -52,137 +52,252 @@
 
 <script type="text/html" data-template-name="openhab-v2-trigger">
   <link rel="stylesheet" type="text/css" href="openhab2/public/css/vendor/slimselect.min.css" />
+  <style>
+    .red-ui-editor #openhab-v2-trigger .form-row .red-ui-tabs {
+      margin-top: 25px;
+      width: 100%;
+    }
+    .red-ui-editor #openhab-v2-trigger #node-openhab-v2-trigger-tabs-content {
+      position: relative;
+      top: -12px;
+    }
 
-  <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.trigger.labels.name">Name</span></label>
-    <input type="text" id="node-input-name" placeholder="Name" />
-  </div>
-  <div class="form-row">
-    <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.trigger.labels.controller">OpenHAB</span></label>
-    <select id="node-input-controller"></select>
-  </div>
+    .red-ui-editor #openhab-v2-trigger .form-row {
+      display: flex;
+    }
 
-  <!-- Tabs container -->
+    .red-ui-editor #openhab-v2-trigger .form-row:has(> div) {
+      margin: 0;
+    }
 
-  <div class="form-row">
-    <ul style="min-width: 600px; margin-bottom: 20px;" id="node-openhab-v2-trigger-tabs"></ul>
-  </div>
+    .red-ui-editor #openhab-v2-trigger .form-row > div:only-child,
+    .red-ui-editor #openhab-v2-trigger .form-row label + div.second-column > *:only-child {
+      width: 100% !important;
+    }
 
-  <!-- Tabs -->
+    .red-ui-editor #openhab-v2-trigger .form-row label {
+      flex: 0 0 100px;
+      align-self: center;
+      width: unset;
+    }
 
-  <div id="node-openhab-v2-trigger-tabs-content" style="min-height: 170px;">
-    <!-- Tab:Trigger -->
-    <div id="node-openhab-v2-trigger-tabs-trigger" style="display:none">
-      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
-        <div class="form-row">
-          <label></label>
-          <strong>Trigger item</strong>
-        </div>
-        <div class="form-row">
-          <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.trigger.labels.item">Item</span></label>
-          <div style="display: inline-block; position: relative; width: 75%; height: 20px;">
-            <div style="position: absolute; left: 0px; right: 0px;">
+    .red-ui-editor #openhab-v2-trigger .form-row label + div.second-column {
+      flex: 1 1 auto;
+      margin: 0 5% 0 0;
+    }
+
+    .red-ui-editor #openhab-v2-trigger .form-row label + div.second-column input[type='checkbox'] {
+      vertical-align: top;
+      margin-right: 5px;
+      width: unset;
+    }
+
+    .red-ui-editor #openhab-v2-trigger .form-row label + div.second-column.align-right {
+      margin: 0 0 0 5%;
+    }
+  </style>
+  <div id="openhab-v2-trigger">
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.trigger.labels.name">Name</span></label>
+      <div class="second-column">
+        <input type="text" id="node-input-name" placeholder="Name" />
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.trigger.labels.controller">OpenHAB</span></label>
+      <div class="second-column">
+        <select id="node-input-controller"></select>
+      </div>
+    </div>
+
+    <!-- Tabs container -->
+
+    <div class="form-row">
+      <ul style="min-width: 600px; margin-bottom: 20px;" id="node-openhab-v2-trigger-tabs"></ul>
+    </div>
+
+    <!-- Tabs -->
+
+    <div id="node-openhab-v2-trigger-tabs-content" style="min-height: 170px;">
+      <!-- Tab:Trigger -->
+      <div id="node-openhab-v2-trigger-tabs-trigger" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label></label>
+            <strong>Trigger item</strong>
+          </div>
+          <div class="form-row">
+            <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.trigger.labels.item">Item</span></label>
+            <div class="second-column">
               <select id="node-input-item" name="node-input-item"></select>
             </div>
           </div>
-        </div>
-        <div class="form-row">
-          <label></label>
-          <strong>Arming & disarming of trigger</strong>
-        </div>
-        <div class="form-row">
-          <label></label>
-          <div style="display: inline-block; position: relative; width: 75%; height: 20px;">
-            <div style="position: absolute; left: 0px; right: 0px;">
+          <div class="form-row">
+            <label></label>
+            <strong>Arming & disarming of trigger</strong>
+          </div>
+          <div class="form-row">
+            <label></label>
+            <div class="second-column">
               <select id="node-input-triggerState" name="node-input-triggerState"></select>
             </div>
           </div>
-        </div>
-        <div id="node-openhab-v2-trigger-tabs-trigger-armed-item" class="form-row">
-          <label for="node-input-triggerStateItem">
-            <i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.triggerStateItem">Arm/Disarm</span>
-          </label>
-          <div style="display: inline-block; position: relative; width: 75%; height: 20px;">
-            <div style="position: absolute; left: 0px; right: 0px;">
+          <div id="node-openhab-v2-trigger-tabs-trigger-armed-item" class="form-row">
+            <label for="node-input-triggerStateItem">
+              <i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.triggerStateItem">Arm/Disarm</span>
+            </label>
+            <div class="second-column">
               <select id="node-input-triggerStateItem" name="node-input-triggerStateItem"></select>
             </div>
           </div>
-        </div>
-        <div id="node-openhab-v2-trigger-tabs-trigger-inputArmDisarm" class="form-row">
-          <label></label>
-          <input type="checkbox" id="node-input-inputArmDisarm" style="margin-left: 0px; vertical-align: top; width: auto !important;" />
-          <span data-i18n="openhab-v2.trigger.labels.inputArmDisarm">Enable node input to arm/disarm trigger</span>
-          <input type="hidden" id="node-input-inputs" />
+          <div id="node-openhab-v2-trigger-tabs-trigger-inputArmDisarm" class="form-row">
+            <label></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-inputArmDisarm" style="margin-left: 0px; vertical-align: top; width: auto !important;" />
+              <span data-i18n="openhab-v2.trigger.labels.inputArmDisarm">Enable node input to arm/disarm trigger</span>
+              <input type="hidden" id="node-input-inputs" />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    <!-- Tab:Condition -->
-    <div id="node-openhab-v2-trigger-tabs-condition" style="display:none">
-      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
-        <div class="form-row">
-          <strong>Trigger conditions</strong>
-        </div>
-        <div class="form-row">
-          <label for="node-input-conditionsLogic">
-            <i class="fa fa-question-circle"></i> <span data-i18n="openhab-v2.trigger.labels.conditionsLogic">Logic</span>
-          </label>
-          <div style="display: inline-block; position: relative; width: 75%; height: 20px;">
-            <div style="position: absolute; left: 0px; right: 0px;">
+      <!-- Tab:Condition -->
+      <div id="node-openhab-v2-trigger-tabs-condition" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <strong>Trigger conditions</strong>
+          </div>
+          <div class="form-row">
+            <label for="node-input-conditionsLogic">
+              <i class="fa fa-question-circle"></i> <span data-i18n="openhab-v2.trigger.labels.conditionsLogic">Logic</span>
+            </label>
+            <div class="second-column align-right">
               <select id="node-input-conditionsLogic" name="node-input-conditionsLogic"></select>
             </div>
           </div>
-        </div>
-        <div class="form-row">
-          <div id="trigger-conditions-list"></div>
-        </div>
-        <div class="form-row">
-          <strong>Additional conditions</strong>
-        </div>
-        <div class="form-row">
-          <label for="node-input-additionalConditionsFrequency">
-            <i class="fa fa-question-circle"></i> <span data-i18n="openhab-v2.trigger.labels.additionalConditions">Test on</span>
-          </label>
-          <div style="display: inline-block; position: relative; width: 75%; height: 20px;">
-            <div style="position: absolute; left: 0px; right: 0px;">
+          <div class="form-row">
+            <div id="trigger-conditions-list"></div>
+          </div>
+          <div class="form-row">
+            <strong>Additional conditions</strong>
+          </div>
+          <div class="form-row">
+            <label for="node-input-additionalConditionsFrequency">
+              <i class="fa fa-question-circle"></i> <span data-i18n="openhab-v2.trigger.labels.additionalConditions">Test on</span>
+            </label>
+            <div class="second-column align-right">
               <select id="node-input-additionalConditionsFrequency" name="node-input-additionalConditionsFrequency"></select>
             </div>
           </div>
-        </div>
-        <div class="form-row">
-          <div id="additional-conditions-list"></div>
-        </div>
-      </div>
-    </div>
-    <!-- Tab:Action -->
-    <div id="node-openhab-v2-trigger-tabs-action" style="display:none">
-      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
-        <div class="form-row">
-          <label></label>
-          <strong>When triggered send</strong>
-        </div>
-        <div class="form-row">
-          <label for="node-input-topic"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.trigger.labels.topic">Topic</span></label>
-          <input type="text" id="node-input-topic" style="width:70%">
-          <input type="hidden" id="node-input-topicType">
-        </div>
-        <div class="form-row">
-          <label for="node-input-payload"><i class="fa fa-envelope"></i> <span data-i18n="openhab-v2.trigger.labels.payload">Payload</span></label>
-          <input type="text" id="node-input-payload" style="width:70%">
-          <input type="hidden" id="node-input-payloadType">
+          <div class="form-row">
+            <div id="additional-conditions-list"></div>
+          </div>
         </div>
       </div>
-    </div>
-    <!-- Tab:Finally -->
-    <div id="node-openhab-v2-trigger-tabs-finally" style="display:none">
-      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb"></div>
-    </div>
-    <!-- Tab:Optional -->
-    <div id="node-openhab-v2-trigger-tabs-optional" style="display:none">
-      <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
-        <div class="form-row">
-          <label for="node-input-ohTimestamp"><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.trigger.labels.ohTimestamp">Timestamp</span></label>
-          <input type="checkbox" id="node-input-ohTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;" />
-          <span data-i18n="openhab-v2.trigger.labels.ohTimestampDescription">use openHAB format</span>
+      <!-- Tab:Action -->
+      <div id="node-openhab-v2-trigger-tabs-action" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row" id="message-row0">
+            <label></label>
+            <strong>When triggered send&nbsp;&hellip;</strong>
+          </div>
+          <div class="form-row" id="message-row1">
+            <label for="node-input-topic"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.trigger.labels.topic">Topic</span></label>
+            <div class="second-column">
+              <input type="text" id="node-input-topic" style="width:100%" />
+              <input type="hidden" id="node-input-topicType" />
+            </div>
+          </div>
+          <div class="form-row" id="message-row2">
+            <label for="node-input-payload"><i class="fa fa-envelope"></i> <span data-i18n="openhab-v2.trigger.labels.payload">Payload</span></label>
+            <div class="second-column">
+              <input type="text" id="node-input-payload" style="width:100%" />
+              <input type="hidden" id="node-input-payloadType" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label></label>
+            <strong>Then&nbsp;&hellip;</strong>
+          </div>
+          <div class="form-row">
+            <label for="node-input-afterTrigger"></label>
+            <div class="second-column">
+              <select id="node-input-afterTrigger" name="node-input-afterTrigger"></select>
+            </div>
+          </div>
+          <div class="form-row" id="timer-row0">
+            <label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
+            <div class="second-column">
+              <input type="text" id="node-input-timer" style="text-align:end; width:100px !important" />
+              <select id="node-input-timerUnits" style="width: calc(100% - 104px);"> </select>
+            </div>
+          </div>
+          <div class="form-row" id="timer-row1">
+            <label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> Time for</label>
+            <div class="second-column">
+              <input type="text" id="node-input-advancedTimer" style="width: 75%; margin-right: 10px" /> milliseconds
+              <input type="hidden" id="node-input-advancedTimerType" />
+            </div>
+          </div>
+          <div class="form-row" id="timer-row2">
+            <label></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-advancedTimerToggle" /><span data-i18n="openhab-v2.trigger.labels.advancedTimerToggleDescription"
+                >Advanced timer setting</span
+              >
+            </div>
+          </div>
+          <div class="form-row" id="timer-row3">
+            <label></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" /><span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmedDescription"
+                >When trigger is disarmed, cancel active timer</span
+              >
+            </div>
+          </div>
+          <div class="form-row" id="timer-row4">
+            <label></label>
+            <strong>When timer expires&nbsp;&hellip;</strong>
+          </div>
+          <div class="form-row" id="timer-row5">
+            <label for="node-input-timerExpiresAction"></label>
+            <div class="second-column">
+              <select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction"></select>
+            </div>
+          </div>
+          <div class="form-row" id="endmessage-row0">
+             <label></label>
+             <strong>Then send&nbsp;&hellip;</strong>
+          </div>
+          <div class="form-row" id="endmessage-row1">
+            <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
+            <div class="second-column">
+              <input type="text" id="node-input-topicEnd" style="width: 100%" />
+              <input type="hidden" id="node-input-topicEndType" />
+            </div>
+          </div>
+          <div class="form-row" id="endmessage-row2">
+            <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
+            <div class="second-column">
+              <input type="text" id="node-input-payloadEnd" style="width:100%" />
+              <input type="hidden" id="node-input-payloadEndType" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tab:Finally -->
+      <div id="node-openhab-v2-trigger-tabs-finally" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb"></div>
+      </div>
+      <!-- Tab:Optional -->
+      <div id="node-openhab-v2-trigger-tabs-optional" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-ohTimestamp"><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.trigger.labels.ohTimestamp">Timestamp</span></label>
+            <div class="second-column">
+            <input type="checkbox" id="node-input-ohTimestamp" />
+            <span data-i18n="openhab-v2.trigger.labels.ohTimestampDescription">use openHAB format</span>
+          </div>
+          </div>
         </div>
       </div>
     </div>
