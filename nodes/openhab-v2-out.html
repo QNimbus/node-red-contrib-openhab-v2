@@ -52,33 +52,111 @@
 
 <script type="text/html" data-template-name="openhab-v2-out">
   <link rel="stylesheet" type="text/css" href="openhab2/public/css/vendor/slimselect.min.css" />
+  <style>
+    .red-ui-editor #openhab-v2-out .form-row .red-ui-tabs {
+      margin-top: 25px;
+      width: 100%;
+    }
+    .red-ui-editor #openhab-v2-out #node-openhab-v2-out-tabs-content {
+      position: relative;
+      top: -12px;
+    }
 
-  <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.out.labels.name">Name</span></label>
-    <input type="text" id="node-input-name" placeholder="Name" />
-  </div>
-  <div class="form-row">
-    <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.out.labels.controller">OpenHAB</span></label>
-    <select id="node-input-controller"></select>
-  </div>
-  <div class="form-row">
-    <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.out.labels.item">Item</span></label>
-    <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
-      <div style="position: absolute; left: 0px; right: 0px;">
-        <select id="node-input-item" name="node-input-item">
-        </select>
+    .red-ui-editor #openhab-v2-out .form-row {
+      display: flex;
+    }
+
+    .red-ui-editor #openhab-v2-out .form-row:has(> div) {
+      margin: 0;
+    }
+
+    .red-ui-editor #openhab-v2-out .form-row > div:only-child,
+    .red-ui-editor #openhab-v2-out .form-row label + div.second-column > *:only-child {
+      width: 100% !important;
+    }
+
+    .red-ui-editor #openhab-v2-out .form-row label {
+      flex: 0 0 100px;
+      align-self: center;
+      width: unset;
+    }
+
+    .red-ui-editor #openhab-v2-out .form-row label + div.second-column {
+      flex: 1 1 auto;
+      margin: 0 5% 0 0;
+    }
+
+    .red-ui-editor #openhab-v2-out .form-row label + div.second-column input[type='checkbox'] {
+      vertical-align: top;
+      margin-right: 5px;
+      width: unset;
+    }
+
+    .red-ui-editor #openhab-v2-out .form-row label + div.second-column.align-right {
+      margin: 0 0 0 5%;
+    }
+  </style>
+  <div id="openhab-v2-out">
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.out.labels.name">Name</span></label>
+      <div class="second-column">
+        <input type="text" id="node-input-name" placeholder="Name" />
       </div>
     </div>
-  </div>
-  <div class="form-row">
-    <label for="node-input-topic"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.out.labels.topic">Topic</span></label>
-    <input type="text" id="node-input-topic" style="width:70%">
-    <input type="hidden" id="node-input-topicType">
-  </div>
-  <div class="form-row">
-    <label for="node-input-payload"><i class="fa fa-envelope"></i> <span data-i18n="openhab-v2.out.labels.payload">Payload</span></label>
-    <input type="text" id="node-input-payload" style="width:70%">
-    <input type="hidden" id="node-input-payloadType">
+    <div class="form-row">
+      <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.out.labels.controller">openHAB</span></label>
+      <div class="second-column">
+        <select id="node-input-controller"></select>
+      </div>
+    </div>
+
+    <!-- Tabs container -->
+
+    <div class="form-row">
+      <ul style="min-width: 600px; margin-bottom: 20px;" id="node-openhab-v2-out-tabs"></ul>
+    </div>
+
+    <!-- Tabs -->
+
+    <div id="node-openhab-v2-out-tabs-content" style="min-height: 170px;">
+      <!-- Tab:Output -->
+      <div id="node-openhab-v2-out-tabs-output" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.out.labels.item">Item</span></label>
+            <div class="second-column">
+              <select id="node-input-item" name="node-input-item"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="node-input-topic"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.out.labels.topic">Topic</span></label>
+            <div class="second-column">
+              <input type="text" id="node-input-topic" style="width:100%" />
+              <input type="hidden" id="node-input-topicType" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="node-input-payload"><i class="fa fa-envelope"></i> <span data-i18n="openhab-v2.out.labels.payload">Payload</span></label>
+            <div class="second-column">
+              <input type="text" id="node-input-payload" style="width:100%" />
+              <input type="hidden" id="node-input-payloadType" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tab:Misc -->
+      <div id="node-openhab-v2-out-tabs-misc" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-storeState"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.out.labels.storeStateLabel">Store</span></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-storeState" />
+              <span data-i18n="openhab-v2.out.labels.storeState">Store item state in flow variable</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </script>
 
