@@ -104,7 +104,7 @@
       </div>
     </div>
     <div class="form-row">
-      <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.trigger.labels.controller">OpenHAB</span></label>
+      <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.trigger.labels.controller">openHAB</span></label>
       <div class="second-column">
         <select id="node-input-controller"></select>
       </div>
@@ -124,7 +124,7 @@
         <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
           <div class="form-row">
             <label></label>
-            <strong>Trigger item</strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.triggerItem">Trigger item</span></strong>
           </div>
           <div class="form-row">
             <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.trigger.labels.item">Item</span></label>
@@ -134,28 +134,29 @@
           </div>
           <div class="form-row">
             <label></label>
-            <strong>Arming & disarming of trigger</strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.triggerState">Arming & disarming of trigger</span></strong>
           </div>
           <div class="form-row">
-            <label></label>
+            <label for="node-input-triggerState"><i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.triggerStateLabel">State</span></label>
             <div class="second-column">
               <select id="node-input-triggerState" name="node-input-triggerState"></select>
             </div>
           </div>
           <div id="node-openhab-v2-trigger-tabs-trigger-armed-item" class="form-row">
             <label for="node-input-triggerStateItem">
-              <i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.triggerStateItem">Arm/Disarm</span>
+              <i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.triggerStateItemLabel">State item</span>
             </label>
             <div class="second-column">
               <select id="node-input-triggerStateItem" name="node-input-triggerStateItem"></select>
             </div>
           </div>
           <div id="node-openhab-v2-trigger-tabs-trigger-inputArmDisarm" class="form-row">
-            <label></label>
+            <label for="node-input-inputArmDisarm"
+              ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.inputArmDisarmLabel">Input</span></label
+            >
             <div class="second-column">
               <input type="checkbox" id="node-input-inputArmDisarm" style="margin-left: 0px; vertical-align: top; width: auto !important;" />
-              <span data-i18n="openhab-v2.trigger.labels.inputArmDisarm">Enable node input to arm/disarm trigger</span>
-              <input type="hidden" id="node-input-inputs" />
+              <span data-i18n="openhab-v2.trigger.labels.inputArmDisarm">Enable additional node input to arm/disarm trigger</span>
             </div>
           </div>
         </div>
@@ -164,7 +165,7 @@
       <div id="node-openhab-v2-trigger-tabs-condition" style="display:none">
         <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
           <div class="form-row">
-            <strong>Trigger conditions</strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.triggerConditions">Trigger conditions</span></strong>
           </div>
           <div class="form-row">
             <label for="node-input-conditionsLogic">
@@ -178,11 +179,11 @@
             <div id="trigger-conditions-list"></div>
           </div>
           <div class="form-row">
-            <strong>Additional conditions</strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.triggerAdditionalConditions">Additional conditions</span></strong>
           </div>
           <div class="form-row">
             <label for="node-input-additionalConditionsFrequency">
-              <i class="fa fa-question-circle"></i> <span data-i18n="openhab-v2.trigger.labels.additionalConditions">Test on</span>
+              <i class="fa fa-question-circle"></i> <span data-i18n="openhab-v2.trigger.labels.additionalConditionsLabel">Test on</span>
             </label>
             <div class="second-column align-right">
               <select id="node-input-additionalConditionsFrequency" name="node-input-additionalConditionsFrequency"></select>
@@ -198,7 +199,7 @@
         <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
           <div class="form-row" id="message-row0">
             <label></label>
-            <strong>When triggered send&nbsp;&hellip;</strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.triggerAction">When triggered send ...</span></strong>
           </div>
           <div class="form-row" id="message-row1">
             <label for="node-input-topic"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.trigger.labels.topic">Topic</span></label>
@@ -216,7 +217,7 @@
           </div>
           <div class="form-row">
             <label></label>
-            <strong>Then&nbsp;&hellip;</strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.triggerActionAfter">Then ...</span></strong>
           </div>
           <div class="form-row">
             <label for="node-input-afterTrigger"></label>
@@ -225,38 +226,42 @@
             </div>
           </div>
           <div class="form-row" id="timer-row0">
-            <label for="node-input-timer"><i class="fa fa-clock-o"></i> Time for</label>
+            <label for="node-input-timer"><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.trigger.labels.timerLabel">Time for</span></label>
             <div class="second-column">
               <input type="text" id="node-input-timer" style="text-align:end; width:100px !important" />
               <select id="node-input-timerUnits" style="width: calc(100% - 104px);"> </select>
             </div>
           </div>
           <div class="form-row" id="timer-row1">
-            <label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> Time for</label>
+            <label for="node-input-advancedTimer"><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.trigger.labels.timerLabel">Time for</span></label>
             <div class="second-column">
-              <input type="text" id="node-input-advancedTimer" style="width: 75%; margin-right: 10px" /> milliseconds
+              <input type="text" id="node-input-advancedTimer" style="width: 75%; margin-right: 10px" /> <span data-i18n="openhab-v2.trigger.labels.millisecondsLabel">milliseconds</span>
               <input type="hidden" id="node-input-advancedTimerType" />
             </div>
           </div>
           <div class="form-row" id="timer-row2">
-            <label></label>
+            <label for="node-input-advancedTimerToggle"
+              ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.advancedTimerToggleLabel">Advanced</span></label
+            >
             <div class="second-column">
-              <input type="checkbox" id="node-input-advancedTimerToggle" /><span data-i18n="openhab-v2.trigger.labels.advancedTimerToggleDescription"
+              <input type="checkbox" id="node-input-advancedTimerToggle" /><span data-i18n="openhab-v2.trigger.labels.advancedTimerToggle"
                 >Advanced timer setting</span
               >
             </div>
           </div>
           <div class="form-row" id="timer-row3">
-            <label></label>
+            <label for="node-input-cancelTimerWhenDisarmed"
+              ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmedLabel">Cancel</span></label
+            >
             <div class="second-column">
-              <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" /><span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmedDescription"
+              <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" /><span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmed"
                 >When trigger is disarmed, cancel active timer</span
               >
             </div>
           </div>
           <div class="form-row" id="timer-row4">
             <label></label>
-            <strong>When timer expires&nbsp;&hellip;</strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.timerExpires">When timer expires ...</span></strong>
           </div>
           <div class="form-row" id="timer-row5">
             <label for="node-input-timerExpiresAction"></label>
@@ -265,18 +270,18 @@
             </div>
           </div>
           <div class="form-row" id="endmessage-row0">
-             <label></label>
-             <strong>Then send&nbsp;&hellip;</strong>
+            <label></label>
+            <strong><span data-i18n="openhab-v2.trigger.headings.timerExpiresAfter">Then send ...</span></strong>
           </div>
           <div class="form-row" id="endmessage-row1">
-            <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> Topic</label>
+            <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.trigger.labels.topic">Topic</span></label>
             <div class="second-column">
               <input type="text" id="node-input-topicEnd" style="width: 100%" />
               <input type="hidden" id="node-input-topicEndType" />
             </div>
           </div>
           <div class="form-row" id="endmessage-row2">
-            <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> Payload</label>
+            <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> <span data-i18n="openhab-v2.trigger.labels.payload">Payload</span></label>
             <div class="second-column">
               <input type="text" id="node-input-payloadEnd" style="width:100%" />
               <input type="hidden" id="node-input-payloadEndType" />
@@ -286,17 +291,30 @@
       </div>
       <!-- Tab:Finally -->
       <div id="node-openhab-v2-trigger-tabs-finally" style="display:none">
-        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb"></div>
-      </div>
-      <!-- Tab:Optional -->
-      <div id="node-openhab-v2-trigger-tabs-optional" style="display:none">
         <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
           <div class="form-row">
-            <label for="node-input-ohTimestamp"><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.trigger.labels.ohTimestamp">Timestamp</span></label>
-            <div class="second-column">
-            <input type="checkbox" id="node-input-ohTimestamp" />
-            <span data-i18n="openhab-v2.trigger.labels.ohTimestampDescription">use openHAB format</span>
+            <label></label>
+            <strong><span data-i18n="openhab-v2.trigger.headings.finally">Finally ...</span></strong>
           </div>
+          <div class="form-row">
+            <label for="node-input-armDisarm"><i class="fa fa-bullseye"></i> <span data-i18n="openhab-v2.trigger.labels.armDisarm">Trigger ...</span></label>
+            <div class="second-column">
+              <select id="node-input-armDisarm" name="node-input-armDisarm" style="width: 100%;"> </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tab:Misc -->
+      <div id="node-openhab-v2-trigger-tabs-misc" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-ohTimestamp"
+              ><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.trigger.labels.ohTimestampLabelLabel">Timestamp</span></label
+            >
+            <div class="second-column">
+              <input type="checkbox" id="node-input-ohTimestamp" />
+              <span data-i18n="openhab-v2.trigger.labels.ohTimestamp">use openHAB format</span>
+            </div>
           </div>
         </div>
       </div>

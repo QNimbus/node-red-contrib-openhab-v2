@@ -27,40 +27,82 @@
 -->
 
 <script type="text/html" data-help-name="openhab-v2-trigger">
-  <p>Trigger node description...</p>
+  <p>
+    Advanced node that will trigger a message when an openHAB item reaches a certain state.
+  </p>
   <h3>Configuration</h3>
   <dl class="message-properties">
     <dt class="optional">Name<span class="property-type">string</span></dt>
-    <dd>optional custom name for node.</dd>
-    <dt>
-      Controller
-      <span class="property-type">object</span>
-    </dt>
+    <dd>Optional custom name for node.</dd>
+    <dt>Controller<span class="property-type">object</span></dt>
     <dd>openHAB controller.</dd>
-    <dt>
-      Item
-      <span class="property-type">string</span>
-    </dt>
-    <dd>openHAB item to watch.</dd>
-    <dt>
-      Timestamp
-      <span class="property-type">boolean</span>
-    </dt>
-    <dd>output openHAB compatible timestamp instead of Unix timestamp.</dd>
   </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Trigger</strong>
+    <dt>Item<span class="property-type">string</span></dt>
+    <dd>openHAB item to monitor.</dd>
+    <dt>State<span class="property-type">string</span></dt>
+    <dd>Trigger armed or disarmed at startup.</dd>
+    <dt class="optional">State item<span class="property-type">string</span></dt>
+    <dd>Optional switch or contact item to determine armed state of trigger.</dd>
+    <dt class="optional">Input<span class="property-type">boolean</span></dt>
+    <dd>Optional toggle to enable an input port on the trigger node to arm or disarm the trigger</dd>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Condition</strong>
+    <dt>Logic<span class="property-type">string</span></dt>
+    <dd>Whether <i>any</i> or <i>all</i> of the trigger conditions should be met.</dd>
+    <dt>Trigger conditions<span class="property-type">[ <i>object</i> ]</span></dt>
+    <dd>List of trigger condtions</dd>
+    <dt>Test on<span class="property-type">string</span></dt>
+    <dd>Test additional conditions for the first trigger or for every trigger.</dd>
+    <dt>Additional conditions<span class="property-type">[ <i>object</i> ]</span></dt>
+    <dd>List of additional condtions</dd>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Action</strong>
+    <dt>Topic<span class="property-type">string</span></dt>
+    <dd>Topic of outbound message.</dd>
+    <dt>Payload<span class="property-type">string</span></dt>
+    <dd>Payload of outbound message.</dd>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Finally</strong>
+    <dt>Trigger<span class="property-type">string</span></dt>
+    <dd>Optionally reset the trigger state afterwards.</dd>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Misc</strong>
+    <dt>Timestamp<span class="property-type">boolean</span></dt>
+    <dd>Output openHAB compatible timestamp instead of Unix timestamp.</dd>
+  </dl>
+  <h3>Inputs</h3>
+  <ol class="node-ports">
+    <li>
+      Input
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>{ trigger: ['TOGGLE' | 'ARM' | 'DISARM'] }</dd>
+      </dl>
+    </li>
+  </ol>
   <h3>Outputs</h3>
   <ol class="node-ports">
     <li>
       Trigger
       <dl class="message-properties">
-        <dt>payload <span class="property-type">object</span></dt>
-        <dd>{ item, type, state, timestamp }</dd>
+        <dt class="optional">topic <span class="property-type">string</span></dt>
+        <dd>An optional property that can be configured in the node.</dd>
+        <dt class="optional">payload<span class="property-type">various</span></dt>
+        <dd>The configured payload of the message.</dd>
       </dl>
     </li>
   </ol>
   <h3>Details</h3>
   <p>
-    The <code>openhab-v2-trigger</code> node ...
+    The <code>openhab-v2-trigger</code> node is an advanced node that will trigger a message when an openHAB item reaches a certain state. Optional additional
+    conditions can be specified using global or flow variables. After the trigger message has been sent another message can be sent instantly, as soon as the
+    trigger condtion is no longer valid or after a certain delay using a timer.
   </p>
   <h3>References</h3>
   <ul>

@@ -52,48 +52,117 @@
 
 <script type="text/html" data-template-name="openhab-v2-in">
   <link rel="stylesheet" type="text/css" href="openhab2/public/css/vendor/slimselect.min.css" />
+  <style>
+    .red-ui-editor #openhab-v2-in .form-row .red-ui-tabs {
+      margin-top: 25px;
+      width: 100%;
+    }
+    .red-ui-editor #openhab-v2-in #node-openhab-v2-in-tabs-content {
+      position: relative;
+      top: -12px;
+    }
 
-  <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.in.labels.name">Name</span></label>
-    <input type="text" id="node-input-name" placeholder="Name" />
-  </div>
-  <div class="form-row">
-    <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.in.labels.controller">OpenHAB</span></label>
-    <select id="node-input-controller"></select>
-  </div>
-  <div class="form-row">
-    <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.in.labels.item">Item</span></label>
-    <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
-      <div style="position: absolute; left: 0px; right: 0px;">
-        <select id="node-input-item" name="node-input-item">
-        </select>
+    .red-ui-editor #openhab-v2-in .form-row {
+      display: flex;
+    }
+
+    .red-ui-editor #openhab-v2-in .form-row:has(> div) {
+      margin: 0;
+    }
+
+    .red-ui-editor #openhab-v2-in .form-row > div:only-child,
+    .red-ui-editor #openhab-v2-in .form-row label + div.second-column > *:only-child {
+      width: 100% !important;
+    }
+
+    .red-ui-editor #openhab-v2-in .form-row label {
+      flex: 0 0 100px;
+      align-self: center;
+      width: unset;
+    }
+
+    .red-ui-editor #openhab-v2-in .form-row label + div.second-column {
+      flex: 1 1 auto;
+      margin: 0 5% 0 0;
+    }
+
+    .red-ui-editor #openhab-v2-in .form-row label + div.second-column input[type='checkbox'] {
+      vertical-align: top;
+      margin-right: 5px;
+      width: unset;
+    }
+
+    .red-ui-editor #openhab-v2-in .form-row label + div.second-column.align-right {
+      margin: 0 0 0 5%;
+    }
+  </style>
+  <div id="openhab-v2-in">
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.in.labels.name">Name</span></label>
+      <div class="second-column">
+        <input type="text" id="node-input-name" placeholder="Name" />
       </div>
     </div>
-  </div>
-  <div class="form-row">
-    <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> <span data-i18n="openhab-v2.in.labels.eventTypes">Event types</span></label>
-    <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple" style="width: 70%">
-      <option value="ItemCommandEvent">ItemCommand</option>
-      <option value="ItemStateEvent">ItemState</option>
-      <option value="ItemStateChangedEvent">ItemStateChanged</option>
-      <option value="GroupItemStateChangedEvent">GroupItemStateChanged</option>
-    </select>
-  </div>
-  <div class="form-row">
-    <label for="node-input-ohTimestamp"><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.in.labels.ohTimestamp">Timestamp</span></label>
-    <input type="checkbox" id="node-input-ohTimestamp" style="margin-left: 0px; vertical-align: top; width: auto !important;" /> <span data-i18n="openhab-v2.in.labels.ohTimestampDescription">use openHAB format</span>
-  </div>
-  <div class="form-row">
-    <hr />
-  </div>
-  <div class="form-row">
-    <label for="node-input-initialOutput"><i class="fa fa-share-square"></i> <span data-i18n="openhab-v2.in.labels.initialOutput">Initial output</span></label>
-    <input type="checkbox" id="node-input-initialOutput" style="width:auto; margin: 0;" checked="checked" />
-  </div>
-  <div class="form-row">
-    <label for="node-input-storeState"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.in.labels.storeState">Store state</span></label>
-    <input type="checkbox" id="node-input-storeState" style="width:auto; margin: 0;" />
-  </div>
+    <div class="form-row">
+      <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.in.labels.controller">openHAB</span></label>
+      <div class="second-column">
+        <select id="node-input-controller"></select>
+      </div>
+    </div>
+
+    <!-- Tabs container -->
+
+    <div class="form-row">
+      <ul style="min-width: 600px; margin-bottom: 20px;" id="node-openhab-v2-in-tabs"></ul>
+    </div>
+
+    <!-- Tabs -->
+
+    <div id="node-openhab-v2-in-tabs-content" style="min-height: 170px;">
+      <!-- Tab:Input -->
+      <div id="node-openhab-v2-in-tabs-input" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.in.labels.item">Item</span></label>
+            <div class="second-column">
+              <select id="node-input-item" name="node-input-item"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="node-input-eventTypes"><i class="fa fa-bolt"></i> <span data-i18n="openhab-v2.in.labels.eventTypes">Event types</span></label>
+            <div class="second-column">
+            <select id="node-input-eventTypes" name="node-input-eventTypes" multiple="multiple" style="width: 100%"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tab:Misc -->
+      <div id="node-openhab-v2-in-tabs-misc" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-ohTimestamp"
+              ><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.in.labels.ohTimestampLabel">Timestamp</span></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-ohTimestamp" />
+              <span data-i18n="openhab-v2.in.labels.ohTimestamp">use openHAB format</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="node-input-initialOutput"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.in.labels.initialOutputLabel">Output</span></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-initialOutput" />
+              <span data-i18n="openhab-v2.in.labels.initialOutput">Output state message when node starts</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="node-input-storeState"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.in.labels.storeStateLabel">Store</span></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-storeState" />
+              <span data-i18n="openhab-v2.in.labels.storeState">Store item state in flow variable</span>
+            </div>
+          </div>
+        </div>
+      </div>
 </script>
 
 <!--***************

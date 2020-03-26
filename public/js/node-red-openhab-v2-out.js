@@ -53,6 +53,7 @@ RED.nodes.registerType('openhab-v2-out', {
   outputLabels: [],
   // Default
   defaults: {
+    // Main config
     name: {
       value: undefined,
       required: false
@@ -62,6 +63,7 @@ RED.nodes.registerType('openhab-v2-out', {
       type: 'openhab-v2-controller',
       required: true
     },
+    // Output tab
     item: {
       value: undefined,
       required: true
@@ -71,7 +73,7 @@ RED.nodes.registerType('openhab-v2-out', {
       required: true
     },
     topicType: {
-      value: 'msg',
+      value: 'msg', // OH_TYPED_INPUT.COMMAND_TYPE.value,
       required: true
     },
     payload: {
@@ -79,9 +81,10 @@ RED.nodes.registerType('openhab-v2-out', {
       required: true
     },
     payloadType: {
-      value: 'msg',
+      value: 'msg', // OH_TYPED_INPUT.PAYLOAD.value,
       required: true
     },
+    // Misc tab
     storeState: {
       value: false,
       required: true
@@ -97,6 +100,30 @@ RED.nodes.registerType('openhab-v2-out', {
     /**
      * Methods
      */
+
+    const createTabs = id => {
+      const tabs = RED.tabs.create({
+        id,
+        onchange: function(tab) {
+          $(`#${id}-content`)
+            .children()
+            .hide();
+          $('#' + tab.id).show();
+        }
+      });
+      tabs.addTab({
+        id: `${id}-output`,
+        label: node._('openhab-v2.out.tabs.outputTab', { defaultValue: 'Output' })
+      });
+      tabs.addTab({
+        id: `${id}-misc`,
+        label: node._('openhab-v2.out.tabs.miscTab', { defaultValue: 'Misc' })
+      });
+
+      setTimeout(function() {
+        tabs.resize();
+      }, 0);
+    };
 
     const populateItemList = (slimSelector, itemList, selectedItem) => {
       const items = [];
@@ -139,6 +166,48 @@ RED.nodes.registerType('openhab-v2-out', {
       slimSelector.set(selectedItem);
     };
 
+    const initializeFormElements = () => {
+      // Initialize SlimSelect form elements
+      slimSelectElements.init();
+
+      /**
+       * 'Output' tab
+       */
+
+      $('#node-input-topic').typedInput({
+        types: ['msg', 'str', OH_TYPED_INPUT.COMMAND_TYPE],
+        value: node.topic,
+        type: node.topicType,
+        typeField: $('#node-input-topicType')
+      });
+
+      $('#node-input-payload').typedInput({
+        types: ['msg', 'flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
+        value: node.payload,
+        type: node.payloadType,
+        typeField: $('#node-input-payloadType')
+      });
+    };
+
+    const applyCustomStyling = () => {
+      // Enhance typedInput element by aligning all options
+      // i.e. here we select all elements without an image or icon label
+      $('div.red-ui-typedInput-options a:not(:has(*))').each((_, elem) => {
+        $(elem).css('padding-left', '28px');
+      });
+
+      // Enhance typedInput element by aligning all options
+      // i.e. here we select all elements with either and image or icon label
+      $('div.red-ui-typedInput-options a').each((_, elem) => {
+        $(elem)
+          .find('>img:first-child')
+          .css('width', '18px');
+        $(elem)
+          .find('>i:first-child')
+          .css('padding-left', '4px');
+      });
+    };
+
     /**
      * Configure SlimSelect form elements
      */
@@ -163,47 +232,46 @@ RED.nodes.registerType('openhab-v2-out', {
         for (const [id, options] of Object.entries(this.options)) {
           const select = document.querySelector(`select#${id}`);
           if (select) {
-            this.elements[id] = new SlimSelect({ select, ...options });
+            const { selectedElement, ...config } = options;
+            const slimSelect = new SlimSelect({ select, ...config });
+
+            // If a selectedElement was passed - select it
+            if (selectedElement) {
+              slimSelect.set(selectedElement);
+            }
+
+            this.elements[id] = slimSelect;
           }
         }
       }
     };
 
-    // *** Topic ***
-
-    $('#node-input-topic').typedInput({
-      types: ['msg', 'str', OH_TYPED_INPUT.COMMAND_TYPE],
-      default: 'msg',
-      value: 'topic',
-      typeField: $('#node-input-topicType')
-    });
-
-    // *** Payload ***
-
-    $('#node-input-payload').typedInput({
-      types: ['msg', 'flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
-      default: 'msg',
-      value: 'payload',
-      typeField: $('#node-input-payloadType')
-    });
-
     /**
-     * Main
+     * Events
      */
 
-    // Initialize SlimSelect form elements
-    slimSelectElements.init();
-
-    // Set onChange handler for when Controller is changed
+    // onChange handler: When node controller selection changes
     $('#node-input-controller').change(
       ({ target: { value: controller } }) =>
         controller !== '__ADD__' &&
         getItems(controller).then(itemList => {
           const allItems = itemList;
-
           populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
         })
     );
+
+    /**
+     * Main
+     */
+
+    // Create navigation tabs
+    createTabs('node-openhab-v2-out-tabs');
+
+    // Load correct values into form elements where necessary
+    initializeFormElements();
+
+    // Apply custom styling
+    applyCustomStyling();
   },
   oneditsave: function() {
     /**

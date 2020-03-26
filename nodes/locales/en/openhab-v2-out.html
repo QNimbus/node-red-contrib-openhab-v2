@@ -32,27 +32,35 @@
   <dl class="message-properties">
     <dt class="optional">Name<span class="property-type">string</span></dt>
     <dd>optional custom name for node.</dd>
-    <dt>
-      Controller
-      <span class="property-type">object</span>
-    </dt>
+    <dt>Controller<span class="property-type">object</span></dt>
     <dd>openHAB controller.</dd>
-    <dt>
-      Item
-      <span class="property-type">string</span>
-    </dt>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Output</strong>
+    <dt>Item<span class="property-type">string</span></dt>
     <dd>openHAB item to send command to.</dd>
-    <dt>
-      Topic
-      <span class="property-type">string</span>
-    </dt>
+    <dt>Topic<span class="property-type">string</span></dt>
     <dd>ItemCommand or ItemUpdate.</dd>
-    <dt>
-      Payload
-      <span class="property-type">string</span>
-    </dt>
+    <dt>Payload<span class="property-type">string</span></dt>
     <dd>Payload to send to openHAB item.</dd>
   </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Misc</strong>
+    <dt>Store state<span class="property-type">boolean</span></dt>
+    <dd>store node state in flow context.</dd>
+  </dl>
+  <h3>Inputs</h3>
+  <ol class="node-ports">
+    <li>
+      Command
+      <dl class="message-properties">
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>StateEvent e.g. <i>ItemUpdate</i> or <i>ItemCommand</i></dd>
+        <dt>payload <span class="property-type">string</span></dt>
+        <dd>New state or command e.g. <i>ON</i> or <i>OFF</i></dd>
+      </dl>
+    </li>
+  </ol>
   <h3>Details</h3>
   <p>
     The <code>openhab-v2-out</code> sends an <i>ItemCommand</i> or <i>ItemUpdate</i> to the selected item via the openHAB REST API. The message topic and payload can be provided via the incomming message or preselected in the node configuration.

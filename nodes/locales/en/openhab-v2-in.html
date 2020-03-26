@@ -32,35 +32,23 @@
   <dl class="message-properties">
     <dt class="optional">Name<span class="property-type">string</span></dt>
     <dd>optional custom name for node.</dd>
-    <dt>
-      Controller
-      <span class="property-type">object</span>
-    </dt>
+    <dt>Controller<span class="property-type">object</span></dt>
     <dd>openHAB controller.</dd>
-    <dt>
-      Item
-      <span class="property-type">string</span>
-    </dt>
-    <dd>openHAB item to watch.</dd>
-    <dt class="optional">
-      Event types
-      <span class="property-type">string []</span>
-    </dt>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Input</strong>
+    <dt>Item<span class="property-type">string</span></dt>
+    <dd>openHAB item to monitor.</dd>
+    <dt class="optional">Event types<span class="property-type">string []</span></dt>
     <dd>openHAB events to watch.</dd>
-    <dt>
-      Timestamp
-      <span class="property-type">boolean</span>
-    </dt>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Misc</strong>
+    <dt>Timestamp<span class="property-type">boolean</span></dt>
     <dd>output openHAB compatible timestamp instead of Unix timestamp.</dd>
-    <dt>
-      Initial output
-      <span class="property-type">boolean</span>
-    </dt>
+    <dt>Initial output<span class="property-type">boolean</span></dt>
     <dd>send message for intial item state.</dd>
-    <dt>
-      Store state
-      <span class="property-type">boolean</span>
-    </dt>
+    <dt>Store state<span class="property-type">boolean</span></dt>
     <dd>store node state in flow context.</dd>
   </dl>
   <h3>Outputs</h3>

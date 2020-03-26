@@ -1,10 +1,75 @@
 {
   "openhab-v2": {
     "trigger": {
+      "tabs": {
+        "triggerTab": "Trigger",
+        "condtionTab": "Condtion",
+        "actionTab": "Action",
+        "finallyTab": "Finally",
+        "miscTab": "Misc"
+      },
+      "headings": {
+        "triggerItem": "Trigger item",
+        "triggerState": "Arming & disarming of trigger",
+        "triggerConditions": "Trigger conditions",
+        "triggerAdditionalConditions": "Additional conditions",
+        "triggerAction": "When triggered send ...",
+        "triggerActionAfter": "Then ...",
+        "timerExpires": "When timer expires ...",
+        "timerExpiresAfter": "Then send ...",
+        "finally": "Finally ..."
+      },
+      "select": {
+        "triggerState": {
+          "armed": "Trigger starts armed",
+          "disarmed": "Trigger starts disarmed",
+          "item": "Use arm/disarm item"
+        },
+        "additionalConditionsFrequency": {
+          "first": "First trigger only",
+          "every": "Every trigger"
+        },
+        "afterTrigger": {
+          "nothing": "Do nothing",
+          "nodelay": "No delay",
+          "timer": "Start timer",
+          "untrigger": "Wait until trigger condition is false"
+        },
+        "timerUnits": {
+          "milliseconds": "milliseconds",
+          "seconds": "seconds",
+          "minutes": "minutes"
+        },
+        "timerExpiresAction": {
+          "always_continue": "Continue",
+          "if_false_continue": "Restart timer IF trigger condition is still true ELSE continue"
+        },
+        "armDisarm": {
+          "do_not_change": "Do not change trigger state",
+          "arm": "Arm trigger",
+          "disarm": "Disarm trigger"
+        }
+      },
       "labels": {
         "name": "Name",
-        "controller": "OpenHAB",
-        "item": "Item"
+        "controller": "openHAB",
+        "item": "Item",
+        "triggerStateLabel": "State",
+        "triggerStateItemLabel": "State item",
+        "additionalConditionsLabel": "Test on",
+        "topic": "Topic",
+        "payload": "Payload",
+        "timerLabel": "Time for",
+        "millisecondsLabel": "milliseconds",
+        "inputArmDisarm": "Enable additional node input to arm/disarm trigger",
+        "inputArmDisarmLabel": "Input",
+        "advancedTimerToggle": "Advanced timer setting",
+        "advancedTimerToggleLabel": "Advanced",
+        "cancelTimerWhenDisarmed": "When trigger is disarmed, cancel active timer",
+        "cancelTimerWhenDisarmedLabel": "Cancel",
+        "armDisarm": "Trigger",
+        "ohTimestamp": "use openHAB format",
+        "ohTimestampLabel": "Timestamp"
       }
     }
   }

@@ -1,15 +1,23 @@
 {
   "openhab-v2": {
     "in": {
+      "tabs": {
+        "inputTab": "Input",
+        "miscTab": "Misc"
+      },
+      "headings": {},
+      "select": {},
       "labels": {
         "name": "Name",
-        "controller": "OpenHAB",
+        "controller": "openHAB",
         "item": "Item",
-        "ohTimestamp": "Timestamp",
-        "ohTimestampDescription": "use openHAB format",
+        "ohTimestamp": "use openHAB format",
+        "ohTimestampLabel": "Timestamp",
         "eventTypes": "Event types",
-        "initialOutput": "Initial output",
-        "storeState": "Store state",
+        "initialOutput": "Output state message when node starts",
+        "initialOutputLabel": "Output",
+        "storeState": "Store item state in flow variable",
+        "storeStateLabel": "Store",
         "placeholderLoading": "Loading...",
         "placeholderSelectItem": "Select item",
         "placeholderEmptyList": "No items found",

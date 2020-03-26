@@ -1,13 +1,25 @@
 {
   "openhab-v2": {
+    "trigger": {
+      "tabs": {
+        "outputTab": "Output",
+        "miscTab": "Misc"
+      },
+      "headings": {
+
+      },
+      "select": {
+
+      },
     "out": {
       "labels": {
         "name": "Name",
-        "controller": "OpenHAB",
+        "controller": "openHAB",
         "item": "Item",
         "topic": "Topic",
         "payload": "Payload",
-        "storeState": "Store state",
+        "storeState": "Store item state in flow variable",
+        "storeStateLabel": "Store",
         "placeholderLoading": "Loading...",
         "placeholderSelectItem": "Select item",
         "placeholderEmptyList": "No items found",
