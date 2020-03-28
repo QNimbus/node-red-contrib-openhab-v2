@@ -35,12 +35,12 @@ SOFTWARE.
 
   this.OPERATORS = (function() {
     return Object.freeze({
-      eq: { label: '===', types: ['str', 'num', 'ohPayload'], method: (a, b) => a === b },
-      neq: { label: '!==', types: ['str', 'num', 'ohPayload'], method: (a, b) => a !== b },
-      lt: { label: '<', types: ['num'], method: (a, b) => a < b },
-      lte: { label: '<=', types: ['num'], method: (a, b) => a <= b },
-      gt: { label: '>', types: ['num'], method: (a, b) => a > b },
-      gte: { label: '>=', types: ['num'], method: (a, b) => a >= b }
+      eq: { label: '===', types: ['global', 'flow', 'str', 'num', 'ohPayload'], method: (a, b) => a === b },
+      neq: { label: '!==', types: ['global', 'flow', 'str', 'num', 'ohPayload'], method: (a, b) => a !== b },
+      lt: { label: '<', types: ['global', 'flow', 'num'], method: (a, b) => a < b },
+      lte: { label: '<=', types: ['global', 'flow', 'num'], method: (a, b) => a <= b },
+      gt: { label: '>', types: ['global', 'flow', 'num'], method: (a, b) => a > b },
+      gte: { label: '>=', types: ['global', 'flow', 'num'], method: (a, b) => a >= b }
     });
   })();
 }.call(this));

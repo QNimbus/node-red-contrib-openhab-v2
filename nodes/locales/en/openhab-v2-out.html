@@ -31,7 +31,7 @@
   <h3>Configuration</h3>
   <dl class="message-properties">
     <dt class="optional">Name<span class="property-type">string</span></dt>
-    <dd>optional custom name for node.</dd>
+    <dd>Optional custom name for node.</dd>
     <dt>Controller<span class="property-type">object</span></dt>
     <dd>openHAB controller.</dd>
   </dl>
@@ -46,8 +46,8 @@
   </dl>
   <dl class="message-properties">
     <strong style="margin: 5px">Misc</strong>
-    <dt>Store state<span class="property-type">boolean</span></dt>
-    <dd>store node state in flow context.</dd>
+    <dt>Override<span class="property-type">boolean</span></dt>
+    <dd>Enables overriding the item via incomming message.</dd>
   </dl>
   <h3>Inputs</h3>
   <ol class="node-ports">
@@ -58,6 +58,8 @@
         <dd>StateEvent e.g. <i>ItemUpdate</i> or <i>ItemCommand</i></dd>
         <dt>payload <span class="property-type">string</span></dt>
         <dd>New state or command e.g. <i>ON</i> or <i>OFF</i></dd>
+        <dt class="optional">item<span class="property-type">string</span></dt>
+        <dd>Optional name of item to send to.</dd>
       </dl>
     </li>
   </ol>

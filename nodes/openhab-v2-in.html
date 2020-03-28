@@ -158,7 +158,14 @@
             <label for="node-input-storeState"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.in.labels.storeStateLabel">Store</span></label>
             <div class="second-column">
               <input type="checkbox" id="node-input-storeState" />
-              <span data-i18n="openhab-v2.in.labels.storeState">Store item state in flow variable</span>
+              <span data-i18n="openhab-v2.in.labels.storeState">Store item state in variable</span>
+            </div>
+          </div>
+          <div class="form-row" id="state-variable-row">
+            <label for="node-input-storeStateVariable"><i class="fa fa-ellipsis-h"></i> <span data-i18n="openhab-v2.in.labels.storeStateVariableLabel">Variable</span></label>
+            <div class="second-column">
+              <input type="text" id="node-input-storeStateVariable" style="width:100%" />
+              <input type="hidden" id="node-input-storeStateVariableType" />
             </div>
           </div>
         </div>

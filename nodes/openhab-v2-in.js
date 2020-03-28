@@ -58,14 +58,32 @@ module.exports = function(RED) {
     node.name = config.name;
     node.item = config.item;
     node.eventTypes = config.eventTypes;
-    node.ohTimestamp = config.ohTimestamp;
     node.initialOutput = config.initialOutput;
-    node.storeState = config.storeState;
-    node.flowContext = node.context().flow;
-    node.globalContext = node.context().global;
+    node.get = node.context().get.bind(node);
+    node.set = node.context().set.bind(node);
+    node.flow = node.context().flow;
+    node.global = node.context().global;
+
+    // setState and getState methods for storing state values in node, flow and/or global context
+    node.getState = () => node.get('itemState');
+    node.setState = state => {
+      const context = node.context()[config.storeStateVariableType];
+
+      node.set('itemState', state);
+      if (config.storeState && config.storeStateVariable && context) {
+        context.set(config.storeStateVariable, state);
+      }
+    };
 
     // Node constants
     node.timeZoneOffset = Object.freeze(new Date().getTimezoneOffset() * 60000);
+
+    // getCurrentTimestamp
+    node.getCurrentTimestamp = config.ohTimestamp ? () => new Date(Date.now() - node.timeZoneOffset).toISOString().slice(0, -1) : Date.now;
+
+    /**
+     * Node methods
+     */
 
     /**
      * Node event handlers
@@ -83,13 +101,11 @@ module.exports = function(RED) {
             // Fetch current state of item
             controller
               .getItem(node.item)
-              .then(item => {
+              .then(({ state }) => {
+                node.setState(state);
                 if (node.initialOutput) {
                   // Output initial state message
-                  node.onEvent({ item: item.name, state: item.state });
-                } else {
-                  // Just update node state
-                  updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, item.state);
+                  node.onEvent({ item: node.item, state });
                 }
               })
               .catch(error => {
@@ -110,19 +126,17 @@ module.exports = function(RED) {
     };
 
     node.onEvent = event => {
-      const { payload, ...message } = event;
-      const timestamp = node.ohTimestamp ? new Date(Date.now() - node.timeZoneOffset).toISOString().slice(0, -1) : Date.now();
+      const { payload, state, ...inMessage } = event;
+      const timestamp = node.getCurrentTimestamp();
+      const message = { payload: { ...inMessage, state, timestamp } };
 
       // Send node message
-      node.send([{ payload: { ...message, timestamp: timestamp } }]);
+      node.send([message]);
 
-      // Update node state
-      updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, event.state);
+      // // Update node state
+      // updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, state);
 
-      // Store state in current flow
-      if (node.storeState) {
-        node.flowContext.set(node.item, event.state);
-      }
+      node.setState(state);
     };
 
     /**

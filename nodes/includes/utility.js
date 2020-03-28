@@ -80,7 +80,7 @@ module.exports = {
       node.status({});
     }
   },
-  getValueAs: (type, value) => {
+  getValueAs: (node, type, value) => {
     try {
       switch (type) {
         case 'flow': {
@@ -98,6 +98,7 @@ module.exports = {
         }
       }
     } catch (error) {
+      console.error(error);
       return null;
     }
   }
