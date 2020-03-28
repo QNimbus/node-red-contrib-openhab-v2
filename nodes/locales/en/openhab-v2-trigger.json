@@ -14,8 +14,7 @@
         "triggerConditions": "Trigger conditions",
         "triggerAdditionalConditions": "Additional conditions",
         "triggerAction": "When triggered send ...",
-        "triggerActionAfter": "Then ...",
-        "timerExpires": "When timer expires ...",
+        "afterTrigger": "Then ...",
         "timerExpiresAfter": "Then send ...",
         "finally": "Finally ..."
       },
@@ -39,10 +38,6 @@
           "milliseconds": "milliseconds",
           "seconds": "seconds",
           "minutes": "minutes"
-        },
-        "timerExpiresAction": {
-          "always_continue": "Continue",
-          "if_false_continue": "Restart timer IF trigger condition is still true ELSE continue"
         },
         "armDisarm": {
           "do_not_change": "Do not change trigger state",
@@ -69,7 +64,10 @@
         "cancelTimerWhenDisarmedLabel": "Cancel",
         "armDisarm": "Trigger",
         "ohTimestamp": "use openHAB format",
-        "ohTimestampLabel": "Timestamp"
+        "ohTimestampLabel": "Timestamp",
+        "storeState": "Store trigger item state in variable",
+        "storeStateLabel": "Store",
+        "storeStateVariableLabel": "Variable"
       }
     }
   }

@@ -151,9 +151,7 @@
             </div>
           </div>
           <div id="node-openhab-v2-trigger-tabs-trigger-inputArmDisarm" class="form-row">
-            <label for="node-input-inputArmDisarm"
-              ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.inputArmDisarmLabel">Input</span></label
-            >
+            <label for="node-input-inputArmDisarm"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.inputArmDisarmLabel">Input</span></label>
             <div class="second-column">
               <input type="checkbox" id="node-input-inputArmDisarm" style="margin-left: 0px; vertical-align: top; width: auto !important;" />
               <span data-i18n="openhab-v2.trigger.labels.inputArmDisarm">Enable additional node input to arm/disarm trigger</span>
@@ -217,7 +215,7 @@
           </div>
           <div class="form-row">
             <label></label>
-            <strong><span data-i18n="openhab-v2.trigger.headings.triggerActionAfter">Then ...</span></strong>
+            <strong><span data-i18n="openhab-v2.trigger.headings.afterTrigger">Then ...</span></strong>
           </div>
           <div class="form-row">
             <label for="node-input-afterTrigger"></label>
@@ -250,6 +248,16 @@
             </div>
           </div>
           <div class="form-row" id="timer-row3">
+            <label for="node-input-timerResetEveryTrigger"
+              ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.timerResetEveryTriggerLabel">Reset</span></label
+            >
+            <div class="second-column">
+              <input type="checkbox" id="node-input-timerResetEveryTrigger" /><span data-i18n="openhab-v2.trigger.labels.timerResetEveryTrigger"
+                >Restart active timer when re-triggered</span
+              >
+            </div>
+          </div>
+          <div class="form-row" id="timer-row4">
             <label for="node-input-cancelTimerWhenDisarmed"
               ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmedLabel">Cancel</span></label
             >
@@ -257,16 +265,6 @@
               <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" /><span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmed"
                 >When trigger is disarmed, cancel active timer</span
               >
-            </div>
-          </div>
-          <div class="form-row" id="timer-row4">
-            <label></label>
-            <strong><span data-i18n="openhab-v2.trigger.headings.timerExpires">When timer expires ...</span></strong>
-          </div>
-          <div class="form-row" id="timer-row5">
-            <label for="node-input-timerExpiresAction"></label>
-            <div class="second-column">
-              <select id="node-input-timerExpiresAction" name="node-input-timerExpiresAction"></select>
             </div>
           </div>
           <div class="form-row" id="endmessage-row0">
@@ -314,6 +312,20 @@
             <div class="second-column">
               <input type="checkbox" id="node-input-ohTimestamp" />
               <span data-i18n="openhab-v2.trigger.labels.ohTimestamp">use openHAB format</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="node-input-storeState"><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.storeStateLabel">Store</span></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-storeState" />
+              <span data-i18n="openhab-v2.trigger.labels.storeState">Store trigger item state in variable</span>
+            </div>
+          </div>
+          <div class="form-row" id="state-variable-row">
+            <label for="node-input-storeStateVariable"><i class="fa fa-ellipsis-h"></i> <span data-i18n="openhab-v2.trigger.labels.storeStateVariableLabel">Variable</span></label>
+            <div class="second-column">
+              <input type="text" id="node-input-storeStateVariable" style="width:100%" />
+              <input type="hidden" id="node-input-storeStateVariableType" />
             </div>
           </div>
         </div>

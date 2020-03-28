@@ -91,7 +91,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
       required: true
     },
     additionalConditionsFrequency: {
-      value: 'first',
+      value: 'once',
       required: true
     },
     // Action tab
@@ -139,8 +139,8 @@ RED.nodes.registerType('openhab-v2-trigger', {
       value: false,
       required: true
     },
-    timerExpiresAction: {
-      value: 'if_false_continue',
+    timerResetEveryTrigger: {
+      value: false,
       required: true
     },
     topicEnd: {
@@ -167,6 +167,18 @@ RED.nodes.registerType('openhab-v2-trigger', {
     // Misc tab
     ohTimestamp: {
       value: false,
+      required: true
+    },
+    storeState: {
+      value: false,
+      required: true
+    },
+    storeStateVariable: {
+      value: undefined,
+      required: false
+    },
+    storeStateVariableType: {
+      value: 'flow',
       required: true
     }
   },
@@ -369,7 +381,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
             setComparatorOptions(
               $('<select>')
                 .appendTo(elem)
-                .attr({ id: `additionalConditioncomparator-${rowIndex}`, style: 'flex: 0 0 100px; text-align: center; margin-right: 10px' }),
+                .attr({ id: `node-input-additionalConditionComparator-${rowIndex}`, style: 'flex: 0 0 100px; text-align: center; margin-right: 10px' }),
               type,
               comparator
             );
@@ -507,6 +519,17 @@ RED.nodes.registerType('openhab-v2-trigger', {
         type: node.payloadEndType,
         typeField: $('#node-input-payloadEndType')
       });
+
+      /**
+       * 'Misc' tab
+       */
+
+      $('#node-input-storeStateVariable').typedInput({
+        types: ['flow', 'global'],
+        value: node.storeStateVariable,
+        type: node.storeStateVariableType,
+        typeField: $('#node-input-storeStateVariableType')
+      });
     };
 
     const applyCustomStyling = () => {
@@ -578,8 +601,8 @@ RED.nodes.registerType('openhab-v2-trigger', {
           showSearch: false,
           selectedElement: node.additionalConditionsFrequency,
           data: [
-            { text: node._('openhab-v2.trigger.select.additionalConditionsFrequency.first', { defaultValue: 'First trigger only' }), value: 'first' },
-            { text: node._('openhab-v2.trigger.select.additionalConditionsFrequency.every', { defaultValue: 'Every trigger' }), value: 'every' }
+            { text: node._('openhab-v2.trigger.select.additionalConditionsFrequency.once', { defaultValue: 'First trigger only' }), value: 'once' },
+            { text: node._('openhab-v2.trigger.select.additionalConditionsFrequency.always', { defaultValue: 'Every trigger' }), value: 'always' }
           ]
         },
         'node-input-triggerStateItem': {
@@ -618,6 +641,11 @@ RED.nodes.registerType('openhab-v2-trigger', {
                   $('#timer-row0').show();
                   $('#timer-row1').hide();
                 }
+                if ($('#node-input-topicEndType').val() === 'nothing') {
+                  $('#endmessage-row2').hide();
+                } else {
+                  $('#endmessage-row2').show();
+                }
                 break;
               }
               case 'untrigger':
@@ -625,6 +653,11 @@ RED.nodes.registerType('openhab-v2-trigger', {
               default: {
                 $('div[id^=timer-row]').hide();
                 $('div[id^=endmessage-row]').show();
+                if ($('#node-input-topicEndType').val() === 'nothing') {
+                  $('#endmessage-row2').hide();
+                } else {
+                  $('#endmessage-row2').show();
+                }
                 break;
               }
             }
@@ -637,20 +670,6 @@ RED.nodes.registerType('openhab-v2-trigger', {
             { text: node._('openhab-v2.trigger.select.timerUnits.milliseconds', { defaultValue: 'milliseconds' }) },
             { text: node._('openhab-v2.trigger.select.timerUnits.seconds', { defaultValue: 'seconds' }) },
             { text: node._('openhab-v2.trigger.select.timerUnits.minutes', { defaultValue: 'minutes' }) }
-          ],
-          onChange: ({ value }) => {}
-        },
-        'node-input-timerExpiresAction': {
-          showSearch: false,
-          selectedElement: node.timerExpiresAction,
-          data: [
-            { text: node._('openhab-v2.trigger.select.timerExpiresAction.always_continue', { defaultValue: 'Continue' }), value: 'always_continue' },
-            {
-              text: node._('openhab-v2.trigger.select.timerExpiresAction.if_false_continue', {
-                defaultValue: 'Restart timer IF trigger condition is still true ELSE continue'
-              }),
-              value: 'if_false_continue'
-            }
           ],
           onChange: ({ value }) => {}
         },
@@ -730,7 +749,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
 
     // Hide payload fields if topic 'nothing' is selected
     $('input[type=text][id^=node-input-topic]').change(({ target: { id, value } }) => {
-      if (value !== '') {
+      if ($(`#${id}Type`).val() !== 'nothing') {
         switch (id) {
           case 'node-input-topic': {
             $('#message-row2').show();
@@ -754,6 +773,15 @@ RED.nodes.registerType('openhab-v2-trigger', {
             break;
           }
         }
+      }
+    });
+
+    // onChange handler: Enable/Disable variable input element
+    $('#node-input-storeState').change(({ target }) => {
+      if ($(target).is(':checked')) {
+        $('#state-variable-row').show();
+      } else {
+        $('#state-variable-row').hide();
       }
     });
 
@@ -799,7 +827,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
       $('#node-input-additionalConditions')
         .editableList('items')
         .each((index, elem) => {
-          const comparator = elem.children(`#node-input-additionalConditioncomparator-${index}`).val();
+          const comparator = elem.children(`#node-input-additionalConditionComparator-${index}`).val();
           const variableType = elem.children(`#node-input-additionalConditionVariableType-${index}`).val();
           const variableValue = elem.children(`#node-input-additionalConditionVariableValue-${index}`).val();
           const type = elem.children(`#node-input-additionalConditionType-${index}`).val();

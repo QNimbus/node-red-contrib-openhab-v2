@@ -78,14 +78,14 @@ RED.nodes.registerType('openhab-v2-out', {
     },
     payload: {
       value: 'payload',
-      required: true
+      required: false
     },
     payloadType: {
       value: 'msg', // OH_TYPED_INPUT.PAYLOAD.value,
       required: true
     },
     // Misc tab
-    storeState: {
+    allowItemOverride: {
       value: false,
       required: true
     }
@@ -182,7 +182,7 @@ RED.nodes.registerType('openhab-v2-out', {
       });
 
       $('#node-input-payload').typedInput({
-        types: ['msg', 'flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
+        types: ['msg', 'flow', 'global', 'str', 'num', 'bool', 'json', 'env', 'date', OH_TYPED_INPUT.PAYLOAD],
         value: node.payload,
         type: node.payloadType,
         typeField: $('#node-input-payloadType')

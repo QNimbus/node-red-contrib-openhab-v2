@@ -57,6 +57,45 @@ module.exports = function(RED) {
     // Load node configuration
     node.name = config.name;
     node.item = config.item;
+    node.allowItemOverride = config.allowItemOverride;
+
+    /**
+     * Node methods
+     */
+
+    node.getTopic = message => {
+      switch (config.topicType) {
+        case 'msg': {
+          return message[config.topic];
+        }
+        case 'str':
+        case 'ohCommandType':
+        default: {
+          return config.topic;
+        }
+      }
+    };
+
+    node.getPayload = message => {
+      switch (config.payloadType) {
+        case 'msg': {
+          return message[config.payload];
+        }
+        case 'date': {
+          return Date.now();
+        }
+        case 'flow':
+        case 'global':
+        case 'num':
+        case 'str':
+        case 'bool':
+        case 'env':
+        case 'json':
+        default: {
+          return RED.util.evaluateNodeProperty(config.payload, config.payloadType, this, message);
+        }
+      }
+    };
 
     /**
      * Node event handlers
@@ -69,22 +108,6 @@ module.exports = function(RED) {
       switch (event) {
         // If the controller just connected to the EventSource
         case STATES.EVENTSOURCE_STATE_TYPE.CONNECTED: {
-          // If we have an item configured
-          if (node.item) {
-            // Fetch current state of item
-            controller
-              .getItem(node.item)
-              .then(item => {
-                updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, item.state);
-              })
-              .catch(error => {
-                // Log error message
-                node.warn(error.message);
-
-                // Change node state
-                updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, error.message);
-              });
-          }
           break;
         }
         // Ignore other events
@@ -95,73 +118,30 @@ module.exports = function(RED) {
     };
 
     node.onInput = message => {
-      const topicType = config.topicType;
-      const payloadType = config.payloadType;
+      const item = message.item || node.item;
 
-      let topic = config.topic;
-      let payload = config.payload;
+      if (item) {
+        const topic = node.getTopic(message);
+        const payload = node.getPayload(message);
 
-      switch (topicType) {
-        case 'msg': {
-          topic = message[topic];
-          break;
-        }
-        case 'str':
-        case 'ohCommandType':
-        default: {
-          // Keep selected topic
-          break;
-        }
-      }
+        if (topic) {
+          if (payload) {
+            controller.sendItem(item, topic, payload).catch(({ response: { status, statusText } }) => {
+              node.error(`Error ${status}: ${statusText}`);
 
-      switch (payloadType) {
-        case 'msg': {
-          payload = message[payload];
-          break;
-        }
-        case 'flow':
-        case 'global': {
-          RED.util.evaluateNodeProperty(payload, payloadType, this, message, function(error, result) {
-            if (error) {
-              node.error(error, message);
-            } else {
-              payload = result;
-            }
-          });
-          break;
-        }
-        case 'date': {
-          payload = Date.now();
-          break;
-        }
-        case 'num':
-        case 'str':
-        default: {
-          // Keep selected payload
-          break;
-        }
-      }
-
-      if (node.item && topic) {
-        if (payload !== undefined) {
-          controller.sendItem(node.item, topic, payload).catch(error => {
-            node.error(error);
-          });
+              // TODO: Update node status in case of error
+            });
+          } else {
+            // TODO: Handle no payload case
+            // node.updateNodeStatus(STATE.NO_PAYLOAD);
+          }
         } else {
-          // node.updateNodeStatus(STATE.NO_PAYLOAD);
+          // TODO: Handle no topic case
+          // node.updateNodeStatus(STATE.NO_TOPIC);
         }
       } else {
-        // node.updateNodeStatus(STATE.NO_TOPIC);
-      }
-    };
-
-    node.onEvent = event => {
-      // Update node state
-      updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, event.state);
-
-      // Store state in current flow
-      if (node.storeState) {
-        node.flowContext.set(node.item, event.state);
+        // TODO: Handle no item case
+        // node.updateNodeStatus(STATE.NO_ITEM);
       }
     };
 
@@ -177,23 +157,8 @@ module.exports = function(RED) {
     node.on('input', node.onInput);
     node.debug("Attaching 'node' event listener 'input'");
 
-    // Listen for subscribed events for selected item
-    if (node.item) {
-      ['ItemStateChangedEvent', 'GroupItemStateChangedEvent'].forEach(eventType => {
-        controller.on(`${node.item}/${eventType}`, node.onEvent);
-        node.debug(`Attaching 'node' event listener '${node.item}/${eventType}'`);
-      });
-    }
-
     // Cleanup event listeners upon node removal
     node.on('close', () => {
-      if (node.item) {
-        ['ItemStateChangedEvent', 'GroupItemStateChangedEvent'].forEach(eventType => {
-          controller.removeListener(`${node.item}/${eventType}`, node.onEvent);
-          node.debug(`Removing 'node' event listener '${node.item}/${eventType}'`);
-        });
-      }
-
       node.removeListener('input', node.onInput);
       node.debug("Removing 'node' event listener 'input'");
 

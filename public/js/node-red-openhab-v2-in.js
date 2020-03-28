@@ -31,7 +31,6 @@ SOFTWARE.
 /* eslint-env browser,jquery */
 /* global RED,SlimSelect */
 /* global getItems */ // From node-red-openhab-v2-utilities.js
-/* global OH_TYPED_INPUT */ // From node-red-openhab-v2-typedinput.js
 
 RED.nodes.registerType('openhab-v2-in', {
   category: 'OpenHAB',
@@ -68,21 +67,29 @@ RED.nodes.registerType('openhab-v2-in', {
       value: undefined,
       required: true
     },
-    ohTimestamp: {
-      value: false,
-      required: true
-    },
     eventTypes: {
       value: [],
       required: true
     },
     // Misc tab
-    storeState: {
+    ohTimestamp: {
       value: false,
       required: true
     },
     initialOutput: {
       value: false,
+      required: true
+    },
+    storeState: {
+      value: false,
+      required: true
+    },
+    storeStateVariable: {
+      value: undefined,
+      required: false
+    },
+    storeStateVariableType: {
+      value: 'flow',
       required: true
     }
   },
@@ -167,21 +174,14 @@ RED.nodes.registerType('openhab-v2-in', {
       slimSelectElements.init();
 
       /**
-       * 'Input' tab
+       * 'Misc' tab
        */
 
-      $('#node-input-topic').typedInput({
-        types: ['str', OH_TYPED_INPUT.NOTHING_TYPE, OH_TYPED_INPUT.COMMAND_TYPE],
-        value: node.topic,
-        type: node.topicType,
-        typeField: $('#node-input-topicType')
-      });
-
-      $('#node-input-payload').typedInput({
-        types: ['flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
-        value: node.payload,
-        type: node.payloadType,
-        typeField: $('#node-input-payloadType')
+      $('#node-input-storeStateVariable').typedInput({
+        types: ['flow', 'global'],
+        value: node.storeStateVariable,
+        type: node.storeStateVariableType,
+        typeField: $('#node-input-storeStateVariableType')
       });
     };
 
@@ -268,6 +268,15 @@ RED.nodes.registerType('openhab-v2-in', {
           populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
         })
     );
+
+    // onChange handler: Enable/Disable variable input element
+    $('#node-input-storeState').change(({ target }) => {
+      if ($(target).is(':checked')) {
+        $('#state-variable-row').show();
+      } else {
+        $('#state-variable-row').hide();
+      }
+    });
 
     /**
      * Main
