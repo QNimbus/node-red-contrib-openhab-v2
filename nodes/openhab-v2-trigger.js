@@ -127,7 +127,6 @@ module.exports = function(RED) {
 
     // Node context variables
     node.set('triggered', false);
-    node.set('armed', config.triggerState === 'armed');
 
     /**
      * Node methods
@@ -222,6 +221,9 @@ module.exports = function(RED) {
         config.cancelTimerWhenDisarmed && node.removeTimer();
       }
       node.set('armed', armed);
+
+      // Update node status to reflect state
+      armed ? node.status({ fill: 'blue', shape: 'ring', text: 'armed' }) : node.status({ fill: 'grey', shape: 'ring', text: 'disarmed' });
     };
 
     node.startTimer = (cb, timeout) => {
@@ -244,9 +246,6 @@ module.exports = function(RED) {
      */
 
     node.onControllerEvent = (event, message) => {
-      // Always update node state
-      updateNodeStatus(node, STATES.EVENTSOURCE_STATE, event, message);
-
       switch (event) {
         // If the controller just connected to the EventSource
         case STATES.EVENTSOURCE_STATE_TYPE.CONNECTED: {
@@ -256,7 +255,7 @@ module.exports = function(RED) {
             controller
               .getItem(node.armedItem)
               .then(({ state }) => {
-                node.armTrigger({ item: node.armedItem, state });
+                node.armTrigger({ state });
               })
               .catch(error => {
                 // Log error message
@@ -265,6 +264,8 @@ module.exports = function(RED) {
                 // Change node state
                 updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, error.message);
               });
+          } else {
+            node.armTrigger({ state: config.triggerState === 'armed' });
           }
           break;
         }
@@ -302,6 +303,9 @@ module.exports = function(RED) {
 
           // Set trigger state
           node.set('triggered', hasTriggered);
+
+          // Update node status to reflect state
+          hasTriggered && node.status({ fill: 'blue', shape: 'dot', text: 'triggered' });
         };
 
         const afterTriggerAction = {
@@ -312,6 +316,9 @@ module.exports = function(RED) {
 
             // Reset trigger state
             node.set('triggered', false);
+
+            // Update node status to reflect state
+            node.get('armed') ? node.status({ fill: 'blue', shape: 'ring', text: 'armed' }) : node.status({ fill: 'grey', shape: 'ring', text: 'disarmed' });
           },
           sendMessage: () => {
             const topic = node.getTopic(config.topicEnd, config.topicEndType, {});
@@ -368,8 +375,8 @@ module.exports = function(RED) {
 
     // Listen for incomming messages to arm/disarm trigger
     config.inputArmDisarm &&
-      node.on('input', message => {
-        console.log(message);
+      node.on('input', ({ payload }) => {
+        node.armTrigger(payload);
       });
 
     /**
