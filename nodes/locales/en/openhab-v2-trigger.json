@@ -14,6 +14,7 @@
         "triggerConditions": "Trigger conditions",
         "triggerAdditionalConditions": "Additional conditions",
         "triggerAction": "When triggered send ...",
+        "timerResetEveryTrigger": "When timer expires...",
         "afterTrigger": "Then ...",
         "timerExpiresAfter": "Then send ...",
         "finally": "Finally ..."
@@ -39,6 +40,10 @@
           "seconds": "seconds",
           "minutes": "minutes"
         },
+        "timerResetEveryTrigger": {
+          "yes": "Keep resetting until trigger condition is false",
+          "no": "Continue"
+        },
         "armDisarm": {
           "do_not_change": "Do not change trigger state",
           "arm": "Arm trigger",
@@ -56,6 +61,7 @@
         "payload": "Payload",
         "timerLabel": "Time for",
         "millisecondsLabel": "milliseconds",
+        "timerResetEveryTrigger": "Timer reset",
         "inputArmDisarm": "Enable additional node input to arm/disarm trigger",
         "inputArmDisarmLabel": "Input",
         "advancedTimerToggle": "Advanced timer setting",

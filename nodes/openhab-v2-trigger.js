@@ -63,6 +63,7 @@ module.exports = function(RED) {
     node.additionalConditions = config.additionalConditions.conditions;
     node.additionalConditionsLogic = config.additionalConditions.logic === 'AND' ? 'AND' : 'OR';
     node.additionalConditionsFrequency = config.additionalConditionsFrequency;
+    node.timerResetEveryTrigger = config.timerResetEveryTrigger === 'yes';
     node.eventTypes = ['ItemStateChangedEvent', 'GroupItemStateChangedEvent'];
     node.armedItem = config.triggerState === 'item' ? config.triggerStateItem : undefined;
     node.get = node.context().get.bind(node);
@@ -201,8 +202,8 @@ module.exports = function(RED) {
       });
     };
 
-    node.armTrigger = ({ state }) => {
-      const armed = ['ON', 'OPEN', true].includes(state);
+    node.armTrigger = ({ state, payload, payload: { state: payloadState } = {} }) => {
+      const armed = !['OFF', 'CLOSED', '0', 'NULL', 'UNDEF', false].includes(state || payload || payloadState || false);
       const changed = armed !== node.get('armed');
 
       // If armed state has not changed, return immediately
@@ -340,7 +341,7 @@ module.exports = function(RED) {
               // Clear timer object
               node.removeTimer();
 
-              if (node.get('triggered') && node.get('armed') && config.timerResetEveryTrigger) {
+              if (node.get('triggered') && node.get('armed') && node.timerResetEveryTrigger) {
                 node.startTimer(timerFunction, node.getTimerValue());
               } else {
                 afterTriggerAction.sendMessage();
@@ -352,7 +353,7 @@ module.exports = function(RED) {
 
             // Perform action with delay
             if (hasTriggered) {
-              if (!node.timerObject || config.timerResetEveryTrigger) {
+              if (!node.timerObject || node.timerResetEveryTrigger) {
                 node.startTimer(timerFunction, node.getTimerValue());
               }
             }
@@ -388,8 +389,8 @@ module.exports = function(RED) {
 
     // Listen for incomming messages to arm/disarm trigger
     config.inputArmDisarm &&
-      node.on('input', ({ payload }) => {
-        node.armTrigger(payload);
+      node.on('input', message => {
+        node.armTrigger(message);
       });
 
     /**

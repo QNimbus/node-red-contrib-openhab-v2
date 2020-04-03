@@ -248,37 +248,27 @@
             </div>
           </div>
           <div class="form-row" id="timer-row3">
-            <label for="node-input-timerResetEveryTrigger"
-              ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.timerResetEveryTriggerLabel">Reset</span></label
-            >
-            <div class="second-column">
-              <input type="checkbox" id="node-input-timerResetEveryTrigger" /><span data-i18n="openhab-v2.trigger.labels.timerResetEveryTrigger"
-                >Restart active timer when re-triggered</span
-              >
-            </div>
+            <label></label>
+            <strong><span data-i18n="openhab-v2.trigger.headings.timerResetEveryTrigger">When timer expires...</span></strong>
           </div>
           <div class="form-row" id="timer-row4">
-            <label for="node-input-cancelTimerWhenDisarmed"
-              ><i class="fa fa-edit"></i> <span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmedLabel">Cancel</span></label
-            >
+            <label for="node-input-timerResetEveryTrigger"><i class="fa fa-undo" aria-hidden="true"></i> <span data-i18n="openhab-v2.trigger.labels.timerResetEveryTrigger">Timer reset</span></label>
             <div class="second-column">
-              <input type="checkbox" id="node-input-cancelTimerWhenDisarmed" /><span data-i18n="openhab-v2.trigger.labels.cancelTimerWhenDisarmed"
-                >When trigger is disarmed, cancel active timer</span
-              >
+              <select id="node-input-timerResetEveryTrigger" name="node-input-timerResetEveryTrigger"></select>
             </div>
           </div>
-          <div class="form-row" id="endmessage-row0">
+          <div class="form-row" id="endmessage-row1">
             <label></label>
             <strong><span data-i18n="openhab-v2.trigger.headings.timerExpiresAfter">Then send ...</span></strong>
           </div>
-          <div class="form-row" id="endmessage-row1">
+          <div class="form-row" id="endmessage-row2">
             <label for="node-input-topicEnd"><i class="fa fa-tasks"></i> <span data-i18n="openhab-v2.trigger.labels.topic">Topic</span></label>
             <div class="second-column">
               <input type="text" id="node-input-topicEnd" style="width: 100%" />
               <input type="hidden" id="node-input-topicEndType" />
             </div>
           </div>
-          <div class="form-row" id="endmessage-row2">
+          <div class="form-row" id="endmessage-row3">
             <label for="node-input-payloadEnd"><i class="fa fa-envelope"></i> <span data-i18n="openhab-v2.trigger.labels.payload">Payload</span></label>
             <div class="second-column">
               <input type="text" id="node-input-payloadEnd" style="width:100%" />

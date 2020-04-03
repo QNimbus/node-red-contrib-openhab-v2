@@ -48,7 +48,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
     return this.name || this.item ? 'node_label_italic' : '';
   },
   // Inputs & outputs
-  inputs: this.inputArmDisarm ? 1 : 0,
+  inputs: 0,
   outputs: 1,
   inputLabels: ['Input'],
   outputLabels: ['Trigger'],
@@ -140,7 +140,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
       required: true
     },
     timerResetEveryTrigger: {
-      value: false,
+      value: 'no',
       required: true
     },
     topicEnd: {
@@ -674,6 +674,18 @@ RED.nodes.registerType('openhab-v2-trigger', {
             { text: node._('openhab-v2.trigger.select.timerUnits.milliseconds', { defaultValue: 'milliseconds' }) },
             { text: node._('openhab-v2.trigger.select.timerUnits.seconds', { defaultValue: 'seconds' }) },
             { text: node._('openhab-v2.trigger.select.timerUnits.minutes', { defaultValue: 'minutes' }) }
+          ],
+          onChange: ({ value }) => {}
+        },
+        'node-input-timerResetEveryTrigger': {
+          showSearch: false,
+          selectedElement: node.timerResetEveryTrigger,
+          data: [
+            {
+              text: node._('openhab-v2.trigger.select.timerResetEveryTrigger.yes', { defaultValue: 'Keep resetting until trigger condition is false' }),
+              value: 'yes'
+            },
+            { text: node._('openhab-v2.trigger.select.timerResetEveryTrigger.no', { defaultValue: 'Continue' }), value: 'no' }
           ],
           onChange: ({ value }) => {}
         },

@@ -164,7 +164,7 @@ module.exports = function(RED) {
     }
 
     // Cleanup event listeners upon node removal
-    node.on('close', done => {
+    node.on('close', () => {
       controller.removeListener(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
       node.debug(`Removing 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
@@ -177,7 +177,6 @@ module.exports = function(RED) {
         });
       }
       node.debug('Closing node');
-      done();
     });
 
     /**
