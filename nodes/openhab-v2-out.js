@@ -158,7 +158,7 @@ module.exports = function(RED) {
     node.debug("Attaching 'node' event listener 'input'");
 
     // Cleanup event listeners upon node removal
-    node.on('close', done => {
+    node.on('close', () => {
       node.removeListener('input', node.onInput);
       node.debug("Removing 'node' event listener 'input'");
 
@@ -166,7 +166,6 @@ module.exports = function(RED) {
       node.debug(`Removing 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
       node.debug('Closing node');
-      done();
     });
 
     /**
