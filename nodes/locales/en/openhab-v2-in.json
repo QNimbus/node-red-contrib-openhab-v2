@@ -10,7 +10,7 @@
       "labels": {
         "name": "Name",
         "controller": "openHAB",
-        "item": "Item",
+        "items": "Items",
         "ohTimestamp": "use openHAB format",
         "ohTimestampLabel": "Timestamp",
         "eventTypes": "Event types",

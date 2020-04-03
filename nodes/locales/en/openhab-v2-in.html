@@ -37,8 +37,8 @@
   </dl>
   <dl class="message-properties">
     <strong style="margin: 5px">Input</strong>
-    <dt>Item<span class="property-type">string</span></dt>
-    <dd>openHAB item to monitor.</dd>
+    <dt>Items<span class="property-type">string []</span></dt>
+    <dd>openHAB items to monitor.</dd>
     <dt class="optional">Event types<span class="property-type">string []</span></dt>
     <dd>openHAB events to watch.</dd>
   </dl>
@@ -48,8 +48,8 @@
     <dd>output openHAB compatible timestamp instead of Unix timestamp.</dd>
     <dt>Initial output<span class="property-type">boolean</span></dt>
     <dd>send message for intial item state.</dd>
-    <dt>Store state<span class="property-type">boolean</span></dt>
-    <dd>store item state in <i>flow</i> or <i>global</i> context.</dd>
+    <dt>Store states<span class="property-type">boolean</span></dt>
+    <dd>store item states in <i>flow</i> or <i>global</i> context.</dd>
   </dl>
   <h3>Outputs</h3>
   <ol class="node-ports">
@@ -63,8 +63,7 @@
   </ol>
   <h3>Details</h3>
   <p>
-    The <code>openhab-v2-in</code> node listens for certain events for a specific item. The node state reflects the initial state or the updated state after
-    an event was received. It subsequently sends a message with the event type, item name, new item state and a timestamp.
+    The <code>openhab-v2-in</code> node listens for certain events for specific items. It subsequently sends a message with the event type, item name, new item state and a timestamp.
   </p>
   <h3>References</h3>
   <ul>

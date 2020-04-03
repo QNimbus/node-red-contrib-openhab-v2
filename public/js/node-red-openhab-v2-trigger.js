@@ -416,13 +416,17 @@ RED.nodes.registerType('openhab-v2-trigger', {
 
         // Construct itemList array for use with SlimSelect
         for (let i = 0; i < itemList.length; i++) {
-          items.push({ text: itemList[i].name, value: itemList[i].name });
+          if (itemList[i].type === 'Group') {
+            items.push({ text: `<strong>${itemList[i].name}</strong>`, value: itemList[i].name });
+          } else {
+            items.push({ text: itemList[i].name, value: itemList[i].name });
+          }
         }
 
         // Sort SlimSelect options alphabetically and case-insensitive
         items.sort((a, b) => {
-          a = a.text.toLowerCase();
-          b = b.text.toLowerCase();
+          a = a.value.toLowerCase();
+          b = b.value.toLowerCase();
 
           if (a < b) return -1;
           else if (a > b) return 1;

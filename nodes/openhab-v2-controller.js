@@ -81,6 +81,9 @@ module.exports = function(RED) {
     const node = this;
     RED.nodes.createNode(node, config);
 
+    // Workaround for issue #3 (https://github.com/QNimbus/node-red-contrib-openhab-v2/issues/3)
+    node.setMaxListeners(100);
+
     // timeoutID for reconnection of EventSource
     node.retryTimer = undefined;
 
@@ -140,7 +143,8 @@ module.exports = function(RED) {
 
         // Topic e.g. 'smarthome/items/My_Light_Switch/state'
         // This grabs the string between the first 16 characters and the last '/' which is the item name
-        const item = parsedMessage.topic.slice(16, parsedMessage.topic.lastIndexOf('/'));
+        // In case of a GroupItemStateChangedEvent the item will have multiple segments e.g. GroupItemName/MemberItemName
+        const [item] = parsedMessage.topic.slice(16, parsedMessage.topic.lastIndexOf('/')).split('/');
         const type = parsedMessage.type;
         const state = parsedMessage.payload.value;
         const payload = parsedMessage.payload;

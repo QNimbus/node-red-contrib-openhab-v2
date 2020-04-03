@@ -31,6 +31,12 @@ SOFTWARE.
 /* eslint-disable no-unused-vars */
 /* eslint-env browser,jquery */
 
+String.prototype.trunc =
+  String.prototype.trunc ||
+  function(n) {
+    return this.length > n ? this.substr(0, n - 1) + '&hellip;' : this;
+  };
+
 const getItems = controller => {
   if (controller) {
     return $.getJSON('openhab2/items', {
