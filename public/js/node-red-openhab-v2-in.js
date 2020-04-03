@@ -63,8 +63,8 @@ RED.nodes.registerType('openhab-v2-in', {
       required: true
     },
     // Input tab
-    item: {
-      value: undefined,
+    items: {
+      value: [],
       required: true
     },
     eventTypes: {
@@ -133,13 +133,20 @@ RED.nodes.registerType('openhab-v2-in', {
 
       // Construct itemList array for use with SlimSelect
       for (let i = 0; i < itemList.length; i++) {
-        items.push({ text: itemList[i].name, value: itemList[i].name });
+        const text = itemList[i].name;
+        const value = text;
+
+        if (itemList[i].type === 'Group') {
+          items.push({ text: `<strong>${text}</strong>`, value });
+        } else {
+          items.push({ text, value });
+        }
       }
 
       // Sort SlimSelect options alphabetically and case-insensitive
       items.sort((a, b) => {
-        a = a.text.toLowerCase();
-        b = b.text.toLowerCase();
+        a = a.value.toLowerCase();
+        b = b.value.toLowerCase();
 
         if (a < b) return -1;
         else if (a > b) return 1;
@@ -210,7 +217,7 @@ RED.nodes.registerType('openhab-v2-in', {
 
     const slimSelectElements = {
       options: {
-        'node-input-item': {
+        'node-input-items': {
           placeholder: node._('openhab-v2.in.labels.placeholderLoading', { defaultValue: 'Loading...' }),
           searchText: node._('openhab-v2.in.labels.searchNoResults', { defaultValue: 'No results' }),
           searchPlaceholder: node._('openhab-v2.in.labels.searchPlaceholder', { defaultValue: 'Search' }),
@@ -218,6 +225,14 @@ RED.nodes.registerType('openhab-v2-in', {
           allowDeselect: false,
           allowDeselectOption: false,
           showOptionTooltips: true
+          // // The onChange function can be used to truncate long item names if required
+          // onChange: function(info) {
+          //   $('#node-input-items ~ .ss-main .ss-value-text').each((index, value) => {
+          //     const elem = $(value);
+          //     const trucatedText = elem.html().trunc(10);
+          //     elem.html(trucatedText);
+          //   });
+          // }
         },
         'node-input-eventTypes': {
           deselectLabel: '<span>&#10006;</span>',
@@ -265,7 +280,7 @@ RED.nodes.registerType('openhab-v2-in', {
         getItems(controller).then(itemList => {
           const allItems = itemList;
 
-          populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
+          populateItemList(slimSelectElements.get('node-input-items'), allItems, node.items);
         })
     );
 
@@ -299,7 +314,8 @@ RED.nodes.registerType('openhab-v2-in', {
 
     // Using SlimSelect and submitting no selected option results in 'null' value instead of undefined
     // This is a workaround to prevent NodeRED from not storing an undefined value
-    node.item = $('node-input-item').val() !== null ? $('node-input-item').val() : undefined;
+    // node.item = $('node-input-item').val() !== null ? $('node-input-item').val() : undefined;
+    node.items = $('#node-input-item').val();
   },
   oneditcancel: function() {},
   oneditdelete: function() {},

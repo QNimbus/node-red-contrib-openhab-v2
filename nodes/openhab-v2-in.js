@@ -56,7 +56,7 @@ module.exports = function(RED) {
 
     // Load node configuration
     node.name = config.name;
-    node.item = config.item;
+    node.items = config.items;
     node.eventTypes = config.eventTypes;
     node.initialOutput = config.initialOutput;
     node.get = node.context().get.bind(node);
@@ -65,13 +65,17 @@ module.exports = function(RED) {
     node.global = node.context().global;
 
     // setState and getState methods for storing state values in node, flow and/or global context
-    node.getState = () => node.get('itemState');
-    node.setState = state => {
+    node.getState = () => node.get('states');
+    node.setState = ({ item, state }) => {
       const context = node.context()[config.storeStateVariableType];
+      const currentState = node.getState();
 
-      node.set('itemState', state);
+      // Write state to node variable
+      node.set('states', { ...currentState, [item]: state });
+
+      // Optionally write state to flow/global variable
       if (config.storeState && config.storeStateVariable && context) {
-        context.set(config.storeStateVariable, state);
+        context.set(config.storeStateVariable, { ...currentState, [item]: state });
       }
     };
 
@@ -97,24 +101,26 @@ module.exports = function(RED) {
         // If the controller just connected to the EventSource
         case STATES.EVENTSOURCE_STATE_TYPE.CONNECTED: {
           // If we have an item configured
-          if (node.item) {
+          if (node.items) {
             // Fetch current state of item
-            controller
-              .getItem(node.item)
-              .then(({ state }) => {
-                node.setState(state);
-                if (node.initialOutput) {
-                  // Output initial state message
-                  node.onEvent({ item: node.item, state });
-                }
-              })
-              .catch(error => {
-                // Log error message
-                node.warn(error.message);
+            node.items.forEach(item => {
+              controller
+                .getItem(item)
+                .then(({ state }) => {
+                  node.setState({ item, state });
+                  if (node.initialOutput) {
+                    // Output initial state message
+                    node.onEvent({ item, state });
+                  }
+                })
+                .catch(error => {
+                  // Log error message
+                  node.warn(error.message);
 
-                // Change node state
-                updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, error.message);
-              });
+                  // Change node state
+                  updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, error.message);
+                });
+            });
           }
           break;
         }
@@ -126,9 +132,9 @@ module.exports = function(RED) {
     };
 
     node.onEvent = event => {
-      const { payload, state, ...inMessage } = event;
+      const { payload, state, item, ...inMessage } = event;
       const timestamp = node.getCurrentTimestamp();
-      const message = { payload: { ...inMessage, state, timestamp } };
+      const message = { payload: { state, item, timestamp, ...inMessage } };
 
       // Send node message
       node.send([message]);
@@ -136,7 +142,7 @@ module.exports = function(RED) {
       // // Update node state
       // updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, state);
 
-      node.setState(state);
+      node.setState({ item, state });
     };
 
     /**
@@ -147,27 +153,31 @@ module.exports = function(RED) {
     controller.on(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
     node.debug(`Attaching 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
-    // Listen for subscribed events for selected item
-    if (node.item) {
-      node.eventTypes.forEach(eventType => {
-        controller.on(`${node.item}/${eventType}`, node.onEvent);
-        node.debug(`Attaching 'node' event listener '${node.item}/${eventType}'`);
+    // Listen for subscribed events for selected items
+    if (node.items) {
+      node.items.forEach(item => {
+        node.eventTypes.forEach(eventType => {
+          controller.on(`${item}/${eventType}`, node.onEvent);
+          node.debug(`Attaching 'node' event listener '${item}/${eventType}'`);
+        });
       });
     }
 
     // Cleanup event listeners upon node removal
-    node.on('close', () => {
+    node.on('close', done => {
       controller.removeListener(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
       node.debug(`Removing 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
-      if (node.item) {
-        node.eventTypes.forEach(eventType => {
-          controller.removeListener(`${node.item}/${eventType}`, node.onEvent);
-          node.debug(`Removing 'node' event listener '${node.item}/${eventType}'`);
+      if (node.items) {
+        node.items.forEach(item => {
+          node.eventTypes.forEach(eventType => {
+            controller.removeListener(`${item}/${eventType}`, node.onEvent);
+            node.debug(`Removing 'node' event listener '${item}/${eventType}'`);
+          });
         });
       }
-
       node.debug('Closing node');
+      done();
     });
 
     /**

@@ -277,6 +277,7 @@ module.exports = function(RED) {
     };
 
     node.onEvent = event => {
+      let hasTriggered = false;
       const { state, payload, ...message } = event;
       const triggerInitialState = node.get('triggered');
 
@@ -284,10 +285,10 @@ module.exports = function(RED) {
       if (node.get('armed')) {
         const triggerAction = () => {
           // Test if event state satisfies the configured trigger conditions
-          const hasTriggered = node.triggerConditionsPassed(state) && node.additionalConditionsPassed();
+          hasTriggered = node.triggerConditionsPassed(state) && node.additionalConditionsPassed();
 
           // If trigger conditions are met and trigger has not yet been triggered
-          if (hasTriggered && hasTriggered !== triggerInitialState) {
+          if (hasTriggered && !node.timerObject && hasTriggered !== triggerInitialState) {
             const timestamp = node.getCurrentTimestamp();
             const msgTopic = node.getTopic(config.topic, config.topicType, event);
             const msgPayload = node.getPayload(config.payload, config.payloadType, event);
@@ -330,24 +331,34 @@ module.exports = function(RED) {
           },
           nothing: () => {
             // Perform final actions
-            afterTriggerAction.finally();
+            if (hasTriggered) {
+              afterTriggerAction.finally();
+            }
           },
           timer: () => {
-            // Perform action with delay
-            if (!node.timerObject || config.timerResetEveryTrigger) {
-              node.startTimer(() => {
+            const timerFunction = function() {
+              // Clear timer object
+              node.removeTimer();
+
+              if (node.get('triggered') && node.get('armed') && config.timerResetEveryTrigger) {
+                node.startTimer(timerFunction, node.getTimerValue());
+              } else {
                 afterTriggerAction.sendMessage();
 
                 // Perform final actions
                 afterTriggerAction.finally();
+              }
+            };
 
-                // Clear timer object
-                node.removeTimer();
-              }, node.getTimerValue());
+            // Perform action with delay
+            if (hasTriggered) {
+              if (!node.timerObject || config.timerResetEveryTrigger) {
+                node.startTimer(timerFunction, node.getTimerValue());
+              }
             }
           },
           untrigger: () => {
-            if (triggerInitialState && !node.get('triggered')) {
+            if (triggerInitialState && !hasTriggered) {
               afterTriggerAction.sendMessage();
 
               // Perform final actions
@@ -356,10 +367,12 @@ module.exports = function(RED) {
           },
           nodelay: () => {
             // Perform action without delay
-            node.startTimer(() => afterTriggerAction.sendMessage(), 0);
+            if (hasTriggered) {
+              node.startTimer(() => afterTriggerAction.sendMessage(), 0);
 
-            // Perform final actions
-            afterTriggerAction.finally();
+              // Perform final actions
+              afterTriggerAction.finally();
+            }
           }
         };
 
@@ -404,7 +417,7 @@ module.exports = function(RED) {
     }
 
     // Cleanup event listeners upon node removal
-    node.on('close', () => {
+    node.on('close', done => {
       controller.removeListener(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
       node.debug(`Removing 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
@@ -421,7 +434,12 @@ module.exports = function(RED) {
           node.debug(`Removing 'node' event listener '${node.item}/${eventType}'`);
         });
       }
+
+      // Remove an existing timer
+      node.removeTimer();
+
       node.debug('Closing node');
+      done();
     });
 
     /**
