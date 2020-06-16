@@ -3,3 +3,8 @@ node_modules
 
 # Yarn
 yarn-error.log
+
+# NodeRED files
+settings.js
+.config.json*
+*flows.json*

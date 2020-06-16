@@ -1,0 +1,154 @@
+<!--
+    OpenHAB nodes for IBM's Node-Red
+    https://github.com/QNimbus/node-red-contrib-openhab2
+    (c) 2020, Bas van Wetten <bas.van.wetten@gmail.com>
+        
+    MIT License
+
+    Copyright (c) 2020 B. van Wetten
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+-->
+
+<!--*************
+* Custom styles *
+**************-->
+
+<style type="text/css">
+  /* Override default input placeholder and ss-disabled style from slimselect.css to ensure all placeholders look the same */
+  .ss-disabled,
+  input::placeholder {
+    color: #a9a9a9 !important;
+  }
+</style>
+
+<!--***************
+* Node definition *
+****************-->
+
+<script type="text/javascript">
+  $.getScript('openhab2/public/js/node-red-openhab-v2-get.js');
+</script>
+
+<!--******************
+* Node edit template *
+*******************-->
+
+<script type="text/html" data-template-name="openhab-v2-get">
+  <link rel="stylesheet" type="text/css" href="openhab2/public/css/vendor/slimselect.min.css" />
+  <style>
+    .red-ui-editor #openhab-v2-get .form-row .red-ui-tabs {
+      margin-top: 25px;
+      width: 100%;
+    }
+    .red-ui-editor #openhab-v2-get #node-openhab-v2-get-tabs-content {
+      position: relative;
+      top: -12px;
+    }
+
+    .red-ui-editor #openhab-v2-get .form-row {
+      display: flex;
+    }
+
+    .red-ui-editor #openhab-v2-get .form-row:has(> div) {
+      margin: 0;
+    }
+
+    .red-ui-editor #openhab-v2-get .form-row > div:only-child,
+    .red-ui-editor #openhab-v2-get .form-row label + div.second-column > *:only-child {
+      width: 100% !important;
+    }
+
+    .red-ui-editor #openhab-v2-get .form-row label {
+      flex: 0 0 100px;
+      align-self: center;
+      width: unset;
+    }
+
+    .red-ui-editor #openhab-v2-get .form-row label + div.second-column {
+      flex: 1 1 auto;
+      margin: 0 5% 0 0;
+    }
+
+    .red-ui-editor #openhab-v2-get .form-row label + div.second-column input[type='checkbox'] {
+      vertical-align: top;
+      margin-right: 5px;
+      width: unset;
+    }
+
+    .red-ui-editor #openhab-v2-get .form-row label + div.second-column.align-right {
+      margin: 0 0 0 5%;
+    }
+  </style>
+  <div id="openhab-v2-get">
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="openhab-v2.get.labels.name">Name</span></label>
+      <div class="second-column">
+        <input type="text" id="node-input-name" placeholder="Name" />
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="node-input-controller"><i class="fa fa-globe"></i> <span data-i18n="openhab-v2.get.labels.controller">openHAB</span></label>
+      <div class="second-column">
+        <select id="node-input-controller"></select>
+      </div>
+    </div>
+
+    <!-- Tabs container -->
+
+    <div class="form-row">
+      <ul style="min-width: 600px; margin-bottom: 20px;" id="node-openhab-v2-get-tabs"></ul>
+    </div>
+
+    <!-- Tabs -->
+
+    <div id="node-openhab-v2-get-tabs-content" style="min-height: 170px;">
+      <!-- Tab:Get -->
+      <div id="node-openhab-v2-get-tabs-get" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-item"><i class="fa fa-crosshairs"></i> <span data-i18n="openhab-v2.get.labels.item">Item</span></label>
+            <div class="second-column">
+              <select id="node-input-item" name="node-input-item"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tab:Misc -->
+      <div id="node-openhab-v2-get-tabs-misc" style="display:none">
+        <div style="padding: 20px; border-left: 1px solid #bbb; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb">
+          <div class="form-row">
+            <label for="node-input-ohTimestamp"
+              ><i class="fa fa-clock-o"></i> <span data-i18n="openhab-v2.get.labels.ohTimestampLabel">Timestamp</span></label>
+            <div class="second-column">
+              <input type="checkbox" id="node-input-ohTimestamp" />
+              <span data-i18n="openhab-v2.get.labels.ohTimestamp">use openHAB format</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>
+
+<!--***************
+* Node help texts *
+****************-->
+
+<!-- See locales\ folder for localized help texts -->

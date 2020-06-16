@@ -1,0 +1,30 @@
+{
+  "openhab-v2": {
+    "get": {
+      "tabs": {
+        "getTab": "Get",
+        "miscTab": "Misc"
+      },
+      "headings": {},
+      "select": {},
+      "labels": {
+        "name": "Name",
+        "controller": "openHAB",
+        "items": "Items",
+        "ohTimestamp": "use openHAB format",
+        "ohTimestampLabel": "Timestamp",
+        "eventTypes": "Event types",
+        "initialOutput": "Output state message when node starts",
+        "initialOutputLabel": "Output",
+        "storeState": "Store item state in variable",
+        "storeStateLabel": "Store",
+        "storeStateVariableLabel": "Variable",
+        "placeholderLoading": "Loading...",
+        "placeholderSelectItem": "Select item",
+        "placeholderEmptyList": "No items found",
+        "searchNoResults": "No results",
+        "searchPlaceholder": "Search"
+      }
+    }
+  }
+}
