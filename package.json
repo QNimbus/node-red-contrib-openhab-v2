@@ -32,6 +32,7 @@
       "openhab-v2-controller": "nodes/openhab-v2-controller.js",
       "openhab-v2-in": "nodes/openhab-v2-in.js",
       "openhab-v2-out": "nodes/openhab-v2-out.js",
+      "openhab-v2-get": "nodes/openhab-v2-get.js",
       "openhab-v2-trigger": "nodes/openhab-v2-trigger.js"
     }
   },

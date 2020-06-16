@@ -80,7 +80,7 @@ describe('OpenHAB Controller Node', function() {
 
   beforeEach(function() {
     nock(scope)
-      .get('/evets')
+      .get('/events')
       .reply(200);
   });
 
