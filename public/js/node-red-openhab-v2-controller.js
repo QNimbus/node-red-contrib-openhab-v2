@@ -76,7 +76,20 @@ RED.nodes.registerType('openhab-v2-controller', {
     }
   },
   // Dialog events
-  oneditprepare: function() {},
+  oneditprepare: function() {
+    /**
+     * Events
+     */
+
+    // onChange handler: When controller protocol selection changes (http/https)
+    $('#node-config-input-protocol').change(({ target: { value: protocol } }) => {
+      if (protocol === 'https') {
+        $('#node-openhab-v2-controller-ignoreInvalidCertificate').show();
+      } else {
+        $('#node-openhab-v2-controller-ignoreInvalidCertificate').hide();
+      }
+    });
+  },
   oneditsave: function() {},
   oneditcancel: function() {},
   oneditdelete: function() {},
