@@ -31,7 +31,6 @@ SOFTWARE.
 /* eslint-env browser,jquery */
 /* global RED,SlimSelect */
 /* global getItems */ // From node-red-openhab-v2-utilities.js
-/* global OH_TYPED_INPUT */ // From node-red-openhab-v2-typedinput.js
 
 RED.nodes.registerType('openhab-v2-get', {
   category: 'OpenHAB',
@@ -64,8 +63,8 @@ RED.nodes.registerType('openhab-v2-get', {
       required: true
     },
     // Get tab
-    item: {
-      value: undefined,
+    items: {
+      value: [],
       required: true
     },
     // Misc tab
@@ -73,6 +72,10 @@ RED.nodes.registerType('openhab-v2-get', {
       value: false,
       required: true
     },
+    getGroupMembers: {
+      value: false,
+      required: true
+    }
   },
   // Dialog events
   oneditprepare: function() {
@@ -187,7 +190,7 @@ RED.nodes.registerType('openhab-v2-get', {
 
     const slimSelectElements = {
       options: {
-        'node-input-item': {
+        'node-input-items': {
           placeholder: node._('openhab-v2.get.labels.placeholderLoading', { defaultValue: 'Loading...' }),
           searchText: node._('openhab-v2.get.labels.searchNoResults', { defaultValue: 'No results' }),
           searchPlaceholder: node._('openhab-v2.get.labels.searchPlaceholder', { defaultValue: 'Search' }),
@@ -230,7 +233,7 @@ RED.nodes.registerType('openhab-v2-get', {
         getItems(controller).then(itemList => {
           const allItems = itemList;
 
-          populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
+          populateItemList(slimSelectElements.get('node-input-items'), allItems, node.items);
         })
     );
 
@@ -255,7 +258,7 @@ RED.nodes.registerType('openhab-v2-get', {
 
     // Using SlimSelect and submitting no selected option results in 'null' value instead of undefined
     // This is a workaround to prevent NodeRED from not storing an undefined value
-    node.item = $('node-input-item').val() !== null ? $('node-input-item').val() : undefined;
+    node.items = $('#node-input-items').val();
   },
   oneditcancel: function() {},
   oneditdelete: function() {},

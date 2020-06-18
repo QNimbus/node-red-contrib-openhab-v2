@@ -56,7 +56,8 @@ module.exports = function(RED) {
 
     // Load node configuration
     node.name = config.name;
-    node.item = config.item;
+    node.items = config.items;
+    node.getGroupMembers = config.getGroupMembers;
     node.allowItemOverride = config.allowItemOverride;
 
     // Node constants
@@ -124,28 +125,70 @@ module.exports = function(RED) {
     };
 
     node.onInput = message => {
-      const item = message.item || node.item;
+      const payload = message.payload;
+      let items = payload.items || payload.item || node.items;
+      let clonedMessage = RED.util.cloneMessage(message);
 
-      if (item) {
-        controller
-        .getItem(item)
-        .then(( _state ) => {
-          state = _state.state
-          node.debug(`state : ${{ ..._state }}`)
-          
-          const timestamp = node.getCurrentTimestamp();
-          const message = { payload: { state, item, timestamp } };
-    
-          // Send node message
-          node.send([message]);
-        })
-        .catch(error => {
-          // Log error message
-          node.warn(error.message);
+      if (items) {
+        // Sanitize items array
+        if (typeof items === 'string') {
+          items = [{ item: items }];
+        } else if (Array.isArray(items)) {
+          if (items.every(val => typeof val === 'string')) {
+            items.forEach((val, index) => {
+              items[index] = { item: val };
+            });
+          } else if (items.every(val => typeof val === 'object') && items.every(val => val.item !== undefined)) {
+            // Items array already sanitized
+          } else {
+            // TODO: Handle invalid payload
+            items = [];
+          }
+        } else {
+          // TODO: Handle invalid payload
+          items = [];
+        }
 
-          // Change node state
-          updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, error.message);
+        const reqs = [];
+        items.forEach(({ item }) => {
+          reqs.push(controller.getItem(item));
         });
+
+        // Recursively drill down into group members and add them to the root object
+        const getMembers = function(obj) {
+          let root = {};
+          if (obj.members && Array.isArray(obj.members)) {
+            obj.members.forEach(val => {
+              root = { ...root, [val.name]: val, ...getMembers(val) };
+            });
+          }
+          return root;
+        };
+
+        Promise.all(reqs)
+          .then(val => {
+            const items = val.reduce((obj, item) => {
+              const members = node.getGroupMembers ? { ...getMembers(item) } : {};
+              return {
+                ...obj,
+                [item.name]: item,
+                ...members
+              };
+            }, {});
+
+            clonedMessage = { ...clonedMessage, payload: items };
+
+            // Send message
+            // See: https://nodered.org/blog/2019/09/13/cloning-messages#cloning-by-default
+            node.send(clonedMessage, false);
+          })
+          .catch(error => {
+            // Log error message
+            node.warn(error.message);
+
+            // Change node state
+            updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.ERROR, error.message);
+          });
       } else {
         // TODO: Handle no item case
         // node.updateNodeStatus(STATE.NO_ITEM);

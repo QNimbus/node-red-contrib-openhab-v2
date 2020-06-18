@@ -27,44 +27,7 @@
 -->
 
 <script type="text/html" data-help-name="openhab-v2-get">
-  <p>Send message when openHAB event occurs for an item.</p>
-  <h3>Configuration</h3>
-  <dl class="message-properties">
-    <dt class="optional">Name<span class="property-type">string</span></dt>
-    <dd>optional custom name for node.</dd>
-    <dt>Controller<span class="property-type">object</span></dt>
-    <dd>openHAB controller.</dd>
-  </dl>
-  <dl class="message-properties">
-    <strong style="margin: 5px">Input</strong>
-    <dt>Items<span class="property-type">string []</span></dt>
-    <dd>openHAB items to monitor.</dd>
-    <dt class="optional">Event types<span class="property-type">string []</span></dt>
-    <dd>openHAB events to watch.</dd>
-  </dl>
-  <dl class="message-properties">
-    <strong style="margin: 5px">Misc</strong>
-    <dt>Timestamp<span class="property-type">boolean</span></dt>
-    <dd>output openHAB compatible timestamp instead of Unix timestamp.</dd>
-    <dt>Initial output<span class="property-type">boolean</span></dt>
-    <dd>send message for intial item state.</dd>
-    <dt>Store states<span class="property-type">boolean</span></dt>
-    <dd>store item states in <i>flow</i> or <i>global</i> context.</dd>
-  </dl>
-  <h3>Outputs</h3>
-  <ol class="node-ports">
-    <li>
-      StateEvent
-      <dl class="message-properties">
-        <dt>payload <span class="property-type">object</span></dt>
-        <dd>{ item, type, state, timestamp }</dd>
-      </dl>
-    </li>
-  </ol>
-  <h3>Details</h3>
-  <p>
-    The <code>openhab-v2-get</code> node listens for certain events for specific items. It subsequently sends a message with the event type, item name, new item state and a timestamp.
-  </p>
+  <p>TODO</p>
   <h3>References</h3>
   <ul>
     <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/blob/master/README.md">README.md</a></li>
