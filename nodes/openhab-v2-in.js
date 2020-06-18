@@ -137,7 +137,8 @@ module.exports = function(RED) {
       const message = { payload: { state, item, timestamp, ...inMessage } };
 
       // Send node message
-      node.send([message]);
+      // See: https://nodered.org/blog/2019/09/13/cloning-messages#cloning-by-default
+      node.send([message], false);
 
       // // Update node state
       // updateNodeStatus(node, STATES.NODE_STATE, STATES.NODE_STATE_TYPE.CURRENT_STATE, state);

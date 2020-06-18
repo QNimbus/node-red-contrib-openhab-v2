@@ -297,7 +297,8 @@ module.exports = function(RED) {
             const msg = { topic: msgTopic, payload: msgPayload, trigger };
 
             // Send message
-            node.send([msg]);
+            // See: https://nodered.org/blog/2019/09/13/cloning-messages#cloning-by-default
+            node.send([msg], false);
 
             // Save current trigger
             node.set('lastTrigger', trigger);
@@ -328,7 +329,9 @@ module.exports = function(RED) {
             const trigger = node.get('lastTrigger');
             const msg = { topic, payload, trigger };
 
-            node.send([msg]);
+            // Send message
+            // See: https://nodered.org/blog/2019/09/13/cloning-messages#cloning-by-default
+            node.send([msg], false);
           },
           nothing: () => {
             // Perform final actions
