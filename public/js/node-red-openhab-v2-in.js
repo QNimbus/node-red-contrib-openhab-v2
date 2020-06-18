@@ -315,7 +315,7 @@ RED.nodes.registerType('openhab-v2-in', {
     // Using SlimSelect and submitting no selected option results in 'null' value instead of undefined
     // This is a workaround to prevent NodeRED from not storing an undefined value
     // node.item = $('node-input-item').val() !== null ? $('node-input-item').val() : undefined;
-    node.items = $('#node-input-item').val();
+    node.items = $('#node-input-items').val();
   },
   oneditcancel: function() {},
   oneditdelete: function() {},
