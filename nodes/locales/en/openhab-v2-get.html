@@ -28,6 +28,57 @@
 
 <script type="text/html" data-help-name="openhab-v2-get">
   <p>TODO</p>
+  <h3>Configuration</h3>
+  <dl class="message-properties">
+    <dt class="optional">Name<span class="property-type">string</span></dt>
+    <dd>optional custom name for node.</dd>
+    <dt>Controller<span class="property-type">object</span></dt>
+    <dd>openHAB controller.</dd>
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Get</strong>
+    <dt>Items<span class="property-type">string []</span></dt>
+    <dd>openHAB items to fetch.</dd>    
+  </dl>
+  <dl class="message-properties">
+    <strong style="margin: 5px">Misc</strong>
+    <dt>Timestamp<span class="property-type">boolean</span></dt>
+    <dd>output openHAB compatible timestamp instead of Unix timestamp.</dd>    
+    <dt>Groups<span class="property-type">boolean</span></dt>
+    <dd>all items for group members in output message.</dd>
+  </dl>
+  <h3>Inputs</h3>
+  <ol class="node-ports">
+    <li>
+      Get
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>{ item: <i>string</i> }</dd>
+      </dl>
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>{ items: <i>string []</i> }</dd>
+      </dl>
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>{ items: <i>object []</i> }</dd>
+      </dl>
+    </li>
+  </ol>
+  <h3>Outputs</h3>
+  <ol class="node-ports">
+    <li>
+      State
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>{ item: { item, type, state, label, ... } }</dd>
+      </dl>
+    </li>
+  </ol>
+  <h3>Details</h3>
+  <p>
+    The <code>openhab-v2-get</code> node will fetch item states using a GET request. Items can be manually selected using the node configuration or you can select the items via the node input. Once the GET request completes the node will output the item states via the node output.
+  </p>
   <h3>References</h3>
   <ul>
     <li><a href="https://github.com/QNimbus/node-red-contrib-openhab-v2/blob/master/README.md">README.md</a></li>
