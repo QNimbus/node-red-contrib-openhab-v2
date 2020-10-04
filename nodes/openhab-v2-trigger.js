@@ -107,11 +107,30 @@ module.exports = function(RED) {
     // getTimerValue
     node.getTimerValue = () => {
       if (config.advancedTimerToggle) {
-        return getValueAs(node, config.advancedTimerType, config.advancedTimer);
+        switch (config.advancedTimerUnits) {
+          case 'milliseconds': {
+            return parseInt(getValueAs(node, config.advancedTimerType, config.advancedTimer));
+          }
+          case 'seconds': {
+            return parseInt(getValueAs(node, config.advancedTimerType, config.advancedTimer)) * 1000;
+          }
+          case 'minutes': {
+            return parseInt(getValueAs(node, config.advancedTimerType, config.advancedTimer)) * (60 * 1000);
+          }
+          case 'hours': {
+            return parseInt(getValueAs(node, config.advancedTimerType, config.advancedTimer)) * (60 * 60 * 1000);
+          }
+          default: {
+            return parseInt(getValueAs(node, config.advancedTimerType, config.advancedTimer)) * 1000;
+          }
+        }
       } else {
         switch (config.timerUnits) {
           case 'milliseconds': {
             return config.timer;
+          }
+          case 'seconds': {
+            return config.timer * 1000;
           }
           case 'minutes': {
             return config.timer * (60 * 1000);
