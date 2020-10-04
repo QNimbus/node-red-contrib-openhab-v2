@@ -131,6 +131,10 @@ RED.nodes.registerType('openhab-v2-trigger', {
       value: 'global',
       required: true
     },
+    advancedTimerUnits: {
+      value: 'seconds',
+      required: true
+    },
     afterTrigger: {
       value: 'nothing',
       required: true
@@ -674,6 +678,16 @@ RED.nodes.registerType('openhab-v2-trigger', {
             { text: node._('openhab-v2.trigger.select.timerUnits.milliseconds', { defaultValue: 'milliseconds' }) },
             { text: node._('openhab-v2.trigger.select.timerUnits.seconds', { defaultValue: 'seconds' }) },
             { text: node._('openhab-v2.trigger.select.timerUnits.minutes', { defaultValue: 'minutes' }) }
+          ],
+          onChange: ({ value }) => {}
+        },
+        'node-input-advancedTimerUnits': {
+          showSearch: false,
+          selectedElement: node.advancedTimerUnits,
+          data: [
+            { text: node._('openhab-v2.trigger.select.advancedTimerUnits.milliseconds', { defaultValue: 'milliseconds' }) },
+            { text: node._('openhab-v2.trigger.select.advancedTimerUnits.seconds', { defaultValue: 'seconds' }) },
+            { text: node._('openhab-v2.trigger.select.advancedTimerUnits.minutes', { defaultValue: 'minutes' }) }
           ],
           onChange: ({ value }) => {}
         },
