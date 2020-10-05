@@ -41,10 +41,10 @@ RED.nodes.registerType('openhab-v2-trigger', {
   color: '#fff',
   align: 'left',
   paletteLabel: 'trigger',
-  label: function() {
+  label: function () {
     return this.name || this.item || 'trigger';
   },
-  labelStyle: function() {
+  labelStyle: function () {
     return this.name || this.item ? 'node_label_italic' : '';
   },
   // Inputs & outputs
@@ -54,140 +54,143 @@ RED.nodes.registerType('openhab-v2-trigger', {
   outputLabels: ['Trigger'],
   // Default
   defaults: {
+    inputs: {
+      value: 0,
+    },
     // Main config
     name: {
       value: undefined,
-      required: false
+      required: false,
     },
     controller: {
       value: '',
       type: 'openhab-v2-controller',
-      required: true
+      required: true,
     },
     // Trigger tab
     item: {
       value: undefined,
-      required: true
+      required: true,
     },
     inputArmDisarm: {
       value: false,
-      required: true
+      required: true,
     },
     triggerState: {
       value: 'armed',
-      required: true
+      required: true,
     },
     triggerStateItem: {
       value: undefined,
-      required: false
+      required: false,
     },
     // Conditions tab
     triggerConditions: {
       value: { logic: 'OR', conditions: [] },
-      required: true
+      required: true,
     },
     additionalConditions: {
       value: { logic: 'AND', conditions: [] },
-      required: true
+      required: true,
     },
     additionalConditionsFrequency: {
       value: 'once',
-      required: true
+      required: true,
     },
     // Action tab
     topic: {
       value: undefined,
-      required: true
+      required: true,
     },
     topicType: {
       value: OH_TYPED_INPUT.COMMAND_TYPE.value,
-      required: true
+      required: true,
     },
     payload: {
       value: undefined,
-      required: true
+      required: true,
     },
     payloadType: {
       value: OH_TYPED_INPUT.PAYLOAD.value,
-      required: true
+      required: true,
     },
     timer: {
       value: 10,
-      validate: val => RED.validators.number(val) && val >= 0
+      validate: (val) => RED.validators.number(val) && val >= 0,
     },
     timerUnits: {
       value: 'seconds',
-      required: true
+      required: true,
     },
     advancedTimerToggle: {
       value: false,
-      required: true
+      required: true,
     },
     advancedTimer: {
       value: undefined,
-      required: false
+      required: false,
     },
     advancedTimerType: {
       value: 'global',
-      required: true
+      required: true,
     },
     advancedTimerUnits: {
       value: 'seconds',
-      required: true
+      required: true,
     },
     afterTrigger: {
       value: 'nothing',
-      required: true
+      required: true,
     },
     cancelTimerWhenDisarmed: {
-      value: false,
-      required: true
+      value: true,
+      required: true,
     },
     timerResetEveryTrigger: {
       value: 'no',
-      required: true
+      required: true,
     },
     topicEnd: {
       value: undefined,
-      required: true
+      required: true,
     },
     topicEndType: {
       value: OH_TYPED_INPUT.COMMAND_TYPE.value,
-      required: true
+      required: true,
     },
     payloadEnd: {
       value: undefined,
-      required: true
+      required: true,
     },
     payloadEndType: {
       value: OH_TYPED_INPUT.PAYLOAD.value,
-      required: true
+      required: true,
     },
     // Finally tab
     armDisarm: {
       value: 'do_not_change',
-      required: true
+      required: true,
     },
     // Misc tab
     ohTimestamp: {
       value: false,
-      required: true
+      required: true,
     },
     storeState: {
       value: false,
-      required: true
+      required: true,
     },
     storeStateVariable: {
       value: undefined,
-      required: false
+      required: false,
     },
     storeStateVariableType: {
       value: 'flow',
-      required: true
-    }
+      required: true,
+    },
   },
   // Dialog events
-  oneditprepare: function() {
+  oneditprepare: function () {
     /**
      * Initialization
      */
@@ -197,38 +200,36 @@ RED.nodes.registerType('openhab-v2-trigger', {
      * Methods
      */
 
-    const createTabs = id => {
+    const createTabs = (id) => {
       const tabs = RED.tabs.create({
         id,
-        onchange: function(tab) {
-          $(`#${id}-content`)
-            .children()
-            .hide();
+        onchange: function (tab) {
+          $(`#${id}-content`).children().hide();
           $('#' + tab.id).show();
-        }
+        },
       });
       tabs.addTab({
         id: `${id}-trigger`,
-        label: node._('openhab-v2.trigger.tabs.triggerTab', { defaultValue: 'Trigger' })
+        label: node._('openhab-v2.trigger.tabs.triggerTab', { defaultValue: 'Trigger' }),
       });
       tabs.addTab({
         id: `${id}-condition`,
-        label: node._('openhab-v2.trigger.tabs.condtionTab', { defaultValue: 'Condition' })
+        label: node._('openhab-v2.trigger.tabs.condtionTab', { defaultValue: 'Condition' }),
       });
       tabs.addTab({
         id: `${id}-action`,
-        label: node._('openhab-v2.trigger.tabs.actionTab', { defaultValue: 'Action' })
+        label: node._('openhab-v2.trigger.tabs.actionTab', { defaultValue: 'Action' }),
       });
       tabs.addTab({
         id: `${id}-finally`,
-        label: node._('openhab-v2.trigger.tabs.finallyTab', { defaultValue: 'Finally' })
+        label: node._('openhab-v2.trigger.tabs.finallyTab', { defaultValue: 'Finally' }),
       });
       tabs.addTab({
         id: `${id}-misc`,
-        label: node._('openhab-v2.trigger.tabs.miscTab', { defaultValue: 'Misc' })
+        label: node._('openhab-v2.trigger.tabs.miscTab', { defaultValue: 'Misc' }),
       });
 
-      setTimeout(function() {
+      setTimeout(function () {
         tabs.resize();
       }, 0);
     };
@@ -266,23 +267,17 @@ RED.nodes.registerType('openhab-v2-trigger', {
           // Creates a 4-column row (4th column is used as padding to compensate for 'X' button in the rows below)
           header: $('<div>')
             .attr({ style: 'display: flex; justify-content: flex-start; padding: 5px; background-color: rgba(192, 192, 192, 0.1)' })
-            .append(
-              $.parseHTML(
-                "<div style='flex: 0 0 75px; margin-right: 10px'>Logic</div><div style='flex: 0 0 65px; margin-right: 10px'>Test</div><div style='flex: 1; margin-right: 10px'>Value</div><div style='flex: 0 0 28px'></div>"
-              )
-            ),
+            .append($.parseHTML("<div style='flex: 0 0 75px; margin-right: 10px'>Logic</div><div style='flex: 0 0 65px; margin-right: 10px'>Test</div><div style='flex: 1; margin-right: 10px'>Value</div><div style='flex: 0 0 28px'></div>")),
           // editableList addItem method
           // Creates a 3-column row with flexbox styling and a right margin
-          addItem: function(elem, rowIndex, { comparator = 'eq', type = 'num', value = '' }) {
+          addItem: function (elem, rowIndex, { comparator = 'eq', type = 'num', value = '' }) {
             // Make row flexbox
             elem.attr({ style: 'display: flex' });
 
             // First column
             if (rowIndex === 0) {
               // First row
-              $('<div>')
-                .appendTo(elem)
-                .attr({ style: 'display: flex; flex: 0 0 75px; justify-content: center; align-items: center; margin-right: 10px;' });
+              $('<div>').appendTo(elem).attr({ style: 'display: flex; flex: 0 0 75px; justify-content: center; align-items: center; margin-right: 10px;' });
             } else {
               // Rest of the rows
               $('<div>')
@@ -308,17 +303,17 @@ RED.nodes.registerType('openhab-v2-trigger', {
                 default: 'num',
                 value,
                 types: ['global', 'flow', 'str', 'num', OH_TYPED_INPUT.PAYLOAD],
-                typeField: `#node-input-conditionType-${rowIndex}`
+                typeField: `#node-input-conditionType-${rowIndex}`,
               })
               .typedInput('value', value)
               .typedInput('type', type)
-              .on('change', function(event, type) {
+              .on('change', function (event, type) {
                 setComparatorOptions($(this).siblings('select'), type);
               });
 
             // Make typeInput elements grow to 100% width (3rd column)
             elem.children('div.red-ui-typedInput-container').attr({ style: 'flex: 1; margin-right: 10px' });
-          }
+          },
         });
 
       return triggerConditionsList;
@@ -357,14 +352,10 @@ RED.nodes.registerType('openhab-v2-trigger', {
           // Creates a 4-column row (4th column is used as padding to compensate for 'X' button in the rows below)
           header: $('<div>')
             .attr({ style: 'display: flex; padding: 5px; background-color: rgba(192, 192, 192, 0.1)' })
-            .append(
-              $.parseHTML(
-                "<div style='flex: 1; margin-right: 10px'>Variable</div><div style='flex: 0 0 100px; margin-right: 10px'>Test</div><div style='flex: 1; margin-right: 10px'>Value</div><div style='flex: 0 0 28px'></div>"
-              )
-            ),
+            .append($.parseHTML("<div style='flex: 1; margin-right: 10px'>Variable</div><div style='flex: 0 0 100px; margin-right: 10px'>Test</div><div style='flex: 1; margin-right: 10px'>Value</div><div style='flex: 0 0 28px'></div>")),
           // editableList addItem method
           // Creates a 3-column row with flexbox styling and a right margin
-          addItem: function(elem, rowIndex, { comparator = 'eq', variableType = 'global', variableValue = '', type = 'str', value = '' }) {
+          addItem: function (elem, rowIndex, { comparator = 'eq', variableType = 'global', variableValue = '', type = 'str', value = '' }) {
             // Make row flexbox
             elem.attr({ style: 'display: flex' });
 
@@ -376,7 +367,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
                 default: 'global',
                 value: variableValue,
                 types: ['global', 'flow'],
-                typeField: `#node-input-additionalConditionVariableType-${rowIndex}`
+                typeField: `#node-input-additionalConditionVariableType-${rowIndex}`,
               })
               .typedInput('value', variableValue)
               .typedInput('type', variableType);
@@ -398,17 +389,17 @@ RED.nodes.registerType('openhab-v2-trigger', {
                 default: 'num',
                 value,
                 types: ['global', 'flow', 'str', 'num', OH_TYPED_INPUT.PAYLOAD],
-                typeField: `#node-input-additionalConditionType-${rowIndex}`
+                typeField: `#node-input-additionalConditionType-${rowIndex}`,
               })
               .typedInput('value', value)
               .typedInput('type', type)
-              .on('change', function(event, type) {
+              .on('change', function (event, type) {
                 setComparatorOptions($(this).siblings('select'), type);
               });
 
             // Make typeInput elements grow to 100% width (1st and 3rd column)
             elem.children('div.red-ui-typedInput-container').attr({ style: 'flex: 1; margin-right: 10px' });
-          }
+          },
         });
 
       return triggerConditionsList;
@@ -449,11 +440,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
         }
 
         // Add a placeholder element required for a list with de-selectable items
-        $(slimSelectItem.select.element).prepend(
-          $('<option>')
-            .val(undefined)
-            .attr('data-placeholder', true)
-        );
+        $(slimSelectItem.select.element).prepend($('<option>').val(undefined).attr('data-placeholder', true));
 
         // Load the data into the SlimSelect list
         slimSelectItem.setData(items);
@@ -497,35 +484,35 @@ RED.nodes.registerType('openhab-v2-trigger', {
         types: ['str', OH_TYPED_INPUT.NOTHING_TYPE, OH_TYPED_INPUT.COMMAND_TYPE],
         value: node.topic,
         type: node.topicType,
-        typeField: $('#node-input-topicType')
+        typeField: $('#node-input-topicType'),
       });
 
       $('#node-input-payload').typedInput({
         types: ['flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
         value: node.payload,
         type: node.payloadType,
-        typeField: $('#node-input-payloadType')
+        typeField: $('#node-input-payloadType'),
       });
 
       $('#node-input-advancedTimer').typedInput({
         types: ['flow', 'global'],
         value: node.advancedTimer,
         type: node.advancedTimerType,
-        typeField: $('#node-input-advancedTimerType')
+        typeField: $('#node-input-advancedTimerType'),
       });
 
       $('#node-input-topicEnd').typedInput({
         types: ['str', OH_TYPED_INPUT.NOTHING_TYPE, OH_TYPED_INPUT.COMMAND_TYPE],
         value: node.topicEnd,
         type: node.topicEndType,
-        typeField: $('#node-input-topicEndType')
+        typeField: $('#node-input-topicEndType'),
       });
 
       $('#node-input-payloadEnd').typedInput({
         types: ['flow', 'global', 'str', 'num', 'date', OH_TYPED_INPUT.PAYLOAD],
         value: node.payloadEnd,
         type: node.payloadEndType,
-        typeField: $('#node-input-payloadEndType')
+        typeField: $('#node-input-payloadEndType'),
       });
 
       /**
@@ -536,7 +523,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
         types: ['flow', 'global'],
         value: node.storeStateVariable,
         type: node.storeStateVariableType,
-        typeField: $('#node-input-storeStateVariableType')
+        typeField: $('#node-input-storeStateVariableType'),
       });
     };
 
@@ -550,12 +537,8 @@ RED.nodes.registerType('openhab-v2-trigger', {
       // Enhance typedInput element by aligning all options
       // i.e. here we select all elements with either and image or icon label
       $('div.red-ui-typedInput-options a').each((_, elem) => {
-        $(elem)
-          .find('>img:first-child')
-          .css('width', '18px');
-        $(elem)
-          .find('>i:first-child')
-          .css('padding-left', '4px');
+        $(elem).find('>img:first-child').css('width', '18px');
+        $(elem).find('>i:first-child').css('padding-left', '4px');
       });
     };
 
@@ -572,7 +555,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
           deselectLabel: '<span>&#10006;</span>',
           allowDeselect: false,
           allowDeselectOption: false,
-          showOptionTooltips: true
+          showOptionTooltips: true,
         },
         'node-input-triggerState': {
           showSearch: false,
@@ -580,7 +563,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
           data: [
             { text: node._('openhab-v2.trigger.select.triggerState.armed', { defaultValue: 'Trigger starts armed' }), value: 'armed' },
             { text: node._('openhab-v2.trigger.select.triggerState.disarmed', { defaultValue: 'Trigger starts disarmed' }), value: 'disarmed' },
-            { text: node._('openhab-v2.trigger.select.triggerState.item', { defaultValue: 'Use arm/disarm item' }), value: 'item' }
+            { text: node._('openhab-v2.trigger.select.triggerState.item', { defaultValue: 'Use arm/disarm item' }), value: 'item' },
           ],
           onChange: ({ value }) => {
             // Hide/show trigger item SlimSelect form element depending on value
@@ -595,7 +578,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
               $('#node-input-inputArmDisarm').prop('checked', node.inputArmDisarm);
               $('#node-input-inputArmDisarm').change();
             }
-          }
+          },
         },
         'node-input-conditionsLogic': {
           showSearch: false,
@@ -603,15 +586,15 @@ RED.nodes.registerType('openhab-v2-trigger', {
           data: [{ text: 'OR' }, { text: 'AND' }],
           onChange: ({ value }) => {
             $('span.conditionsLogic').text(value);
-          }
+          },
         },
         'node-input-additionalConditionsFrequency': {
           showSearch: false,
           selectedElement: node.additionalConditionsFrequency,
           data: [
             { text: node._('openhab-v2.trigger.select.additionalConditionsFrequency.once', { defaultValue: 'First trigger only' }), value: 'once' },
-            { text: node._('openhab-v2.trigger.select.additionalConditionsFrequency.always', { defaultValue: 'Every trigger' }), value: 'always' }
-          ]
+            { text: node._('openhab-v2.trigger.select.additionalConditionsFrequency.always', { defaultValue: 'Every trigger' }), value: 'always' },
+          ],
         },
         'node-input-triggerStateItem': {
           placeholder: node._('openhab-v2.trigger.labels.placeholderLoading', { defaultValue: 'Loading...' }),
@@ -620,7 +603,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
           deselectLabel: '<span>&#10006;</span>',
           allowDeselect: false,
           allowDeselectOption: false,
-          showOptionTooltips: true
+          showOptionTooltips: true,
         },
         'node-input-afterTrigger': {
           showSearch: false,
@@ -629,7 +612,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
             { text: node._('openhab-v2.trigger.select.afterTrigger.nothing', { defaultValue: 'Do nothing' }), value: 'nothing' },
             { text: node._('openhab-v2.trigger.select.afterTrigger.nodelay', { defaultValue: 'No delay' }), value: 'nodelay' },
             { text: node._('openhab-v2.trigger.select.afterTrigger.timer', { defaultValue: 'Start timer' }), value: 'timer' },
-            { text: node._('openhab-v2.trigger.select.afterTrigger.untrigger', { defaultValue: 'Wait until trigger condition is false' }), value: 'untrigger' }
+            { text: node._('openhab-v2.trigger.select.afterTrigger.untrigger', { defaultValue: 'Wait until trigger condition is false' }), value: 'untrigger' },
           ],
           // onChange handler: When 'afterTrigger' on the 'action' tab changes
           onChange: ({ value: afterTrigger }) => {
@@ -669,7 +652,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
                 break;
               }
             }
-          }
+          },
         },
         'node-input-timerUnits': {
           showSearch: false,
@@ -677,9 +660,9 @@ RED.nodes.registerType('openhab-v2-trigger', {
           data: [
             { text: node._('openhab-v2.trigger.select.timerUnits.milliseconds', { defaultValue: 'milliseconds' }) },
             { text: node._('openhab-v2.trigger.select.timerUnits.seconds', { defaultValue: 'seconds' }) },
-            { text: node._('openhab-v2.trigger.select.timerUnits.minutes', { defaultValue: 'minutes' }) }
+            { text: node._('openhab-v2.trigger.select.timerUnits.minutes', { defaultValue: 'minutes' }) },
           ],
-          onChange: ({ value }) => {}
+          onChange: ({ value }) => {},
         },
         'node-input-advancedTimerUnits': {
           showSearch: false,
@@ -687,9 +670,9 @@ RED.nodes.registerType('openhab-v2-trigger', {
           data: [
             { text: node._('openhab-v2.trigger.select.advancedTimerUnits.milliseconds', { defaultValue: 'milliseconds' }) },
             { text: node._('openhab-v2.trigger.select.advancedTimerUnits.seconds', { defaultValue: 'seconds' }) },
-            { text: node._('openhab-v2.trigger.select.advancedTimerUnits.minutes', { defaultValue: 'minutes' }) }
+            { text: node._('openhab-v2.trigger.select.advancedTimerUnits.minutes', { defaultValue: 'minutes' }) },
           ],
-          onChange: ({ value }) => {}
+          onChange: ({ value }) => {},
         },
         'node-input-timerResetEveryTrigger': {
           showSearch: false,
@@ -697,11 +680,11 @@ RED.nodes.registerType('openhab-v2-trigger', {
           data: [
             {
               text: node._('openhab-v2.trigger.select.timerResetEveryTrigger.yes', { defaultValue: 'Keep resetting until trigger condition is false' }),
-              value: 'yes'
+              value: 'yes',
             },
-            { text: node._('openhab-v2.trigger.select.timerResetEveryTrigger.no', { defaultValue: 'Continue' }), value: 'no' }
+            { text: node._('openhab-v2.trigger.select.timerResetEveryTrigger.no', { defaultValue: 'Continue' }), value: 'no' },
           ],
-          onChange: ({ value }) => {}
+          onChange: ({ value }) => {},
         },
         'node-input-armDisarm': {
           showSearch: false,
@@ -709,16 +692,16 @@ RED.nodes.registerType('openhab-v2-trigger', {
           data: [
             { text: node._('openhab-v2.trigger.select.armDisarm.do_not_change', { defaultValue: 'Do not change trigger state' }), value: 'do_not_change' },
             { text: node._('openhab-v2.trigger.select.armDisarm.arm', { defaultValue: 'Arm trigger' }), value: 'arm' },
-            { text: node._('openhab-v2.trigger.select.armDisarm.disarm', { defaultValue: 'Disarm trigger' }), value: 'disarm' }
+            { text: node._('openhab-v2.trigger.select.armDisarm.disarm', { defaultValue: 'Disarm trigger' }), value: 'disarm' },
           ],
-          onChange: ({ value }) => {}
-        }
+          onChange: ({ value }) => {},
+        },
       },
       elements: {},
-      get: function(id) {
+      get: function (id) {
         return this.elements[id];
       },
-      init: function() {
+      init: function () {
         for (const [id, options] of Object.entries(this.options)) {
           const select = document.querySelector(`select#${id}`);
           if (select) {
@@ -733,7 +716,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
             this.elements[id] = slimSelect;
           }
         }
-      }
+      },
     };
 
     /**
@@ -744,9 +727,9 @@ RED.nodes.registerType('openhab-v2-trigger', {
     $('#node-input-controller').change(
       ({ target: { value: controller } }) =>
         controller !== '__ADD__' &&
-        getItems(controller).then(itemList => {
+        getItems(controller).then((itemList) => {
           const allItems = itemList;
-          const switchItems = itemList.filter(item => ['Switch', 'Contact'].includes(item.type) || ['Switch', 'Contact'].includes(item.groupType));
+          const switchItems = itemList.filter((item) => ['Switch', 'Contact'].includes(item.type) || ['Switch', 'Contact'].includes(item.groupType));
 
           populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
           populateItemList(slimSelectElements.get('node-input-triggerStateItem'), switchItems, node.triggerStateItem);
@@ -828,14 +811,14 @@ RED.nodes.registerType('openhab-v2-trigger', {
     // Apply custom styling
     applyCustomStyling();
   },
-  oneditsave: function() {
+  oneditsave: function () {
     /**
      * Initialization
      */
     const node = this;
 
     // Save triggerConditions
-    (function() {
+    (function () {
       const logic = $('#node-input-conditionsLogic').val() ? $('#node-input-conditionsLogic').val() : node._def.defaults.triggerConditions.value.logic;
       const triggerConditions = { logic, conditions: [] };
       $('#node-input-triggerConditions')
@@ -851,7 +834,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
     })();
 
     // Save additionalConditions
-    (function() {
+    (function () {
       const logic = node._def.defaults.additionalConditions.value.logic;
       const additionalConditions = { logic, conditions: [] };
       $('#node-input-additionalConditions')
@@ -873,7 +856,7 @@ RED.nodes.registerType('openhab-v2-trigger', {
     $('#node-input-item').val($('#node-input-item').val() !== null ? $('#node-input-item').val() : undefined);
     $('#node-input-triggerStateItem').val($('#node-input-triggerStateItem').val() !== null ? $('#node-input-triggerStateItem').val() : undefined);
   },
-  oneditcancel: function() {},
-  oneditdelete: function() {},
-  oneditresize: function() {}
+  oneditcancel: function () {},
+  oneditdelete: function () {},
+  oneditresize: function () {},
 });
