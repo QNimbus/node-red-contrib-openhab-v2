@@ -72,31 +72,31 @@ module.exports = function(RED) {
     node.global = node.context().global;
 
     // setState and getState methods for storing state values in node, flow and/or global context
-    node.getState = () => node.get('itemState');
-    node.setState = state => {
+    node.getState = () => node.get('triggerItemState');
+    node.setState = (state) => {
       const context = node.context()[config.storeStateVariableType];
 
-      node.set('itemState', state);
+      node.set('triggerItemState', state);
+      // Optionally write state to flow/global variable
       if (config.storeState && config.storeStateVariable && context) {
-        context.set(config.storeStateVariable, state);
+        const currentState = context.get(config.storeStateVariable);
+        context.set(config.storeStateVariable, { ...currentState, [node.item]: state });
       }
-    };
+    };;
 
     // Pre-cast condition values
-    node.triggerConditions.forEach(condition => {
-      condition.compare = OPERATORS[condition.comparator] ? OPERATORS[condition.comparator].method : _ => false;
+    node.triggerConditions.forEach((condition) => {
+      condition.compare = OPERATORS[condition.comparator] ? OPERATORS[condition.comparator].method : (_) => false;
     });
 
     // Pre-cast additional condition values
-    node.additionalConditions.forEach(condition => {
-      condition.compare = OPERATORS[condition.comparator] ? OPERATORS[condition.comparator].method : _ => false;
+    node.additionalConditions.forEach((condition) => {
+      condition.compare = OPERATORS[condition.comparator] ? OPERATORS[condition.comparator].method : (_) => false;
     });
 
     // triggerLogicMethod is bound to Array.prototype.every or Array.prototype.some depending on configuration
-    node.triggerLogicMethod =
-      node.triggerConditionsLogic === 'AND' ? Array.prototype.every.bind(node.triggerConditions) : Array.prototype.some.bind(node.triggerConditions);
-    node.additionalConditionsLogicMethod =
-      node.additionalConditionsLogic === 'AND' ? Array.prototype.every.bind(node.additionalConditions) : Array.prototype.some.bind(node.additionalConditions);
+    node.triggerLogicMethod = node.triggerConditionsLogic === 'AND' ? Array.prototype.every.bind(node.triggerConditions) : Array.prototype.some.bind(node.triggerConditions);
+    node.additionalConditionsLogicMethod = node.additionalConditionsLogic === 'AND' ? Array.prototype.every.bind(node.additionalConditions) : Array.prototype.some.bind(node.additionalConditions);
 
     // Node constants
     node.timeZoneOffset = Object.freeze(new Date().getTimezoneOffset() * 60000);
@@ -186,7 +186,7 @@ module.exports = function(RED) {
       }
     };
 
-    node.triggerConditionsPassed = state => {
+    node.triggerConditionsPassed = (state) => {
       return node.triggerLogicMethod(({ compare, value, type }) => {
         value = getValueAs(node, type, value);
 
@@ -200,7 +200,7 @@ module.exports = function(RED) {
       });
     };
 
-    node.additionalConditionsPassed = _ => {
+    node.additionalConditionsPassed = (_) => {
       // Quick return if there are no additional conditions
       if (node.additionalConditions.length === 0) return true;
 
@@ -221,8 +221,9 @@ module.exports = function(RED) {
       });
     };
 
-    node.armTrigger = ({ state, payload, payload: { state: payloadState } = {} }) => {
-      const armed = !['OFF', 'CLOSED', '0', 'NULL', 'UNDEF', false].includes(state || payload || payloadState || false);
+    node.armTrigger = ({ state, payload, payload: { state: payloadState } = {} } = {}) => {
+      const states = [state, payload, payloadState].filter(v => v !== undefined && (typeof v !== 'object' || v !== null));
+      const armed = states.every(v => ['off', 'OFF', 'closed', 'CLOSED', '0', 'NULL', 'UNDEF', 0, null, false, undefined, {}].indexOf(v) < 0);
       const changed = armed !== node.get('armed');
 
       // If armed state has not changed, return immediately
@@ -275,9 +276,10 @@ module.exports = function(RED) {
             controller
               .getItem(node.armedItem)
               .then(({ state }) => {
+                node.setState(state);
                 node.armTrigger({ state });
               })
-              .catch(error => {
+              .catch((error) => {
                 // Log error message
                 node.warn(error.message);
 
@@ -296,7 +298,7 @@ module.exports = function(RED) {
       }
     };
 
-    node.onEvent = event => {
+    node.onEvent = (event) => {
       let hasTriggered = false;
       const { state, payload, ...message } = event;
       const triggerInitialState = node.get('triggered');
@@ -359,7 +361,7 @@ module.exports = function(RED) {
             }
           },
           timer: () => {
-            const timerFunction = function() {
+            const timerFunction = function () {
               // Clear timer object
               node.removeTimer();
 
@@ -396,7 +398,7 @@ module.exports = function(RED) {
               // Perform final actions
               afterTriggerAction.finally();
             }
-          }
+          },
         };
 
         // Excute trigger action
@@ -411,7 +413,7 @@ module.exports = function(RED) {
 
     // Listen for incomming messages to arm/disarm trigger
     config.inputArmDisarm &&
-      node.on('input', message => {
+      node.on('input', (message) => {
         node.armTrigger(message);
       });
 
@@ -425,7 +427,7 @@ module.exports = function(RED) {
 
     // List for changes to the trigger armed item, if configured
     if (node.armedItem) {
-      node.eventTypes.forEach(eventType => {
+      node.eventTypes.forEach((eventType) => {
         controller.on(`${node.armedItem}/${eventType}`, node.armTrigger);
         node.debug(`Attaching 'node' event listener '${node.armedItem}/${eventType}'`);
       });
@@ -433,26 +435,26 @@ module.exports = function(RED) {
 
     // Listen for subscribed events for selected item
     if (node.item) {
-      node.eventTypes.forEach(eventType => {
+      node.eventTypes.forEach((eventType) => {
         controller.on(`${node.item}/${eventType}`, node.onEvent);
         node.debug(`Attaching 'node' event listener '${node.item}/${eventType}'`);
       });
     }
 
     // Cleanup event listeners upon node removal
-    node.on('close', done => {
+    node.on('close', (done) => {
       controller.removeListener(STATES.EVENTSOURCE_STATE, node.onControllerEvent);
       node.debug(`Removing 'controller' event listener '${STATES.EVENTSOURCE_STATE}'`);
 
       if (node.armedItem) {
-        node.eventTypes.forEach(eventType => {
+        node.eventTypes.forEach((eventType) => {
           controller.removeListener(`${node.armedItem}/${eventType}`, node.armTrigger);
           node.debug(`Removing 'node' event listener '${node.armedItem}/${eventType}'`);
         });
       }
 
       if (node.item) {
-        node.eventTypes.forEach(eventType => {
+        node.eventTypes.forEach((eventType) => {
           controller.removeListener(`${node.item}/${eventType}`, node.onEvent);
           node.debug(`Removing 'node' event listener '${node.item}/${eventType}'`);
         });

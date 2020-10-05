@@ -125,7 +125,7 @@ module.exports = function(RED) {
         const payload = node.getPayload(message);
 
         if (topic) {
-          if (payload) {
+          if (payload != undefined) {
             controller.sendItem(item, topic, payload).catch(({ response: { status, statusText } }) => {
               node.error(`Error ${status}: ${statusText}`);
 

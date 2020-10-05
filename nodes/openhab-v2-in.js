@@ -68,16 +68,21 @@ module.exports = function(RED) {
     node.getState = () => node.get('states');
     node.setState = ({ item, state }) => {
       const context = node.context()[config.storeStateVariableType];
-      const currentState = node.getState();
+      const currentNodeState = node.getState();
+
+      // // Try to parse state as number
+      // const parsedState = parseFloat(state);
+      // state = isNaN(parsedState) ? state : parsedState;
 
       // Write state to node variable
-      node.set('states', { ...currentState, [item]: state });
+      node.set('states', { ...currentNodeState, [item]: state });
 
       // Optionally write state to flow/global variable
       if (config.storeState && config.storeStateVariable && context) {
+        const currentState = context.get(config.storeStateVariable);
         context.set(config.storeStateVariable, { ...currentState, [item]: state });
       }
-    };
+    };;
 
     // Node constants
     node.timeZoneOffset = Object.freeze(new Date().getTimezoneOffset() * 60000);
