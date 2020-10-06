@@ -66,7 +66,7 @@
         "inputArmDisarmLabel": "Input",
         "advancedTimerToggle": "Advanced timer setting",
         "advancedTimerToggleLabel": "Advanced",
-        "cancelTimerWhenDisarmed": "When trigger is disarmed, cancel active timer",
+        "cancelTimerWhenDisarmed": "Cancel active timer when disarmed",
         "cancelTimerWhenDisarmedLabel": "Cancel",
         "armDisarm": "Trigger",
         "ohTimestamp": "use openHAB format",
