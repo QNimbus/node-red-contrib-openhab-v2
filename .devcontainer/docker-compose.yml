@@ -1,0 +1,23 @@
+---
+  version: '3'
+
+  services:
+    app:
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - 1880:1880
+
+      volumes:
+        - ..:/workspace:cached
+        - nodered_data:/data
+
+    openhab:
+      image: openhab/openhab:3.0.0.M2
+
+      # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+      network_mode: service:app
+
+  volumes:
+    nodered_data:

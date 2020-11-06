@@ -1,0 +1,29 @@
+{
+	// See: https://code.visualstudio.com/docs/remote/devcontainerjson-reference
+	"name": "node-red-contrib-openhab-v2",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+
+	"workspaceFolder": "/workspace",
+
+	"runServices": ["app", "openhab"],
+
+	// Set *default* container specific settings.json values on container create.
+	"settings": {
+		"terminal.integrated.shell.linux": "/bin/bash"
+	},
+	
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"dbaeumer.vscode-eslint"
+	],
+	
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [8808, 8443],
+	
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "",
+	
+	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
+	// "remoteUser": "node"
+}
