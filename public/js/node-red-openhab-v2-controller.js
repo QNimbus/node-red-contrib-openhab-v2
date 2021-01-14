@@ -69,11 +69,11 @@ RED.nodes.registerType('openhab-v2-controller', {
       value: 8080,
       validate: RED.validators.number(),
       required: true
-    },
-    credentials: {
-      username: { type: 'text' },
-      password: { type: 'password' }
     }
+  },
+  credentials: {
+    username: { type: 'text' },
+    password: { type: 'password' }
   },
   // Dialog events
   oneditprepare: function() {
