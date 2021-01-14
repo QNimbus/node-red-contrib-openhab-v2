@@ -75,6 +75,10 @@ RED.nodes.registerType('openhab-v2-get', {
     getGroupMembers: {
       value: false,
       required: true
+    },
+    useInput: {
+      value: false,
+      required: true
     }
   },
   // Dialog events
