@@ -131,6 +131,7 @@ module.exports = function(RED) {
 
               // TODO: Update node status in case of error
             });
+            node.send([message], false);
           } else {
             // TODO: Handle no payload case
             // node.updateNodeStatus(STATE.NO_PAYLOAD);
