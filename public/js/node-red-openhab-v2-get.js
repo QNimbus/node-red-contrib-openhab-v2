@@ -76,7 +76,7 @@ RED.nodes.registerType('openhab-v2-get', {
       value: false,
       required: true
     },
-    useInput: {
+    allowItemOverride: {
       value: false,
       required: true
     }

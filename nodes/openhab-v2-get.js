@@ -126,7 +126,7 @@ module.exports = function(RED) {
 
     node.onInput = message => {
       const payload = message.payload;
-      let items = !config.useInput ? node.items : payload.items || payload.item || node.items;
+      let items = !config.allowItemOverride ? node.items : payload.items || payload.item || node.items;
       let clonedMessage = RED.util.cloneMessage(message);
 
       if (items) {
