@@ -144,7 +144,7 @@ module.exports = function(RED) {
         // Topic e.g. 'smarthome/items/My_Light_Switch/state'
         // This grabs the string between the first 16 characters and the last '/' which is the item name
         // In case of a GroupItemStateChangedEvent the item will have multiple segments e.g. GroupItemName/MemberItemName
-        const [item] = parsedMessage.topic.slice(16, parsedMessage.topic.lastIndexOf('/')).split('/');
+        const [item] = parsedMessage.topic.slice(parsedMessage.topic.indexOf('/') + 7, parsedMessage.topic.lastIndexOf('/')).split('/');
         const type = parsedMessage.type;
         const state = parsedMessage.payload.value;
         const payload = parsedMessage.payload;
@@ -260,8 +260,8 @@ module.exports = function(RED) {
       method: 'get',
       baseURL: node.url,
       auth: {
-        username: config.username,
-        password: config.password
+        username: node.credentials.username,
+        password: node.credentials.password
       },
       httpAgent: new http.Agent({}),
       httpsAgent: new https.Agent({

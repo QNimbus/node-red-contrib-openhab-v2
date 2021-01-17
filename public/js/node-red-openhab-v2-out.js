@@ -53,6 +53,9 @@ RED.nodes.registerType('openhab-v2-out', {
   outputLabels: [],
   // Default
   defaults: {
+    outputs: {
+      value: 0,
+    },
     // Main config
     name: {
       value: undefined,
@@ -88,6 +91,10 @@ RED.nodes.registerType('openhab-v2-out', {
     allowItemOverride: {
       value: false,
       required: true
+    },
+    enableOutput: {
+      value: true,
+      required: true,
     }
   },
   // Dialog events
@@ -263,6 +270,15 @@ RED.nodes.registerType('openhab-v2-out', {
           populateItemList(slimSelectElements.get('node-input-item'), allItems, node.item);
         })
     );
+
+    // onChange handler: Hide/Show store item state in variable option
+    $('#node-input-enableOutput').change(({ target }) => {
+      if ($(target).is(':checked')) {
+        node.outputs = 1;
+      } else {
+        node.outputs = 0;
+      }
+    });
 
     /**
      * Main
