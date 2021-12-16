@@ -13,6 +13,8 @@
         "items": "Items",
         "ohTimestamp": "use openHAB format",
         "ohTimestampLabel": "Timestamp",
+        "allowItemOverride": "Override",
+        "allowItemOverrideLabel": "Allow override of item via input message",
         "getGroupMembers": "Return all groupmembers (recursively)",
         "getGroupMembersLabel": "Groups",
         "placeholderLoading": "Loading...",

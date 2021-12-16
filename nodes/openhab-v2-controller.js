@@ -261,8 +261,8 @@ module.exports = function(RED) {
       method: 'get',
       baseURL: node.url,
       auth: {
-        username: config.username,
-        password: config.password
+        username: node.credentials.username,
+        password: node.credentials.password
       },
       httpAgent: new http.Agent({}),
       httpsAgent: new https.Agent({
