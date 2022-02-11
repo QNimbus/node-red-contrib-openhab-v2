@@ -142,7 +142,8 @@ module.exports = function(RED) {
         }
 
         // Topic e.g. 'smarthome/items/My_Light_Switch/state'
-        // This grabs the string between the first 16 characters and the last '/' which is the item name
+        // Topic e.g. 'openhab/items/My_Light_Switch/state'
+        // This grabs the string between the first '/' + 6 characters and the last '/' which is the item name
         // In case of a GroupItemStateChangedEvent the item will have multiple segments e.g. GroupItemName/MemberItemName
         const [item] = parsedMessage.topic.slice(parsedMessage.topic.indexOf('/') + 7, parsedMessage.topic.lastIndexOf('/')).split('/');
         const type = parsedMessage.type;
