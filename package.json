@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
-    "eventsource": "~1.0.7",
+    "eventsource": "~2.0.2",
     "slim-select": "^1.25.0"
   },
   "devDependencies": {
